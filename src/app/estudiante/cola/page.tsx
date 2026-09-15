@@ -1,0 +1,19 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { StudentShell } from "@/components/student-shell";
+import { getQueueForAppointment } from "@/lib/demo-booking-store";
+import { type MockQueueEntry } from "@/lib/mock-clinic";
+
+const statusCopy: Record<MockQueueEntry["status"], string> = { WAITING: "Estás en la cola", CALLED: "Te están llamando", IN_SERVICE: "Tu atención está en curso", COMPLETED: "Atención finalizada" };
+const statusStyle: Record<MockQueueEntry["status"], string> = { WAITING: "bg-warning-container text-warning", CALLED: "bg-secondary-container text-secondary", IN_SERVICE: "bg-info-container text-info", COMPLETED: "bg-success-container text-success" };
+
+export default function StudentQueuePage() {
+  const [entry, setEntry] = useState<MockQueueEntry | undefined>();
+  useEffect(() => {
+    const timer = window.setTimeout(() => setEntry(getQueueForAppointment("CIT-2026-001")), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return <StudentShell active="appointments"><main className="mx-auto max-w-3xl px-5 py-8 sm:px-8"><Link href="/estudiante/citas/CIT-2026-001" className="text-sm font-semibold text-primary hover:underline">← Ver mi cita</Link><header className="mt-5"><p className="text-sm font-semibold tracking-wide text-primary">ATENCIÓN DE HOY</p><h1 className="mt-1 text-3xl font-bold text-text-primary">Estado de tu llegada</h1><p className="mt-2 text-text-secondary">Aquí verás las actualizaciones de tu atención presencial.</p></header>{entry ? <article className="mt-7 overflow-hidden rounded-2xl border border-divider bg-surface"><div className="h-1.5 bg-secondary" /><div className="p-5 sm:p-7"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold text-secondary">LLEGADA REGISTRADA</p><h2 className="mt-2 text-2xl font-bold text-text-primary">{statusCopy[entry.status]}</h2></div><span className={`rounded-full px-3 py-1.5 text-sm font-semibold ${statusStyle[entry.status]}`}>{entry.status === "WAITING" ? "En espera" : entry.status === "CALLED" ? "Llamada" : entry.status === "IN_SERVICE" ? "En atención" : "Finalizada"}</span></div><div className="mt-7 grid gap-4 sm:grid-cols-3"><div className="rounded-xl bg-surface-secondary p-4"><p className="text-sm text-text-secondary">Espera estimada</p><p className="mt-1 font-bold text-text-primary">{entry.estimatedWait}</p></div><div className="rounded-xl bg-surface-secondary p-4"><p className="text-sm text-text-secondary">Demanda</p><p className="mt-1 font-bold text-text-primary">{entry.demand}</p></div><div className="rounded-xl bg-surface-secondary p-4"><p className="text-sm text-text-secondary">Última actualización</p><p className="mt-1 font-bold text-text-primary">Recientemente</p></div></div><p className="mt-6 text-sm leading-6 text-text-secondary">El tiempo es aproximado y puede variar según la atención de pacientes anteriores. Mantente cerca de recepción para cuando te llamen.</p></div></article> : <article className="mt-7 rounded-2xl border border-divider bg-surface p-6 sm:p-8"><p className="text-sm font-semibold text-primary">PENDIENTE DE LLEGADA</p><h2 className="mt-2 text-2xl font-bold text-text-primary">Aún no registraste tu llegada</h2><p className="mt-3 max-w-xl text-sm leading-6 text-text-secondary">Al llegar al centro de atención, presenta tu comprobante QR en recepción. Luego podrás consultar aquí tu posición y tiempo de espera estimado.</p><Link href="/estudiante/citas/CIT-2026-001" className="mt-6 inline-flex rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover">Ver comprobante QR</Link></article>}<p className="mt-5 text-xs text-text-tertiary">Simulación conectada: recepción actualiza esta vista mediante el mismo objeto de cola almacenado en el navegador.</p></main></StudentShell>;
+}

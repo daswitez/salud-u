@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #0b5cad;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-hover: #094c90;
+  --color-primary-container: #eff6ff;
+  --color-on-primary: #ffffff;
+  --color-secondary: #0b6e75;
+  --color-secondary-hover: #0b5258;
+  --color-secondary-container: #d7f4f4;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f1f5f9;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-disabled: #94a3b8;
+  --color-border: #cbd5e1;
+  --color-divider: #e2e8f0;
+  --color-success: #2e7d32;
+  --color-success-container: #e8f5e9;
+  --color-warning: #a15c00;
+  --color-warning-container: #fff8e1;
+  --color-error: #b3261e;
+  --color-error-container: #fdecec;
+  --color-info: #1565c0;
+  --color-info-container: #e8f1fc;
+  --color-focus-ring: #93c5fd;
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+:root {
+  color: var(--color-text-primary);
+  background: var(--color-background);
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-height: 100vh; background: var(--color-background); }
+
+:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
