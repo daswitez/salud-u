@@ -1,27 +1,21 @@
 # Salud Universitaria — Frontend
 
-Frontend inicial de la plataforma de gestión de atención médica universitaria.
+Frontend de una plataforma universitaria orientada a historias clínicas, atención inicial, derivaciones a especialidades y reportes autorizados. Las citas por cupo son un apoyo administrativo; no son el centro del producto.
 
-## Stack
+## Alcance actual
 
-- Next.js con App Router
-- TypeScript estricto
-- Tailwind CSS 4
-- ESLint
+- Registro único de estudiantes por carnet y código de registro.
+- Historia clínica longitudinal, atenciones, diagnósticos, etiquetas y adjuntos.
+- Derivaciones desde revisión estudiantil a Dermatología, Oftalmología, Medicina Interna y Urología.
+- Consulta de pacientes por médico y reportes filtrables de atención.
 
 ## Desarrollo
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-Abrir `http://localhost:3000`.
+## Documentación funcional
 
-## Organización inicial
-
-- `src/app`: rutas, layout global y estilos.
-- `src/components`: componentes reutilizables.
-- `src/features`: módulos de dominio; por ejemplo, citas, agenda, cola y campañas.
-
-La interfaz debe usar los tokens semánticos definidos en `src/app/globals.css`. Los documentos Markdown en la raíz contienen el contexto funcional, la arquitectura y los flujos del sistema.
+Comenzar por [00_contexto_maestro_para_agentes.md](./00_contexto_maestro_para_agentes.md), seguido de [01_requisitos_y_procesos.md](./01_requisitos_y_procesos.md) y [08_backlog_priorizado.md](./08_backlog_priorizado.md).

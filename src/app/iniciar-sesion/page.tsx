@@ -3,6 +3,13 @@ import { MOCK_USERS, findMockUser } from "@/lib/mock-users";
 
 type SignInPageProps = { searchParams: Promise<{ error?: string; success?: string; email?: string }> };
 
+const clinicalRoleLabel = {
+  ADMINISTRATIVE: "Administrativo",
+  REVIEW_DOCTOR: "Médico de revisión",
+  SPECIALIST: "Médico especialista",
+  STUDENT: "Estudiante",
+} as const;
+
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
   const selectedUser = params.email ? findMockUser(params.email) : undefined;
@@ -12,8 +19,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     <main className="grid min-h-screen bg-background lg:grid-cols-[1.1fr_0.9fr]">
       <section className="relative hidden overflow-hidden bg-primary p-12 text-on-primary lg:flex lg:flex-col lg:justify-between">
         <div className="relative z-10 flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-white/15 text-base font-bold">SU</span><span><span className="block font-semibold">Salud Universitaria</span><span className="block text-sm text-white/75">Atención médica estudiantil</span></span></div>
-        <div className="relative z-10 max-w-xl"><p className="text-sm font-semibold tracking-[0.16em] text-white/75">ATENCIÓN MÁS CERCA DE TI</p><h1 className="mt-4 text-5xl font-bold leading-tight tracking-tight">Tu salud, con claridad y sin filas innecesarias.</h1><p className="mt-6 max-w-md text-lg leading-8 text-white/85">Consulta disponibilidad, gestiona tus citas y conoce el estado de tu atención desde un solo lugar.</p></div>
-        <p className="relative z-10 text-sm text-white/70">Universidad pública · Área de especialidades médicas</p>
+        <div className="relative z-10 max-w-xl"><p className="text-sm font-semibold tracking-[0.16em] text-white/75">ATENCIÓN CLÍNICA UNIVERSITARIA</p><h1 className="mt-4 text-5xl font-bold leading-tight tracking-tight">Historias clínicas y atención conectadas.</h1><p className="mt-6 max-w-md text-lg leading-8 text-white/85">Registra, consulta y da seguimiento a la atención estudiantil desde un solo lugar.</p></div>
+        <p className="relative z-10 text-sm text-white/70">Universidad pública · Servicio de salud estudiantil</p>
         <div aria-hidden="true" className="absolute -bottom-40 -right-28 size-140 rounded-full border-[48px] border-white/10" /><div aria-hidden="true" className="absolute -top-24 right-30 size-80 rounded-full bg-secondary/40 blur-3xl" />
       </section>
 
@@ -29,7 +36,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <div className="flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm text-text-secondary"><input type="checkbox" className="size-4 accent-primary" />Recordarme</label><button type="button" className="text-sm font-semibold text-primary hover:underline">¿Olvidaste tu contraseña?</button></div>
             <button type="submit" className="w-full rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold text-on-primary shadow-sm hover:bg-primary-hover">Iniciar sesión</button>
           </form>
-          <div className="mt-8 rounded-xl border border-info-container bg-info-container/40 p-4"><p className="text-sm font-semibold text-info">Usuarios de demostración</p><p className="mt-1 text-sm leading-6 text-text-secondary">El rol se obtiene del correo de prueba al iniciar sesión. Selecciona una cuenta para precargar su correo; contraseña sugerida: <strong>Demo2026!</strong>.</p><div className="mt-4 grid gap-2">{MOCK_USERS.map((account) => <a key={account.id} href={`/iniciar-sesion?email=${account.email}`} className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${selectedUser?.id === account.id ? "border-primary bg-surface text-primary" : "border-transparent bg-white/70 text-text-secondary hover:border-border"}`}>{account.name} · {account.role === "medico" ? "Médico" : account.role === "administrativo" ? "Administrativo" : "Estudiante"}</a>)}</div></div>
+          <div className="mt-8 rounded-xl border border-info-container bg-info-container/40 p-4"><p className="text-sm font-semibold text-info">Usuarios de demostración</p><p className="mt-1 text-sm leading-6 text-text-secondary">El rol clínico se obtiene del correo de prueba. Selecciona una cuenta para precargar su correo; contraseña sugerida: <strong>Demo2026!</strong>.</p><div className="mt-4 grid gap-2">{MOCK_USERS.map((account) => <a key={account.id} href={`/iniciar-sesion?email=${account.email}`} className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${selectedUser?.id === account.id ? "border-primary bg-surface text-primary" : "border-transparent bg-white/70 text-text-secondary hover:border-border"}`}>{account.name} · {clinicalRoleLabel[account.clinicalRole]}</a>)}</div></div>
           <p className="mt-8 text-center text-xs leading-5 text-text-tertiary">Al ingresar aceptas el uso responsable de la información según las políticas institucionales.</p>
         </div>
       </section>

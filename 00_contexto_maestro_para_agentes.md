@@ -1,1687 +1,648 @@
 # Contexto maestro del proyecto para agentes de desarrollo
 
-> **Propósito de este archivo**
->
-> Este documento explica la idea completa del proyecto, su alcance, lógica de negocio, actores, procesos, arquitectura y criterios de diseño con suficiente contexto para que un agente de software pueda trabajar sobre el repositorio sin interpretar el sistema como un simple agendador de citas.
->
-> Debe utilizarse como **documento de orientación general**. Los requisitos detallados se encuentran en `01_requisitos_y_procesos.md`, la arquitectura en `02_desarrollo_arquitectura.md`, UI/UX en `03_ui_ux.md`, IA en `04_ia_datos_y_demanda.md` y pantallas en `05_pantallas_y_flujos.md`.
+## Visión
 
----
+Este proyecto es una **plataforma de gestión clínica universitaria**. Su producto principal no es el agendamiento: es la historia clínica longitudinal y consultable de cada estudiante. El sistema digitaliza la atención inicial, el almacenamiento de exámenes/documentos, la derivación a especialistas y los reportes necesarios para la operación y la investigación autorizada.
 
-# 1. Visión del proyecto
-
-El proyecto consiste en desarrollar un **sistema web y móvil de gestión de atención médica universitaria** para el área de especialidades médicas de una universidad pública.
-
-No es solamente una aplicación para “sacar cita”. El objetivo es digitalizar el recorrido completo del estudiante desde la planificación de la oferta médica hasta el cierre de una atención clínica:
+## Flujo de atención obligatorio
 
 ```text
-Administración de personal médico
+Administración registra o valida al estudiante
         ↓
-Planificación de turnos médicos
+Se crea/gestiona una cita por cupo si hace falta
         ↓
-Generación de capacidad y slots
+Médico de revisión estudiantil realiza atención inicial
         ↓
-Búsqueda de atención
+Historia clínica, diagnóstico(s), mediciones y adjuntos
         ↓
-Reserva o campaña masiva
-        ↓
-Comprobante QR o teleconsulta
-        ↓
-Check-in
-        ↓
-Cola digital
-        ↓
-Estimación de tiempo de espera
-        ↓
-Atención médica
-        ↓
-Historia clínica especializada
-        ↓
-Datos operacionales e históricos
-        ↓
-Mejor estimación y planificación futura
+¿Requiere especialidad?
+ ├─ no → cerrar atención / seguimiento
+ └─ sí → derivación documentada → especialista → evolución y cierre
 ```
 
-El sistema debe atacar varios problemas del proceso actual:
+El estudiante no elige una especialidad directamente. La derivación clínica es la puerta de entrada a Dermatología, Oftalmología, Medicina Interna y Urología. La única excepción debe estar explícitamente autorizada y ser auditable.
 
-- programación y atención apoyadas en procedimientos manuales;
-- presencia de fichas físicas y filas presenciales;
-- dificultad para conocer disponibilidad real antes de acudir;
-- temporadas de demanda extremadamente alta y otras de baja demanda;
-- tiempos de espera impredecibles;
-- capacidad médica que no siempre se distribuye de acuerdo con la demanda;
-- cancelaciones y cupos liberados que pueden desaprovecharse;
-- registros clínicos que no forman parte de un flujo digital integrado;
-- poca trazabilidad operacional.
+## Problema que resuelve
 
-La idea central es transformar ese proceso en una cadena digital y medible.
+Actualmente la información relevante queda distribuida entre papeles, fichas aisladas y documentos físicos. Esto impide reconstruir con facilidad qué recibió un estudiante, qué examen presentó, cuál fue el diagnóstico, si fue derivado y qué ocurrió después. También vuelve lentos los informes diarios, los controles de cumplimiento de la consulta obligatoria y las consultas para investigación institucional.
 
----
+La plataforma debe resolver principalmente:
 
-# 2. Idea de producto en una frase
+- registro único y encontrable del estudiante cuando llega a Administración;
+- continuidad de la historia sin rehacer formularios ni perder antecedentes;
+- sustitución gradual del papel por escaneos y fotografías clasificadas;
+- derivación clínica con contexto suficiente para el especialista;
+- consulta rápida de los pacientes vinculados a cada médico;
+- reportes confiables de atenciones, diagnósticos, derivaciones y cumplimiento.
 
-> Plataforma web y móvil que administra médicos, turnos, capacidad, citas, campañas, check-in, cola, teleconsulta e historias clínicas especializadas, utilizando un modelo predictivo para estimar tiempos de espera y datos de demanda para apoyar la planificación de la oferta médica.
+No debe interpretar el proceso como una reserva de servicios independientes. La reserva puede existir, pero el proceso asistencial comienza con la recepción administrativa y la revisión estudiantil.
 
----
+## Principios del sistema
 
-# 3. Principios que definen el sistema
+### La atención inicial es la entrada clínica
 
-## 3.1 La agenda nace de la oferta médica
+El médico de revisión estudiantil es el primer profesional clínico del recorrido. Registra la evaluación inicial, revisa o adjunta estudios disponibles y determina si procede seguimiento general o una derivación. El sistema no ofrece al estudiante un camino de reserva directa hacia una especialidad.
 
-No deben existir citas “sueltas” sin relación con una agenda real.
+### Administración forma parte del flujo, no es un actor externo
 
-La disponibilidad sigue esta jerarquía conceptual:
+El personal administrativo recibe al estudiante, lo identifica, corrige datos administrativos, crea o confirma la cita por cupo, registra asistencia y genera informes. Esta participación debe estar representada en los estados y en la auditoría, sin asignarle facultades clínicas.
 
-```text
-Médico
-  ↓
-Especialidad habilitada
-  ↓
-Turno médico
-  ↓
-Slots generados
-  ↓
-Cita
-```
+### La historia es longitudinal y no se reemplaza
 
-Un **turno médico** es el bloque de trabajo de un profesional. Ejemplo conceptual:
+La primera atención puede crear la historia; cada atención posterior agrega una evolución fechada. La información anterior siempre queda disponible para usuarios autorizados. Un cierre clínico no se edita silenciosamente: cualquier corrección crea una adenda con autor, fecha y motivo.
 
-```text
-Médico A
-Lunes 08:00–12:00
-Modalidad presencial
-Duración de slot: 30 min
-```
+### Documento clínico y archivo son datos de primera clase
 
-De ese turno el sistema puede generar:
+No basta con guardar una URL de archivo. Un examen, fotografía o escaneo requiere clasificación, fecha de estudio, autor de carga, descripción y etiquetas. Así podrá ser recuperado desde la historia y usado en filtros/reportes permitidos.
 
-```text
-08:00
-08:30
-09:00
-09:30
-10:00
-10:30
-11:00
-11:30
-```
+### Reportar es parte del trabajo diario
 
-Los slots pueden tener bloqueos o pausas y solo los publicados deben aparecer al estudiante.
+Los reportes no son una función final o decorativa. Deben surgir de los datos capturados al atender, derivar y registrar al paciente. El panel debe ofrecer accesos rápidos para la operación cotidiana antes de habilitar análisis complejos.
 
-## 3.2 La IA no decide atención clínica
+## Actores y límites
 
-La inteligencia artificial del proyecto tiene como objetivo principal **estimar tiempos de espera**.
+| Actor | Puede | No puede |
+|---|---|---|
+| Estudiante | Solicitar cita y consultar información que la institución le habilite. | Auto-derivarse ni modificar información clínica. |
+| Administrativo | Registrar estudiante, crear citas por cupo, marcar asistencia y generar informes autorizados. | Diagnosticar, editar evoluciones cerradas o alterar una derivación clínica. |
+| Médico de revisión | Atender inicialmente, crear historia/evolución, adjuntar estudios y derivar. | Acceder a pacientes sin relación asistencial. |
+| Especialista | Atender derivaciones de su especialidad y registrar evolución/cierre. | Convertir una cita general en atención especializada sin derivación o permiso extraordinario. |
 
-No debe:
+### Permisos administrativos recomendados
 
-- diagnosticar;
-- priorizar clínicamente pacientes;
-- negar atención;
-- decidir qué médico debe trabajar;
-- modificar citas de forma autónoma.
-
-La IA es una herramienta operacional y analítica.
-
-## 3.3 La historia clínica es especializada
-
-Existen cuatro especialidades, pero hasta que el levantamiento clínico las confirme formalmente deben denominarse únicamente:
-
-- Especialidad 1
-- Especialidad 2
-- Especialidad 3
-- Especialidad 4
-
-Cada especialidad debe tener una ficha diseñada a medida. No se debe construir un único formulario genérico lleno de campos opcionales para todas.
-
-Sí puede existir un núcleo común de atención, por ejemplo:
+No es necesario crear un rol humano adicional de coordinación. Los permisos pueden modular el rol administrativo, por ejemplo:
 
 ```text
-ClinicalHistory
-    ↓
-ClinicalEncounter
-    ├── Specialty1Record
-    ├── Specialty2Record
-    ├── Specialty3Record
-    └── Specialty4Record
-```
-
-## 3.4 Spring Boot es la fuente de verdad transaccional
-
-La lógica de agenda, slots, citas, colas y estados pertenece al backend transaccional.
-
-El microservicio Python no es dueño de ningún estado crítico.
-
-```text
-Spring Boot + PostgreSQL = fuente de verdad
-Python + scikit-learn      = inferencia predictiva
-```
-
-Una caída del servicio de IA no debe impedir reservar, hacer check-in ni atender pacientes.
-
----
-
-# 4. Actores del sistema
-
-El sistema posee tres actores humanos principales.
-
-## 4.1 Estudiante Universitario
-
-Responsabilidades y capacidades:
-
-- autenticarse;
-- consultar servicios disponibles;
-- buscar disponibilidad;
-- filtrar por especialidad, médico, fecha y modalidad;
-- reservar atención;
-- programar el chequeo obligatorio cuando corresponda;
-- confirmar, cancelar y reprogramar citas;
-- visualizar comprobante QR;
-- acceder a teleconsulta;
-- ingresar a lista de espera;
-- aceptar una vacante liberada;
-- realizar check-in;
-- visualizar su estado en cola;
-- consultar una estimación de espera;
-- recibir notificaciones.
-
-## 4.2 Personal Médico Especialista
-
-Responsabilidades y capacidades:
-
-- consultar su agenda;
-- visualizar turnos asignados;
-- solicitar cambios de disponibilidad;
-- solicitar bloqueos, ausencias o turnos extraordinarios cuando corresponda;
-- visualizar los pacientes que ya realizaron check-in;
-- llamar al siguiente paciente;
-- iniciar y cerrar consultas;
-- acceder a antecedentes clínicos permitidos;
-- registrar el encuentro clínico de su especialidad;
-- atender teleconsultas.
-
-Un médico **no administra otros médicos** y no publica libremente la agenda institucional salvo que se defina explícitamente esa capacidad.
-
-## 4.3 Personal Administrativo
-
-Es el actor que administra la operación del servicio.
-
-Puede:
-
-- registrar médicos;
-- editar su información operacional;
-- activar o inactivar profesionales;
-- asociar especialidades y modalidades;
-- resolver solicitudes de agenda;
-- asignar turnos médicos;
-- configurar duración de slots;
-- publicar capacidad;
-- crear bloqueos de agenda;
-- administrar campañas Tipo A;
-- visualizar capacidad y demanda;
-- gestionar excepciones de citas;
-- supervisar lista de espera;
-- asistir en check-in;
-- consultar auditoría operacional según permisos.
-
-### Regla institucional fundamental
-
-**No existe el rol “Coordinador de Salud”.**
-
-Si alguna funcionalidad requiere permisos de coordinación, debe modelarse mediante permisos dentro de `Personal Administrativo`, por ejemplo:
-
-```text
-MANAGE_MEDICAL_STAFF
-MANAGE_SCHEDULES
-MANAGE_CAMPAIGNS
+REGISTER_PATIENT
+UPDATE_ADMINISTRATIVE_PATIENT_DATA
+MANAGE_APPOINTMENT_CAPACITY
 MANAGE_APPOINTMENTS
 VIEW_OPERATIONAL_REPORTS
+EXPORT_AUTHORIZED_REPORTS
 VIEW_AUDIT
 ```
 
-No crear un cuarto rol humano denominado coordinador.
+Tener permiso de reporte no concede automáticamente acceso al texto clínico ni a imágenes. La visualización nominal o agregada depende del propósito y autorización institucional.
 
----
+### Especialidades iniciales
 
-# 5. Tipos de demanda del estudiante
+Las especialidades configuradas para la primera versión son:
 
-## 5.1 Tipo A — Chequeo médico obligatorio único
+1. Dermatología.
+2. Oftalmología.
+3. Medicina Interna.
+4. Urología.
 
-El estudiante debe realizar un chequeo obligatorio **una sola vez durante toda su carrera universitaria**.
+El núcleo de la historia es común. Una especialidad puede añadir secciones o plantillas propias más adelante, pero no debe crear una historia aislada que oculte al resto del equipo autorizado las atenciones previas.
 
-Este flujo no debe competir por los mismos cupos que las consultas especializadas.
+## Datos que deben existir
 
-Características:
+### Paciente
 
-- atención masiva;
-- campañas por periodo y criterios institucionales;
-- capacidad propia;
-- slots o cupos de campaña independientes;
-- validación de que el estudiante no lo haya completado previamente.
+`carnet` y `código de registro` son identificadores únicos. Conservar: nombre completo, fecha de nacimiento o edad, carrera, contacto, estado académico y mediciones históricas como peso.
 
-Conceptualmente:
+El número de carnet y el código de registro deben buscarse por coincidencia exacta y validarse al crear/editar. El nombre completo ayuda a localizar, pero no es suficiente para deduplicar. Si un estudiante ya existe, Administración actualiza únicamente datos administrativos permitidos y el sistema mantiene su historial.
 
-```text
-Capacidad Tipo A != Capacidad Tipo B
-```
+### Datos de ingreso y datos clínicos
 
-## 5.2 Tipo B — Atención especializada
+Conviene separar los campos para evitar que un ajuste administrativo modifique un dato médico:
 
-Corresponde a la atención en Especialidad 1–4.
+| Grupo | Ejemplos | Responsable habitual |
+|---|---|---|
+| Identificación | carnet, código de registro, nombre, fecha de nacimiento | Administración |
+| Académico | carrera, gestión/estado académico | Administración o integración institucional |
+| Contacto | teléfono, correo, dirección si aplica | Administración/estudiante |
+| Medición clínica | peso, presión u otra medida, fecha y unidad | Médico durante una atención |
+| Contenido clínico | motivo, evaluación, diagnósticos, indicaciones | Médico |
 
-La disponibilidad proviene de turnos médicos publicados.
+La edad puede calcularse desde la fecha de nacimiento para evitar que envejezca como un dato estático. Si se guarda un valor por compatibilidad, debe indicar fecha de captura.
 
-Puede incluir:
+### Historia y atención
 
-- presencial;
-- teleconsulta, cuando la especialidad y el médico tengan habilitada esa modalidad.
+Hay una historia por paciente y muchas atenciones/evoluciones. Cada atención registra profesional, fecha, tipo inicial/especializada, motivo, evaluación, diagnósticos, indicaciones, mediciones, adjuntos y estado. Cerrar una atención no destruye lo anterior; una corrección se modela como adenda.
 
----
+### Adjuntos
 
-# 6. Conceptos de dominio que NO deben confundirse
+Los médicos pueden subir escaneos o fotografías. Cada adjunto tiene tipo (química sanguínea, radiografía, laboratorio, receta u otro), descripción, fecha del estudio, etiquetas, autor y relación con paciente/atención. Debe almacenarse de forma privada.
 
-## Turno médico
+### Derivación
 
-Bloque de trabajo asignado a un profesional.
+Una derivación tiene atención origen, paciente, especialidad destino, motivo de consulta, comentario para el especialista, médico emisor, especialista asignado opcional, fechas y estado. Estados: `PENDING_ASSIGNMENT`, `ASSIGNED`, `IN_PROGRESS`, `RETURNED`, `CLOSED`, `CANCELLED`.
 
-## Slot
+### Cita y cupo
 
-Unidad reservable dentro de un turno médico.
+Las citas siguen existiendo para la organización administrativa. Pueden ser solicitadas por el estudiante o creadas por Administración y se limitan a cupos disponibles; los pacientes recurrentes usan los cupos habilitados. Estados: `REQUESTED`, `SCHEDULED`, `CANCELLED`, `NO_SHOW`, `ATTENDED`. Una cita atendida debe enlazarse a una atención clínica, pero no sustituye la historia.
 
-## Hold
+Un cupo representa capacidad disponible para una atención, no un diagnóstico ni una especialidad elegida libremente por el estudiante. La administración operativa de la capacidad queda fuera del núcleo clínico descrito en este documento.
 
-Bloqueo temporal de un slot durante el flujo de reserva.
+## Conceptos de dominio que no deben confundirse
 
-Duración acordada:
+| Concepto | Definición | No es |
+|---|---|---|
+| Perfil de paciente | Identidad y datos base del estudiante. | Una atención clínica. |
+| Historia clínica | Expediente longitudinal del paciente. | Un único formulario editable. |
+| Atención/evolución | Registro clínico de una consulta concreta. | Una cita ni una derivación. |
+| Cita | Organización operativa de un cupo y asistencia. | Prueba de que se realizó una consulta. |
+| Adjunto clínico | Archivo y metadatos vinculados a paciente/atención. | Una nota de texto sin origen. |
+| Diagnóstico | Problema clínico codificado o etiquetado y su descripción. | La derivación. |
+| Derivación | Solicitud clínica documentada hacia una especialidad. | Una reserva directa del estudiante. |
+| Reporte | Vista filtrada para gestión, seguimiento o investigación autorizada. | Acceso libre a toda la historia. |
 
-```text
-10 minutos
-```
+## Macroprocesos
 
-## Cita
+### A. Admisión administrativa
 
-Reserva confirmada de un estudiante sobre un slot.
+Objetivo: identificar de forma segura al estudiante y dejarlo listo para atención sin crear fichas repetidas.
 
-## Cola digital
+Incluye búsqueda, registro, actualización permitida de datos, creación de solicitud/cita por cupo, confirmación de llegada y consulta de restricciones de cumplimiento institucional.
 
-Pacientes que **ya hicieron check-in** y se encuentran esperando atención.
+### B. Atención inicial y expediente clínico
 
-## Lista de espera
+Objetivo: registrar la consulta de revisión estudiantil y consolidar el historial.
 
-Estudiantes que quieren obtener una cita pero actualmente no poseen un slot disponible.
+Incluye antecedentes autorizados, motivo de consulta, evaluación, mediciones, diagnósticos, indicaciones, documentos y cierre de la atención.
 
-## Tiempo de espera
+### C. Derivación y atención especializada
 
-Para el modelo principal:
+Objetivo: trasladar el caso al especialista con información clínica completa y trazable.
 
-```text
-wait_time = consultation_started_at - checked_in_at
-```
+Incluye creación de derivación, asignación, gestión de cita especializada si aplica, evolución del especialista, devolución para seguimiento o cierre.
 
-## Capacidad
+### D. Consulta y reportes
 
-Cantidad de atención que puede ofrecerse en un periodo a partir de los turnos y slots publicados.
+Objetivo: permitir a médicos y Administración encontrar información útil con rapidez y producir informes consistentes.
 
-## Demanda
+Incluye “Mis pacientes”, historial por filtros, accesos rápidos diarios, cumplimiento de consulta obligatoria, reportes de gestión e investigación autorizada.
 
-Cantidad de solicitudes, reservas, pacientes, entradas en lista de espera o carga esperada para un periodo/especialidad.
+### E. Seguridad y auditoría
 
----
+Objetivo: proteger datos sensibles y poder responder quién accedió o modificó qué información y cuándo.
 
-# 7. Macroprocesos del sistema
+Incluye control de acceso, archivos privados, adendas, bitácora de consulta/descarga/exportación y retención de datos conforme a la política institucional.
 
-Los procesos se organizan conceptualmente en cuatro grandes áreas, aunque la matriz formal de trazabilidad usa columnas separadas URS → PRC → RF → RNF.
+## Proceso detallado de admisión administrativa
 
-## Área A — Oferta médica y agenda
+**Disparadores posibles:** estudiante llega presencialmente, llama/escribe solicitando atención o envía una solicitud desde su portal.
 
-Objetivo: determinar quién puede atender, cuándo y cuánta capacidad existe.
+1. Administración busca al estudiante por carnet, código de registro o nombre.
+2. Si encuentra coincidencia, confirma identidad y revisa datos administrativos mínimos.
+3. Si no existe, registra al estudiante con carnet, código, nombres, fecha de nacimiento/edad, carrera y contacto.
+4. El sistema bloquea el registro si carnet o código pertenecen a otro paciente.
+5. Administración consulta el estado de cumplimiento de consulta obligatoria como información operativa, sin editarlo manualmente.
+6. Se crea una solicitud o cita para atención inicial contra un cupo disponible.
+7. Al llegar a la consulta, Administración registra asistencia o el médico confirma el inicio de la atención según el flujo definido.
+8. Toda creación o actualización administrativa deja auditoría.
 
-Incluye:
+### Pacientes recurrentes
 
-1. Gestión del personal médico.
-2. Configuración profesional.
-3. Consulta de agenda médica.
-4. Solicitud de cambio de agenda.
-5. Resolución administrativa de solicitudes.
-6. Asignación y publicación de turnos.
-7. Planificación de capacidad.
+Un paciente recurrente no pierde su historia ni se registra nuevamente. Administración recupera el perfil existente, consulta atenciones y derivaciones solo en el nivel permitido, y gestiona la siguiente cita con los cupos disponibles. El sistema puede marcarlo como recurrente para filtros operativos, pero esta marca no debe alterar el criterio médico ni permitir sobrepasar cupos.
 
-## Área B — Exploración y agendamiento
+## Proceso detallado de atención inicial
 
-Objetivo: convertir capacidad publicada en acceso real para el estudiante.
+**Disparador:** el estudiante con ingreso registrado llega a revisión estudiantil o el médico abre un paciente asignado.
 
-Incluye:
+1. El médico verifica identidad y abre el resumen clínico autorizado.
+2. Revisa la línea de tiempo: atenciones, diagnósticos, mediciones, adjuntos y derivaciones previas.
+3. Crea una nueva atención de tipo `INITIAL` en estado `DRAFT`.
+4. Registra el motivo de consulta y los datos de evaluación necesarios.
+5. Registra peso y otras mediciones con valor, unidad y fecha, sin sustituir mediciones históricas.
+6. Añade uno o varios diagnósticos o problemas clínicos mediante etiqueta/catálogo y observación complementaria.
+7. Registra indicaciones y, si corresponde, seguimiento esperado.
+8. Adjunta el examen de química sanguínea si el estudiante lo presenta. Si no está disponible, marca `pendiente/no presentado` con su contexto.
+9. Puede adjuntar otros documentos o fotografías, como radiografías, resultados de laboratorio o recetas.
+10. Decide si el caso se cierra en revisión, requiere seguimiento o requiere derivación.
+11. Cierra la atención. Después de este punto, el contenido principal es de solo lectura y cualquier corrección se realiza como adenda.
 
-8. Búsqueda y exploración de citas.
-9. Hold temporal.
-10. Agendamiento Tipo A.
-11. Agendamiento Tipo B.
-12. Cancelación y reprogramación.
-13. QR presencial.
-14. Teleconsulta.
+## Gestión de documentos y fotografías
 
-## Área C — Demanda, cola y espera
+Los documentos físicos se digitalizan desde la atención para evitar su dispersión. El sistema debe soportar un escaneo o una fotografía tomada con suficiente calidad; no debe exigir que todo documento sea escaneado formalmente si una imagen es más apropiada, como puede suceder con una radiografía.
 
-Objetivo: gestionar saturación, incertidumbre de espera y recuperación de capacidad.
-
-Incluye:
-
-15. Estimación inteligente de espera.
-16. Cola digital.
-17. Lista de espera y reasignación.
-18. Gestión de déficit de capacidad.
-
-## Área D — Atención clínica
-
-Objetivo: registrar llegada, ejecutar la atención y conservar un expediente especializado.
-
-Incluye:
-
-19. Check-in.
-20. Encuentro clínico.
-21. Atención Especialidad 1.
-22. Atención Especialidad 2.
-23. Atención Especialidad 3.
-24. Atención Especialidad 4.
-
----
-
-# 8. Proceso completo de administración de médicos
-
-## 8.1 Alta de médico
-
-1. Personal Administrativo accede a gestión de médicos.
-2. Busca si el profesional ya existe.
-3. Registra o actualiza sus datos operacionales.
-4. Asocia Especialidad 1–4 según corresponda.
-5. Define modalidad disponible:
-   - presencial;
-   - teleconsulta;
-   - ambas.
-6. Define parámetros requeridos por agenda.
-7. Activa al profesional.
-8. Sistema registra auditoría.
-9. Médico queda disponible para planificación de turnos.
-
-El estado conceptual puede ser:
+### Metadatos mínimos de un adjunto
 
 ```text
-ACTIVE
-INACTIVE
-SUSPENDED
-```
-
-## 8.2 Configuración de especialidad
-
-Un médico solo puede recibir turnos dentro de una especialidad que tenga habilitada.
-
-Debe existir una relación similar a:
-
-```text
-MedicalStaff
-MedicalStaffSpecialty
-Specialty
-```
-
-## 8.3 Inactivación
-
-Inactivar un médico no debe borrar su historial ni sus atenciones anteriores.
-
-Antes de afectar futuros turnos, el sistema debe revisar citas existentes y mostrar impacto.
-
----
-
-# 9. Solicitudes de agenda del médico
-
-El médico necesita un mecanismo formal para comunicar cambios.
-
-Entidad conceptual:
-
-```text
-MedicalScheduleRequest
-```
-
-Tipos posibles:
-
-```text
-CHANGE_SCHEDULE
-TEMPORARY_UNAVAILABILITY
-LEAVE
-EXTRA_SHIFT
-BLOCK_PERIOD
-MODALITY_CHANGE
-SHIFT_SWAP
-OTHER
-```
-
-Estados:
-
-```text
-PENDING
-APPROVED
-REJECTED
-CANCELLED
-APPLIED
-```
-
-Flujo:
-
-1. Médico abre su agenda.
-2. Selecciona fecha/turno.
-3. Solicita modificación.
-4. Sistema identifica si existen citas afectadas.
-5. Solicitud queda pendiente.
-6. Administrativo revisa impacto.
-7. Puede aprobar o rechazar.
-8. Si se aprueba y existen citas afectadas, se dispara un procedimiento de contingencia.
-9. Se notifica al médico y a estudiantes afectados cuando corresponda.
-10. Se registra trazabilidad.
-
-No borrar automáticamente un turno con citas activas.
-
----
-
-# 10. Asignación de turnos médicos
-
-Este es un proceso central.
-
-## Entradas
-
-- médicos activos;
-- especialidad habilitada;
-- disponibilidad;
-- solicitudes aprobadas;
-- horarios existentes;
-- modalidad;
-- duración de consulta/slot;
-- demanda histórica;
-- demanda estimada;
-- lista de espera;
-- campañas y restricciones institucionales.
-
-## Flujo esperado
-
-1. Administrativo selecciona un periodo.
-2. Selecciona especialidad.
-3. Sistema muestra médicos elegibles.
-4. Sistema muestra capacidad ya publicada.
-5. Sistema muestra indicadores de demanda.
-6. Administrativo selecciona médico.
-7. Define fecha y hora de inicio/fin.
-8. Define modalidad.
-9. Define duración del slot.
-10. Sistema valida solapamientos.
-11. Sistema valida que el médico esté activo y habilitado para esa especialidad.
-12. Sistema calcula slots posibles.
-13. Administrativo puede añadir pausas/bloqueos.
-14. Sistema muestra preview.
-15. Turno puede guardarse como borrador.
-16. Cuando se publica, se generan slots reservables.
-17. Los slots aparecen en búsqueda.
-18. Se registra auditoría.
-
-Estados sugeridos de `MedicalShift`:
-
-```text
-DRAFT
-PUBLISHED
-BLOCKED
-CANCELLED
-COMPLETED
-```
-
-Estados sugeridos de `Slot`:
-
-```text
-AVAILABLE
-HELD
-BOOKED
-BLOCKED
-CANCELLED
-```
-
----
-
-# 11. Gestión de capacidad y demanda
-
-El sistema debe ayudar al personal administrativo a responder:
-
-- ¿cuántos slots existen para cada especialidad?
-- ¿cuántos ya están ocupados?
-- ¿cuánta gente está esperando?
-- ¿en qué días u horas existe mayor saturación?
-- ¿la oferta futura parece suficiente?
-
-Ejemplo conceptual:
-
-```text
-Especialidad 1
-Próxima semana
-
-Slots publicados: 96
-Demanda estimada: 124
-Lista de espera: 21
-Déficit estimado: 28
-```
-
-El sistema puede advertir:
-
-```text
-Capacidad prevista insuficiente
-```
-
-Pero **no debe asignar autónomamente más horas a un médico**.
-
-La decisión puede llevar a:
-
-- abrir un turno extraordinario;
-- consultar médicos disponibles;
-- solicitar disponibilidad adicional;
-- redistribuir la oferta;
-- mantener capacidad actual.
-
-Flujo circular:
-
-```text
-Demanda
-   ↓
-Déficit detectado
-   ↓
-Decisión administrativa
-   ↓
-Nuevo turno médico
-   ↓
-Nuevos slots
-   ↓
-Mayor capacidad
-```
-
----
-
-# 12. Búsqueda y exploración de citas
-
-Esta es una de las experiencias principales del estudiante.
-
-Debe permitir filtrar por:
-
-- especialidad;
-- médico;
-- fecha/rango;
-- modalidad;
-- disponibilidad.
-
-Flujo:
-
-1. Estudiante abre “Buscar atención”.
-2. Sistema identifica qué servicios puede utilizar.
-3. Estudiante selecciona tipo de atención.
-4. Si es Tipo B, selecciona especialidad.
-5. Puede seleccionar médico opcionalmente.
-6. Selecciona modalidad.
-7. Selecciona fecha/rango.
-8. Backend consulta turnos publicados.
-9. Excluye slots ocupados, bloqueados o en hold vigente.
-10. Libera lógicamente holds expirados.
-11. Devuelve disponibilidad real.
-12. Puede mostrar tiempo de espera o demanda estimada cuando aplique.
-13. Estudiante selecciona un slot.
-14. Se inicia hold de 10 minutos.
-
-El frontend no es la fuente de verdad de disponibilidad.
-
----
-
-# 13. Hold temporal de 10 minutos
-
-Cuando un estudiante selecciona un slot:
-
-1. Backend abre una operación transaccional.
-2. Verifica nuevamente disponibilidad.
-3. Crea un hold exclusivo.
-4. Guarda estudiante propietario.
-5. Define:
-
-```text
-expires_at = now + 10 minutos
-```
-
-6. Mientras esté vigente, otro usuario no puede reservar ese slot.
-7. Si se confirma la cita, el slot pasa a reservado.
-8. Si expira, vuelve a estar disponible.
-
-Condición crítica:
-
-```text
-0 double booking
-```
-
-La exclusión debe garantizarse en backend/PostgreSQL, no mediante un simple estado visual del frontend.
-
----
-
-# 14. Agendamiento Tipo A
-
-Flujo esperado:
-
-1. Estudiante selecciona chequeo obligatorio.
-2. Sistema consulta si ya fue completado.
-3. Si ya está completado, no permite una segunda realización como Tipo A.
-4. Consulta campañas activas.
-5. Aplica reglas de elegibilidad.
-6. Muestra capacidad de campaña.
-7. Estudiante selecciona cupo.
-8. Sistema reserva capacidad Tipo A.
-9. Crea cita/registro correspondiente.
-10. Genera comprobante y notificaciones.
-
-La capacidad Tipo A jamás debe restarse de la capacidad normal de Especialidad 1–4.
-
----
-
-# 15. Agendamiento Tipo B
-
-1. Estudiante selecciona slot.
-2. Backend crea hold.
-3. Estudiante confirma.
-4. Backend verifica que el hold siga vigente y pertenezca al estudiante.
-5. Dentro de una transacción:
-   - crea cita;
-   - cambia slot `HELD → BOOKED`;
-   - registra modalidad;
-   - crea historial de estado.
-6. Según modalidad:
-   - presencial → genera QR;
-   - teleconsulta → genera sesión segura.
-7. Programa notificaciones.
-
-Estados de cita sugeridos:
-
-```text
-PENDING_CONFIRMATION
-CONFIRMED
-CHECKED_IN
-WAITING
-CALLED
-IN_CONSULTATION
-COMPLETED
-CANCELLED
-NO_SHOW
-```
-
----
-
-# 16. Cancelación y reprogramación
-
-## Cancelación
-
-1. Usuario selecciona una cita.
-2. Backend valida que su estado permita cancelar.
-3. Cambia a `CANCELLED`.
-4. Libera slot.
-5. Invalida QR o acceso virtual.
-6. Emite evento conceptual:
-
-```text
-SLOT_RELEASED
-```
-
-7. Lista de espera puede intentar reutilizar ese slot.
-
-## Reprogramación segura
-
-No cancelar primero la cita original.
-
-Secuencia recomendada:
-
-1. Mantener cita actual.
-2. Buscar nuevo slot.
-3. Crear hold del nuevo slot.
-4. Confirmar nuevo slot transaccionalmente.
-5. Liberar slot anterior.
-6. Registrar historial.
-
-Esto evita que el estudiante pierda una cita antes de asegurar otra.
-
----
-
-# 17. Modalidad presencial y QR
-
-Una cita presencial confirmada debe producir un comprobante digital.
-
-El QR debe representar un identificador/token opaco y verificable, no información clínica sensible en texto plano.
-
-Flujo de check-in:
-
-1. Estudiante presenta QR.
-2. Recepción/consultorio lo escanea.
-3. Backend valida token.
-4. Comprueba cita, fecha, vigencia y estado.
-5. Marca `CHECKED_IN`.
-6. Registra hora real de llegada.
-7. Crea entrada en cola digital.
-
-El objetivo es reducir dependencia de fichas físicas y filas administrativas.
-
----
-
-# 18. Teleconsulta
-
-Cuando una cita sea virtual:
-
-1. Backend crea `TeleconsultationSession`.
-2. Genera credencial temporal no predecible.
-3. El estudiante solo puede entrar dentro de la ventana permitida.
-4. Ingresa a una sala virtual de espera.
-5. El médico recibe una alerta cuando el estudiante se conecta.
-6. Médico admite al paciente.
-7. Se inicia canal cifrado.
-8. Al cerrar la atención, se invalida la sesión según política.
-
-Los tokens deben ser temporales, expirables y revocables.
-
----
-
-# 19. Cola digital
-
-La cola digital comienza después del check-in.
-
-Entidad conceptual:
-
-```text
-QueueEntry
-```
-
-Estados sugeridos:
-
-```text
-WAITING
-CALLED
-IN_CONSULTATION
-COMPLETED
-LEFT
-```
-
-Flujo:
-
-1. Check-in crea entrada `WAITING`.
-2. Médico visualiza cola.
-3. Llama al siguiente paciente.
-4. Estado pasa a `CALLED`.
-5. Médico inicia atención.
-6. Estado pasa a `IN_CONSULTATION`.
-7. Se registra `consultation_started_at`.
-8. Al terminar, pasa a `COMPLETED`.
-9. Se registra `consultation_finished_at`.
-
-Estos timestamps son esenciales para el modelo de espera.
-
----
-
-# 20. Modelo predictivo de tiempo de espera
-
-La IA debe responder una pregunta útil:
-
-> ¿Cuánto tiempo aproximadamente tendrá que esperar un estudiante para ser atendido dadas las condiciones actuales e históricas?
-
-Variable objetivo:
-
-```text
-wait_time_minutes = consultation_started_at - checked_in_at
-```
-
-## Posibles features actuales
-
-```text
-queue_length
-patients_in_consultation
-active_doctors
-recent_arrivals
-recent_completions
-appointments_next_60_minutes
-```
-
-## Posibles features temporales/históricas
-
-```text
-specialty
-weekday
-hour
-month
-academic_period
-average_consultation_duration
-historical_wait_same_period
-campaign_active
-```
-
-## Salida deseada
-
-No mostrar una promesa exacta.
-
-Preferir:
-
-```text
-Espera estimada: 25–35 min
-Demanda: ALTA
-```
-
-Ejemplo de respuesta del microservicio:
-
-```json
-{
-  "estimatedWaitMinutes": 30,
-  "lowerBound": 24,
-  "upperBound": 38,
-  "demandLevel": "HIGH",
-  "modelVersion": "wait-time-1.0.0"
-}
-```
-
-## Modelos candidatos
-
-No fijar un modelo definitivo antes de evaluar.
-
-Comparar por ejemplo:
-
-- promedio/mediana histórica como baseline;
-- Linear Regression;
-- Random Forest Regressor;
-- Gradient Boosting Regressor;
-- HistGradientBoostingRegressor.
-
-Métricas:
-
-- MAE como métrica principal;
-- RMSE;
-- R².
-
-Meta experimental propuesta:
-
-```text
-MAE <= 10 minutos
-```
-
-No tratar esa meta como garantía previa.
-
----
-
-# 21. Cold start de la IA
-
-El servicio actual puede no disponer de suficientes datos digitales estructurados.
-
-Por eso el sistema debe funcionar desde el primer día sin depender de ML entrenado.
-
-## Fase 1
-
-Baseline estadístico, por ejemplo:
-
-```text
-queue_length × average_consultation_duration / active_doctors
-```
-
-con ajustes básicos.
-
-## Fase 2
-
-Recolectar automáticamente:
-
-```text
-checked_in_at
-consultation_started_at
-consultation_finished_at
-queue_length
-active_doctors
-contexto temporal
-```
-
-## Fase 3
-
-Entrenar y comparar modelos.
-
-## Fase 4
-
-Desplegar solo un modelo que supere de forma suficiente al baseline.
-
-## Fallback
-
-Si Python falla:
-
-```text
-Spring Boot
-   ↓
-usa estimación estadística
-   ↓
-la agenda sigue funcionando
-```
-
----
-
-# 22. Lista de espera inteligente
-
-La lista de espera es distinta de la cola digital.
-
-Flujo:
-
-1. Estudiante busca cita.
-2. No existe disponibilidad compatible.
-3. Puede ingresar a lista de espera.
-4. Define criterios aceptables:
-   - especialidad;
-   - fechas;
-   - modalidad;
-   - médico opcional.
-5. Una cita se cancela o libera un slot.
-6. Sistema busca candidatos compatibles.
-7. Aplica reglas institucionales.
-8. Entre candidatos equivalentes puede utilizar FIFO.
-9. Selecciona candidato.
-10. Crea oferta temporal.
-11. Reserva temporalmente el slot.
-12. Notifica al estudiante.
-13. Estudiante dispone de una ventana configurable para aceptar.
-14. Si acepta → cita confirmada.
-15. Si rechaza o expira → siguiente candidato.
-
-La reasignación debe ser consistente y evitar que dos estudiantes acepten la misma vacante.
-
----
-
-# 23. Notificaciones
-
-Canales mínimos acordados:
-
-- push;
-- in-app.
-
-Eventos comunes:
-
-- cita creada;
-- recordatorio;
-- cita modificada;
-- cita cancelada;
-- cambio de agenda que afecte al estudiante;
-- oferta de lista de espera;
-- oferta a punto de expirar;
-- acceso de teleconsulta;
-- cambio relevante en atención/cola si se decide notificarlo.
-
-Registro conceptual:
-
-```text
-notification_id
-user_id
-appointment_id
-notification_type
-channel
-created_at
-sent_at
-delivered_at
-read_at
+patientId
+encounterId (opcional si se adjunta al historial general)
+type
+studyDate
+description
+tags
+uploadedBy
+uploadedAt
+storageReference
 status
 ```
 
----
+Tipos iniciales recomendados: `BLOOD_CHEMISTRY`, `LAB_RESULT`, `RADIOGRAPH`, `PRESCRIPTION`, `CLINICAL_PHOTO`, `REFERRAL_DOCUMENT`, `OTHER`.
 
-# 24. Check-in y atención clínica
+### Reglas para archivos
 
-## Check-in
+- Validar formato, tamaño y legibilidad antes de marcarlo disponible.
+- Permitir descripción para explicar por qué es clínicamente relevante.
+- Mostrar al especialista únicamente los adjuntos vinculados/autorizados para su derivación o historial.
+- Conservar el original; si se reemplaza una versión, mantener la relación entre versiones y la auditoría.
+- No incrustar archivos privados en enlaces públicos ni enviarlos por notificaciones.
 
-Puede originarse por QR o por asistencia administrativa en un caso excepcional.
+## Proceso detallado de derivación
 
-Al hacer check-in:
+**Precondición:** existe una atención inicial abierta o cerrada que fundamenta la necesidad clínica.
+
+1. El médico de revisión selecciona “Derivar” desde la atención.
+2. Selecciona una de las especialidades habilitadas.
+3. Registra un motivo de consulta claro: qué se observó, qué se requiere evaluar y cuál es el problema relevante.
+4. Añade un comentario dirigido al especialista con antecedentes, preguntas clínicas o indicaciones de continuidad.
+5. Selecciona diagnósticos y adjuntos relevantes que quedarán contextualizados para el especialista.
+6. El sistema crea la derivación en `PENDING_ASSIGNMENT` y registra emisor, fecha y atención origen.
+7. Administración gestiona, si corresponde, el cupo/cita de la atención especializada; no edita el motivo ni el comentario clínico.
+8. Al asignarse un profesional, la derivación pasa a `ASSIGNED`.
+9. El especialista la inicia (`IN_PROGRESS`), registra su evolución y decide `CLOSED` o `RETURNED`.
+10. Una devolución debe incluir una nota clínica y no borra el registro original de derivación.
+
+### Calidad del motivo y comentario
+
+El motivo y comentario no son la misma cosa. El motivo identifica la razón de derivar; el comentario entrega contexto o solicitud al especialista. Ambos son obligatorios para evitar que la derivación se convierta en una simple selección de especialidad sin información clínica.
+
+## Proceso detallado de atención especializada
+
+1. El especialista abre únicamente derivaciones asignadas a su especialidad y pacientes con relación clínica autorizada.
+2. Visualiza el motivo, comentario, atención origen, diagnósticos y adjuntos relacionados.
+3. Crea una atención `SPECIALTY` vinculada a la derivación; no sobrescribe la evaluación inicial.
+4. Registra evolución, diagnósticos adicionales/actualizados, indicaciones, estudios y documentos.
+5. Puede solicitar continuidad dentro de su atención según reglas institucionales o devolver el caso al médico de revisión.
+6. Al cerrar, el sistema actualiza el estado de derivación y conserva ambas atenciones en la línea de tiempo del paciente.
+
+## Historial y cartera de pacientes del médico
+
+La pantalla “Mis pacientes” es una función central para cada médico. No debe mostrar una lista global sin control, sino los pacientes que el médico:
+
+- tiene asignados para atención;
+- atendió previamente;
+- recibió mediante derivación;
+- debe seguir por una derivación devuelta, si la política lo permite.
+
+### Columnas recomendadas
 
 ```text
-CONFIRMED
-   ↓
-CHECKED_IN
-   ↓
-WAITING
+Paciente | Carnet/código | Carrera | Edad | Última atención |
+Último diagnóstico | Estado de derivación | Próxima acción autorizada
 ```
 
-## Inicio de atención
+### Filtros recomendados
 
-Médico llama al estudiante:
+- texto por nombre, carnet o código;
+- fecha o rango de atenciones;
+- diagnóstico/enfermedad o etiqueta;
+- médico y especialidad, cuando el permiso lo permita;
+- carrera;
+- rango de edad;
+- paciente recurrente;
+- estado de atención y estado de derivación;
+- tipo de documento adjunto.
+
+Los filtros deben poder combinarse y conservarse durante la navegación de vuelta desde una ficha. El sistema debe indicar claramente cuando no hay resultados y no confundir “sin pacientes autorizados” con “filtro sin coincidencias”.
+
+## Reportes y accesos rápidos
+
+### Reportes operativos diarios
+
+Los reportes que el personal necesita todos los días son:
+
+1. Pacientes atendidos hoy, con fecha, médico y estado.
+2. Diagnósticos registrados hoy y su frecuencia.
+3. Derivaciones creadas hoy, pendientes de asignación, en curso, devueltas y cerradas.
+4. Pacientes recurrentes atendidos o con cita vigente, respetando cupos.
+5. Documentos/exámenes cargados o pendientes, cuando sea pertinente para seguimiento.
+
+### Cumplimiento de consulta médica obligatoria
+
+Una consulta cuenta solo cuando existe una atención clínica cerrada. El reporte debe permitir filtrar por carrera, gestión o período y separar estudiantes cumplidos de pendientes. Administración podrá usarlo como insumo para el proceso institucional de inscripción; una integración externa sería la responsable de cualquier bloqueo académico, nunca una acción implícita del frontend.
+
+### Investigación y análisis autorizado
+
+Los médicos que además realizan investigación pueden requerir datos como edad, carrera, peso, diagnóstico y fecha. El sistema debe permitir filtros y exportaciones autorizadas, pero ofrecer por defecto la mínima identificación necesaria y preferir resultados agregados o seudonimizados cuando el estudio lo permita. Siempre registrar finalidad, solicitante, filtros y fecha de exportación.
+
+## Estados y transiciones relevantes
+
+### Atención clínica
 
 ```text
-WAITING
-   ↓
-CALLED
-   ↓
-IN_CONSULTATION
+DRAFT → CLOSED
+CLOSED → AMENDED (mediante adenda, sin borrar el cierre)
 ```
 
-Al iniciar consulta debe crearse o abrirse un `ClinicalEncounter`.
+Una atención `DRAFT` solo está visible para el profesional autorizado y colaboradores explícitos según política. Una atención `CLOSED` entra al historial y puede contar para cumplimiento institucional.
 
-Al finalizar:
+### Derivación
 
 ```text
-IN_CONSULTATION
-   ↓
-COMPLETED
+PENDING_ASSIGNMENT → ASSIGNED → IN_PROGRESS → CLOSED
+                                      └──────→ RETURNED
+PENDING_ASSIGNMENT / ASSIGNED → CANCELLED (con motivo y auditoría)
 ```
 
-Se registra la hora real y los datos alimentan analítica/IA.
-
----
-
-# 25. Historia clínica especializada
-
-Cada atención debe vincularse al estudiante, profesional, cita y especialidad.
-
-Núcleo conceptual:
+### Cita
 
 ```text
-ClinicalHistory
-  └── ClinicalEncounter
-          ├── patient/student
-          ├── medical_staff
-          ├── specialty
-          ├── appointment
-          ├── started_at
-          ├── completed_at
-          └── specialty_record
+REQUESTED → SCHEDULED → ATTENDED
+           ├──────────→ CANCELLED
+           └──────────→ NO_SHOW
 ```
 
-Cada especialidad tendrá una estructura propia:
+La transición a `ATTENDED` exige una atención clínica vinculada, salvo un estado técnico transitorio definido por backend para evitar inconsistencias durante el guardado.
+
+## Casos de uso prioritarios
+
+1. Administración busca por carnet/código, registra o actualiza al estudiante y gestiona un cupo.
+2. Médico abre “Mis pacientes”, encuentra sus pacientes asignados/atendidos/derivados y filtra por diagnóstico, fecha, carrera, edad y estado.
+3. Médico crea una atención inicial con diagnóstico, peso, indicaciones y examen de química sanguínea adjunto o marcado pendiente.
+4. Médico adjunta documentos escaneados y fotos de radiografías u otros estudios.
+5. Médico de revisión crea derivación con motivo y comentario; especialista recibe, evoluciona y cierra/devuelve.
+6. Personal autorizado consulta reportes de atendidos hoy, diagnósticos, derivaciones y cumplimiento de consulta obligatoria.
+
+## Reportes
+
+Los accesos rápidos mínimos son: pacientes atendidos hoy, diagnósticos del día, derivaciones creadas/pendientes/cerradas y cumplimiento de consulta médica obligatoria. Los filtros incluyen fecha, médico, especialidad, diagnóstico/etiqueta, carrera, rango de edad, estado de derivación, asistencia y paciente recurrente. Las exportaciones deben registrar actor, fecha, filtros y finalidad.
+
+La consulta médica obligatoria queda cumplida solo si existe al menos una atención clínica cerrada durante la carrera. El reporte sirve de insumo administrativo; el sistema no debe ejecutar bloqueos académicos por sí mismo sin integración y decisión institucional explícita.
+
+## Seguridad y auditoría
+
+- Aplicar permisos por rol **y** relación clínica con el paciente.
+- Cifrar datos en tránsito y reposo; no registrar contenido clínico en logs.
+- Usar almacenamiento de objetos privado para adjuntos, validación de tipo/tamaño y enlaces temporales.
+- Auditar creación/cierre/adenda de atención, acceso a historia, descarga de adjunto, cambios de derivación y exportación de reportes.
+- Minimizar datos en reportes de investigación y seudonimizar cuando el propósito lo permita.
+
+## Arquitectura guía
+
+El backend es la fuente de verdad para permisos, historial, estados y auditoría. Separar dominios `patients`, `appointments`, `clinical`, `documents`, `referrals`, `reporting`, `identity` y `audit`. Para consultas relevantes, indexar carnet, código de registro, paciente+fecha, médico+fecha, especialidad+estado y diagnóstico/etiqueta+fecha.
+
+### Responsabilidad de frontend y backend
+
+El frontend guía los flujos, valida campos evidentes y evita errores de captura, pero no es fuente de verdad de permisos, cupos, estados ni auditoría. El backend debe volver a validar toda operación sensible y responder con estados normalizados.
 
 ```text
-Specialty1Record
-Specialty2Record
-Specialty3Record
-Specialty4Record
+Frontend web/móvil
+        │ HTTPS
+        ▼
+Backend transaccional
+ ├── identidad y autorización
+ ├── pacientes y citas
+ ├── historia, diagnósticos y mediciones
+ ├── documentos privados
+ ├── derivaciones
+ ├── reportes y exportaciones
+ └── auditoría
+        │
+        ├── Base de datos relacional
+        └── Almacenamiento privado de archivos
 ```
 
-Reglas:
+El proyecto puede implementarse como un monolito modular. No se requiere un microservicio de IA para el alcance actual. Si en el futuro existe una integración académica para consulta de carrera o cumplimiento, debe ser explícita, tolerante a fallos y no bloquear el registro clínico.
 
-- permitir guardar borrador;
-- permitir finalizar atención;
-- validar campos requeridos según ficha;
-- conservar historial;
-- auditar modificaciones relevantes;
-- restringir acceso según rol/permisos;
-- no exponer contenido clínico innecesariamente al personal administrativo.
-
-Los campos exactos de cada ficha deben provenir del levantamiento con profesionales y no deben inventarse durante el desarrollo.
-
----
-
-# 26. Arquitectura técnica esperada
-
-## Frontend
-
-Debe existir experiencia web y móvil.
-
-Orientación:
-
-- estudiante: mobile-first;
-- médico: web/desktop-first con responsive;
-- administrativo: web/desktop-first.
-
-## Backend
+### Relación entre entidades
 
 ```text
-Java
-Spring Boot
+Patient 1 ─── 1 ClinicalHistory
+Patient 1 ─── N Appointment
+Patient 1 ─── N ClinicalEncounter
+ClinicalHistory 1 ─── N ClinicalEncounter
+ClinicalEncounter 1 ─── N Diagnosis
+ClinicalEncounter 1 ─── N Measurement
+ClinicalEncounter 1 ─── N ClinicalDocument
+ClinicalEncounter 1 ─── N Referral (origen)
+Referral N ─── 1 Specialty
+Referral 0..1 ─── 1 ClinicalEncounter (atención especializada)
+Patient 1 ─── N ClinicalDocument (adjunto general permitido)
 ```
 
-Arquitectura recomendada para el proyecto:
+Una derivación puede requerir más de una atención especializada si el negocio lo autoriza; en ese caso la relación debe modelarse como evoluciones vinculadas a la misma derivación, sin perder el primer encuentro.
 
-```text
-monolito modular
+### Servicios de aplicación sugeridos
+
+| Servicio | Responsabilidad |
+|---|---|
+| `PatientService` | Alta, búsqueda, deduplicación y actualización administrativa segura. |
+| `AppointmentService` | Solicitudes, cupos, estados, asistencia y vínculo con atención. |
+| `ClinicalHistoryService` | Lectura de resumen/historial y creación de atenciones/adendas. |
+| `DocumentService` | Carga, validación, acceso temporal, metadatos y clasificación de adjuntos. |
+| `ReferralService` | Creación, asignación, transiciones y vínculo a atención especializada. |
+| `ReportService` | Consultas rápidas, filtros, agregación, exportación y minimización de datos. |
+| `AuditService` | Bitácora inmutable de acciones sensibles. |
+
+## Contratos de API de referencia
+
+Los nombres son orientativos. La API definitiva puede variar, pero debe conservar los límites de responsabilidad y los campos clínicos esenciales.
+
+### Pacientes y admisión
+
+```http
+GET  /api/v1/patients?carnet=&registrationCode=&query=
+POST /api/v1/patients
+GET  /api/v1/patients/{patientId}
+PATCH /api/v1/patients/{patientId}
+POST /api/v1/appointments
+POST /api/v1/appointments/{appointmentId}/mark-attended
 ```
 
-No convertir cada módulo en microservicio sin necesidad.
+La creación de paciente debe devolver un error de conflicto legible cuando carnet o código ya estén registrados. La consulta por nombre debe restringirse por permisos y usar paginación.
 
-Módulos sugeridos:
+### Historia y documentos
 
-```text
-identity
-medical_staff
-specialties
-schedule
-slots
-appointments
-campaigns
-checkin
-queue
-waitlist
-notifications
-telemedicine
-clinical
-analytics
-ai_integration
-audit
+```http
+GET   /api/v1/patients/{patientId}/history
+POST  /api/v1/patients/{patientId}/encounters
+GET   /api/v1/encounters/{encounterId}
+PATCH /api/v1/encounters/{encounterId}
+POST  /api/v1/encounters/{encounterId}/close
+POST  /api/v1/encounters/{encounterId}/amendments
+POST  /api/v1/encounters/{encounterId}/documents
+GET   /api/v1/documents/{documentId}/access
 ```
 
-## Persistencia
+`PATCH` solo funciona sobre borradores. Para una atención cerrada, el endpoint de adenda crea un registro adicional y no reescribe el cuerpo original.
 
-```text
-PostgreSQL
+### Derivaciones y cartera médica
+
+```http
+POST      /api/v1/encounters/{encounterId}/referrals
+GET       /api/v1/referrals?status=&specialty=&assignedDoctorId=
+GET       /api/v1/referrals/{referralId}
+POST      /api/v1/referrals/{referralId}/assign
+POST      /api/v1/referrals/{referralId}/start
+POST      /api/v1/referrals/{referralId}/return
+POST      /api/v1/referrals/{referralId}/close
+GET       /api/v1/doctors/me/patients?diagnosis=&from=&to=&career=&ageFrom=&ageTo=
 ```
 
-Debe conservar integridad transaccional de:
+El endpoint de “Mis pacientes” debe aplicar el alcance del médico en backend, incluso si el frontend oculta filtros no permitidos.
 
-- slots;
-- holds;
-- citas;
-- agenda;
-- estados críticos.
+### Reportes
 
-## IA
-
-```text
-Python
-FastAPI
-scikit-learn
+```http
+GET  /api/v1/reports/daily-attended?date=
+GET  /api/v1/reports/daily-diagnoses?date=
+GET  /api/v1/reports/referrals?from=&to=&status=&specialty=
+GET  /api/v1/reports/mandatory-consultation?career=&term=
+POST /api/v1/reports/exports
 ```
 
-Integración mediante REST.
+Una exportación debe conservar los filtros usados, el formato solicitado, la finalidad y el actor. Si el rol solo puede ver agregados, la exportación tampoco debe contener filas nominales.
 
----
+## Integridad, concurrencia y errores
 
-# 27. Entidades principales sugeridas
+### Identidad única del paciente
 
-```text
-User
-Student
-MedicalStaff
-Specialty
-MedicalStaffSpecialty
+La base de datos debe imponer restricciones únicas para carnet y código de registro. El flujo recomendado es:
 
-MedicalScheduleRequest
-MedicalShift
-ScheduleBlock
-Slot
-AppointmentHold
+1. Buscar antes de crear para una buena experiencia.
+2. Intentar crear dentro de transacción.
+3. Capturar violación de unicidad si dos operadores registran al mismo estudiante a la vez.
+4. Mostrar el perfil existente sin revelar información excesiva a un rol sin permiso.
 
-Campaign
-CampaignEligibility
-CampaignCapacity
+### Cupos limitados
 
-Appointment
-AppointmentStatusHistory
+Los cupos se validan en backend dentro de una transacción. Dos operadores no deben poder confirmar más citas que la capacidad habilitada. Cuando el sistema no pueda confirmar, debe devolver un conflicto y sugerir volver a la lista/alternativas administrativas, no crear una cita “pendiente” invisible.
 
-QrCheckInToken
-TeleconsultationSession
+### Cierre clínico
 
-QueueEntry
-QueueEvent
-WaitTimePrediction
+Antes de cerrar una atención, el backend valida paciente, médico responsable, motivo, estado de evaluación, diagnósticos cuando aplique y la coherencia de adjuntos. No debe exigir un examen de química sanguínea si la operación permite que esté pendiente, pero sí debe guardar claramente dicho estado.
 
-WaitlistEntry
-WaitlistOffer
+### Derivación
 
-Notification
+No se puede derivar sin especialidad, motivo ni comentario. Tampoco se puede iniciar una derivación cancelada/cerrada, ni cerrar una que no fue iniciada sin una transición administrativa/clinica explícita y auditada.
 
-ClinicalHistory
-ClinicalEncounter
-Specialty1Record
-Specialty2Record
-Specialty3Record
-Specialty4Record
+### Estados de UI
 
-AuditEvent
-```
+Todas las pantallas de datos deben contemplar `loading`, `success`, `empty`, `error` y `unauthorized`. Un error recuperable debe indicar qué hacer: corregir datos, reintentar, volver a la lista o pedir permisos. Nunca mostrar detalles clínicos en el mensaje de error de un permiso denegado.
 
-Estos nombres son conceptuales. El diseño final de base de datos puede ajustar normalización y agregados, pero debe conservar la semántica del dominio.
+## Eventos de dominio y auditoría
 
----
-
-# 28. Eventos de dominio útiles
-
-El sistema puede utilizar eventos internos sin requerir necesariamente Kafka.
+No es obligatorio adoptar un bus de eventos externo en el MVP; estos pueden ser eventos internos y trabajos asíncronos. Sin embargo, son útiles para desacoplar auditoría, notificaciones no clínicas y actualización de reportes.
 
 ```text
-MEDICAL_SHIFT_PUBLISHED
-MEDICAL_SHIFT_CHANGED
+PATIENT_REGISTERED
+PATIENT_ADMIN_DATA_UPDATED
 APPOINTMENT_CREATED
-APPOINTMENT_CANCELLED
-APPOINTMENT_RESCHEDULED
-SLOT_RELEASED
-CHECKIN_COMPLETED
-QUEUE_ENTRY_CREATED
-PATIENT_CALLED
-CONSULTATION_STARTED
-CONSULTATION_COMPLETED
-WAITLIST_OFFER_CREATED
-WAITLIST_OFFER_EXPIRED
-WAITLIST_OFFER_ACCEPTED
+APPOINTMENT_STATUS_CHANGED
+ENCOUNTER_CREATED
+ENCOUNTER_CLOSED
+ENCOUNTER_AMENDED
+CLINICAL_DOCUMENT_UPLOADED
+CLINICAL_DOCUMENT_ACCESSED
+REFERRAL_CREATED
+REFERRAL_ASSIGNED
+REFERRAL_STARTED
+REFERRAL_RETURNED
+REFERRAL_CLOSED
+REPORT_EXPORTED
 ```
 
-Para el MVP, estos eventos pueden resolverse mediante eventos de aplicación, jobs y procesamiento asíncrono simple.
+Cada evento clínico debe almacenar el identificador de recurso, actor, momento, resultado y `requestId`/correlación. El log de auditoría no debe duplicar el texto completo de la evaluación, diagnóstico o documento.
 
----
+## Seguridad, privacidad y retención
 
-# 29. Integridad y concurrencia
+### Autorización contextual
 
-## Double booking
+El RBAC por sí solo no basta. El sistema necesita combinar rol, especialidad cuando aplique y relación con el paciente. Por ejemplo, un especialista de Dermatología no debe abrir una derivación de Urología solo por tener el rol “médico”.
 
-Debe ser imposible que dos citas activas ocupen el mismo slot.
+### Protección de adjuntos
 
-No confiar en:
+- Almacenar los archivos fuera de la BD, en contenedor privado.
+- Validar MIME real y extensión; limitar tamaño y resolver cargas fallidas.
+- Analizar malware cuando la infraestructura lo permita.
+- Emitir enlaces firmados de duración corta en vez de URL públicas persistentes.
+- Registrar cada descarga, previsualización sensible y rechazo de archivo.
 
-- botones deshabilitados;
-- estado local del frontend;
-- “el usuario fue más rápido”.
+### Protección en interfaz
 
-Debe existir protección transaccional en backend/DB.
+- No mostrar diagnósticos, nombres ni carnet en notificaciones genéricas.
+- Limpiar datos sensibles al cerrar sesión o cambiar de usuario en un dispositivo compartido.
+- Ocultar acciones sin permiso; aun así, el backend debe rechazarlas.
+- Evitar enlaces compartibles de historia clínica y parámetros URL con contenido sensible.
 
-Opciones aceptables según diseño:
+### Retención y eliminación
 
-- `SELECT ... FOR UPDATE`;
-- locking optimista;
-- locking pesimista;
-- constraints únicos compatibles con el modelo;
-- transacciones atómicas.
+La política de retención debe ser definida por la institución. Mientras no exista una política aprobada, el sistema no debe implementar borrado físico de atenciones, diagnósticos, derivaciones ni adjuntos. Las bajas operativas se realizan por estado, revocación de acceso o archivo lógico conforme a las normas aplicables.
 
-## Hold
+## Experiencia de usuario y pantallas
 
-El hold de 10 minutos también debe ser validado en servidor.
+### Inicio administrativo
 
-## WaitlistOffer
+Debe priorizar búsqueda de estudiante, alta rápida, próximas solicitudes/citas por cupo, asistencias del día y atajos a reportes. El administrativo necesita completar la toma de datos sin navegar por información clínica no autorizada.
 
-Una vacante no puede ser confirmada por dos estudiantes.
+### Inicio médico
 
----
+Debe priorizar pacientes pendientes/asignados, botón “Nueva atención”, derivaciones pendientes, atenciones cerradas hoy y accesos a reportes personales. No debe iniciar en una vista de programación operativa.
 
-# 30. Seguridad y privacidad
+### Ficha del paciente
 
-Datos de salud son información sensible.
+Debe contener una cabecera persistente con nombre, carnet, código, edad, carrera y alertas permitidas; debajo, pestañas o secciones para línea de tiempo, diagnósticos, documentos, derivaciones y nueva atención. La vista debe dejar claro qué información es de solo lectura y cuál puede editarse.
 
-Criterios mínimos del proyecto:
+### Formulario de atención
 
-```text
-TLS 1.3 cuando el entorno lo soporte
-cifrado en reposo equivalente a AES-256
-RBAC
-sesiones/tokens expirables
-trazabilidad de cambios
-```
+El formulario común debe seguir un orden clínico entendible: motivo, evaluación, mediciones, diagnósticos, indicaciones, adjuntos, derivación opcional y cierre. Guardar borrador debe ser visible y no cerrar la atención de forma automática.
 
-Los logs no deben almacenar:
+### Panel de derivaciones
 
-- contraseñas;
-- tokens completos;
-- texto clínico completo innecesario;
-- secretos;
-- datos sensibles sin necesidad técnica.
+Debe permitir diferenciar fácilmente pendientes de asignación, asignadas, en curso, devueltas y cerradas. Cada fila muestra paciente, especialidad, fecha, médico emisor, motivo resumido y próxima acción; el detalle completo se abre solo con permiso.
 
-El personal administrativo debe poder operar agenda/citas sin recibir automáticamente acceso al contenido íntegro de historias clínicas.
+### Reportes
 
----
+El reporte inicia con accesos rápidos diarios, período visible y filtros. Las columnas nominales deben depender del rol; los gráficos agregados nunca sustituyen las tablas cuando la operación necesita identificar pacientes autorizados.
 
-# 31. Auditoría
+## Requisitos no funcionales de referencia
 
-Se requiere trazabilidad especialmente para:
+- Las búsquedas comunes por carnet/código y “Mis pacientes” deben responder en menos de tres segundos bajo la carga objetivo.
+- La creación de una atención, derivación o adjunto debe ser atómica desde la perspectiva del usuario: éxito confirmado o error claro, sin duplicados silenciosos.
+- Las cargas de archivos deben poder reintentarse sin duplicar el documento.
+- La aplicación debe mantener trazabilidad de cambios y exportaciones aun si los servicios de notificación fallan.
+- Formularios y tablas deben funcionar con teclado, lectores de pantalla y contraste suficiente.
+- El sistema debe aplicar paginación y filtros en backend; no descargar historiales masivos al navegador.
 
-- creación/edición/inactivación de médicos;
-- cambios de especialidad/modalidad;
-- asignación de turnos;
-- aprobación/rechazo de solicitudes;
-- cambios de agenda;
-- cancelaciones/reprogramaciones administrativas;
-- check-in;
-- cambios clínicos relevantes;
-- acceso a información sensible cuando se defina necesario.
+## Estrategia de pruebas
 
-`AuditEvent` debería permitir reconstruir al menos:
+### Pruebas de negocio
 
-```text
-actor
-operation
-entity_type
-entity_id
-timestamp
-previous_state / new_state cuando aplique
-```
+- Registro de paciente nuevo y rechazo de carnet/código duplicado.
+- Paciente recurrente que conserva todas sus atenciones previas.
+- Atención inicial cerrada con examen adjunto y con examen pendiente/no presentado.
+- Derivación válida y rechazo de motivo/comentario/especialidad faltante.
+- Especialista que solo abre derivaciones asignadas/autorizadas.
+- Adenda que preserva el texto de la atención cerrada.
+- Cumplimiento obligatorio calculado solo con atención cerrada.
 
----
+### Pruebas de permisos
 
-# 32. Requisitos no funcionales de referencia
+- Administrativo que intenta modificar contenido clínico.
+- Médico que intenta abrir paciente sin relación asistencial.
+- Especialista que intenta abrir derivación de otra especialidad.
+- Usuario con reporte agregado que intenta exportar detalle nominal.
+- Acceso y descarga de adjunto sin permiso.
 
-Metas actuales del proyecto:
+### Pruebas de integración y carga
 
-```text
-CRUD estándar p95 < 200 ms
-Búsqueda de disponibilidad p95 < 500 ms
-Inferencia IA p95 < 300 ms
-Actualización relevante de cola <= 5 s
-Carga objetivo >= 500 req/s en pruebas controladas
-Disponibilidad objetivo >= 99.5%
-0 double bookings en pruebas concurrentes
-SUS > 75
-MAE objetivo experimental <= 10 min
-```
+- Dos registros simultáneos con el mismo carnet/código.
+- Dos intentos de usar el último cupo disponible.
+- Carga de documento, fallo de procesamiento y reintento idempotente.
+- Filtros combinados en cartera médica y reportes con paginación.
 
-No interpretar estas cifras como garantías sin pruebas; son objetivos de validación.
+## Convenciones de implementación
 
----
+- Usar los términos `patient`, `clinicalEncounter`, `clinicalHistory`, `referral`, `clinicalDocument` y `appointment`; evitar reutilizar “cita” como nombre de historia o atención.
+- Mantener diagnóstico/etiqueta normalizada y texto libre complementario.
+- Validar y mostrar claramente datos ausentes: “pendiente/no presentado” para estudios no disponibles, nunca un valor inventado.
+- Diseñar primero el formulario clínico común; las secciones propias de cada especialidad son extensiones, no historias separadas.
+- Toda pantalla clínica debe indicar paciente, identificador, contexto, estado y permisos de acción.
 
-# 33. UX esperada por actor
+## Fuera de alcance
 
-## Estudiante
+No implementar reserva directa por especialidad ni mecanismos ajenos al núcleo de gestión clínica. Tampoco eliminar físicamente evoluciones, diagnósticos o adjuntos clínicos.
 
-Debe poder llegar a la acción principal rápidamente.
-
-Prioridades:
-
-- buscar atención;
-- ver próxima cita;
-- saber si debe realizar chequeo Tipo A;
-- ver QR/acceso virtual;
-- conocer estado de espera;
-- aceptar oferta de lista de espera.
-
-El estudiante no debería necesitar entender conceptos internos como `MedicalShift`, `QueueEntry` o `AppointmentHold`.
-
-## Médico
-
-Debe priorizar operación del día:
-
-- agenda;
-- pacientes esperando;
-- paciente actual;
-- consulta;
-- historia especializada.
-
-## Administrativo
-
-Debe priorizar capacidad y control operacional:
-
-- médicos;
-- agenda;
-- solicitudes;
-- demanda;
-- saturación;
-- campañas;
-- incidencias.
-
----
-
-# 34. Inventario de pantallas
-
-La versión actual contempla **32 pantallas principales**.
-
-Resumen:
-
-```text
-2 compartidas
-10 estudiante
-11 médico
-9 administrativo
-```
-
-El detalle completo está en `05_pantallas_y_flujos.md`.
-
-No contar como pantalla independiente:
-
-- toast;
-- modal de confirmación;
-- drawer;
-- estado vacío;
-- error inline.
-
----
-
-# 35. Flujos end-to-end importantes
-
-## Flujo 1 — Reserva normal de Especialidad 1–4
-
-```text
-Inicio estudiante
-→ Buscar atención
-→ Filtrar
-→ Seleccionar slot
-→ Hold 10 min
-→ Confirmar
-→ Crear cita
-→ QR o sesión virtual
-→ Notificación
-```
-
-## Flujo 2 — Presencial
-
-```text
-Cita confirmada
-→ QR
-→ Llegada
-→ Escaneo
-→ Check-in
-→ Cola digital
-→ Espera estimada
-→ Médico llama
-→ Consulta
-→ Historia especializada
-→ Finalización
-```
-
-## Flujo 3 — Teleconsulta
-
-```text
-Cita confirmada
-→ Acceso seguro
-→ Sala de espera
-→ Alerta al médico
-→ Médico admite
-→ Consulta
-→ Historia especializada
-→ Finalización
-```
-
-## Flujo 4 — Lista de espera
-
-```text
-Sin disponibilidad
-→ Unirse a lista
-→ Cancelación libera slot
-→ Sistema busca candidato
-→ Oferta temporal
-→ Acepta
-→ Cita confirmada
-```
-
-## Flujo 5 — Planificación médica
-
-```text
-Dashboard administrativo
-→ Capacidad/demanda
-→ Déficit detectado
-→ Planificación de turnos
-→ Médico elegible
-→ Crear turno
-→ Generar slots
-→ Publicar
-→ Nueva disponibilidad
-```
-
-## Flujo 6 — Cambio solicitado por médico
-
-```text
-Médico consulta agenda
-→ Solicita cambio
-→ Sistema calcula impacto
-→ Administrativo revisa
-→ Aprueba / rechaza
-→ Agenda se ajusta
-→ Citas afectadas se gestionan
-→ Notificaciones
-```
-
-## Flujo 7 — Aprendizaje del modelo
-
-```text
-Check-in
-→ checked_in_at
-→ Inicio consulta
-→ consultation_started_at
-→ wait_time real
-→ dataset histórico
-→ entrenamiento offline
-→ evaluación
-→ nueva versión del modelo
-→ mejores estimaciones
-```
-
----
-
-# 36. Límites de alcance
-
-El proyecto **sí incluye**:
-
-- gestión de médicos;
-- agenda;
-- turnos;
-- slots;
-- citas;
-- campañas Tipo A;
-- presencial con QR;
-- teleconsulta;
-- cola digital;
-- estimación de espera;
-- lista de espera;
-- reasignación;
-- demanda/capacidad;
-- historias clínicas especializadas 1–4;
-- seguridad;
-- auditoría;
-- notificaciones.
-
-El MVP **no pretende convertirse en un HIS hospitalario completo**.
-
-Fuera de alcance recomendado:
-
-- laboratorio clínico completo;
-- farmacia/dispensación;
-- facturación;
-- internación hospitalaria;
-- interoperabilidad nacional compleja;
-- diagnóstico automático por IA;
-- prescripción electrónica avanzada;
-- seguros;
-- gestión contable.
-
-No agregar estos módulos salvo decisión explícita del proyecto.
-
----
-
-# 37. Convenciones obligatorias para agentes
-
-1. **No crear un rol Coordinador de Salud.**
-2. Utilizar `Especialidad 1`, `Especialidad 2`, `Especialidad 3`, `Especialidad 4` hasta que se confirme otra nomenclatura.
-3. No convertir el modelo de IA nuevamente en un predictor principal de no-show. El objetivo central actual es **tiempo de espera**.
-4. No permitir que Python modifique agenda/citas directamente.
-5. No permitir double booking.
-6. No mezclar lista de espera con cola digital.
-7. No mezclar turno médico con slot.
-8. Tipo A y Tipo B deben mantener capacidad separada.
-9. No borrar historial clínico al modificar una cita o médico.
-10. No exponer contenido clínico completo a roles administrativos sin necesidad y autorización.
-11. Las fichas de Especialidad 1–4 deben poder evolucionar independientemente.
-12. Mantener trazabilidad y auditoría de operaciones críticas.
-13. Un cambio de agenda con citas activas requiere análisis de impacto.
-14. Una caída de IA no debe bloquear la operación transaccional.
-15. No inventar reglas clínicas; marcarlas como pendientes de validación profesional.
-
----
-
-# 38. Prioridad sugerida de implementación
-
-Una secuencia razonable es:
-
-## Fase 1 — Núcleo de identidad y oferta
-
-```text
-identity
-medical_staff
-specialties
-schedule
-slots
-```
-
-## Fase 2 — Reserva
-
-```text
-availability
-holds
-appointments
-campaigns
-```
-
-## Fase 3 — Operación de atención
-
-```text
-QR/checkin
-queue
-notifications
-waitlist
-```
-
-## Fase 4 — Clínica
-
-```text
-clinical core
-specialty 1
-specialty 2
-specialty 3
-specialty 4
-```
-
-## Fase 5 — Teleconsulta
-
-```text
-session
-waiting room
-access tokens
-```
-
-## Fase 6 — IA y analítica
-
-```text
-operational dataset
-baseline
-training pipeline
-inference API
-demand dashboards
-```
-
-Esta secuencia permite que el sistema genere datos útiles antes de depender del modelo predictivo.
-
----
-
-# 39. Qué debe entender un agente antes de implementar una feature
-
-Antes de modificar el sistema, responder mentalmente:
-
-1. ¿Qué actor inicia esta acción?
-2. ¿A qué proceso de negocio pertenece?
-3. ¿Qué entidad es la fuente de verdad?
-4. ¿Qué estados pueden cambiar?
-5. ¿Debe ser transaccional?
-6. ¿Puede afectar citas existentes?
-7. ¿Debe generar auditoría?
-8. ¿Debe generar notificación?
-9. ¿Produce datos para cola/demanda/IA?
-10. ¿Expone datos clínicos sensibles?
-
-Si una feature no puede ubicarse dentro del modelo de negocio descrito aquí, no asumir comportamiento: revisar requisitos o pedir definición.
-
----
-
-# 40. Resultado final esperado del producto
-
-Cuando el sistema esté completo, el recorrido ideal será:
-
-- administración configura profesionales y su capacidad;
-- médicos conocen y gestionan su disponibilidad mediante solicitudes;
-- estudiantes encuentran atención sin ir físicamente a buscar una ficha;
-- las reservas son consistentes y no se duplican;
-- el chequeo obligatorio se gestiona por campañas separadas;
-- la atención presencial utiliza QR y cola digital;
-- la teleconsulta utiliza acceso seguro;
-- los estudiantes reciben una expectativa razonable de su espera;
-- los cupos liberados pueden recuperarse con lista de espera;
-- administración puede identificar déficit de capacidad;
-- cada consulta genera un encuentro clínico especializado;
-- los datos operacionales permiten evaluar y mejorar el modelo de espera;
-- el sistema conserva seguridad, privacidad y trazabilidad.
-
-En resumen, el proyecto pretende sustituir un proceso fragmentado y manual por un **flujo digital completo de oferta → acceso → espera → atención → registro → aprendizaje operacional**.
-
+## Orden de implementación
+
+1. Identidad y registro único de estudiante.
+2. Historia clínica, atención/evolución, diagnósticos y mediciones.
+3. Adjuntos clínicos privados.
+4. Derivaciones y atención especializada.
+5. Citas por cupo como apoyo administrativo.
+6. Mis pacientes, filtros, reportes diarios, cumplimiento y auditoría.

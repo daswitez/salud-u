@@ -1,154 +1,83 @@
 # Resumen del proyecto
 
-## 1. Nombre conceptual
+## Nombre conceptual
 
-**Sistema Web y Móvil de Gestión de Atención Médica Universitaria con Historias Clínicas Especializadas e Inteligencia Artificial para la Estimación de Tiempos de Espera.**
+**Plataforma de Historia Clínica, Atención Primaria y Derivación Médica Universitaria.**
 
-## 2. Contexto
+## Contexto y cambio de enfoque
 
-El proyecto busca digitalizar el recorrido de atención del estudiante universitario, desde la exploración de disponibilidad hasta la atención clínica y el registro especializado del encuentro médico.
+La plataforma deja de ser principalmente un sistema de agendamiento. Su propósito central es concentrar y hacer consultable la información clínica de los estudiantes: sus atenciones, diagnósticos, documentos, exámenes, derivaciones y reportes institucionales.
 
-El problema actual se caracteriza por procesos manuales, fichas presenciales, filas físicas, dificultad para conocer disponibilidad real, variaciones fuertes en la demanda, tiempos de espera impredecibles y registros clínicos no integrados al flujo digital.
+La cita puede ser solicitada por el estudiante o creada por el personal administrativo, pero es un dato de apoyo. En la operación real, el estudiante normalmente se registra con Administración y es atendido inicialmente por un médico de revisión estudiantil. Solo después de esa evaluación puede ser derivado, si corresponde, a Dermatología, Oftalmología, Medicina Interna o Urología.
 
-La solución propuesta reemplaza la lógica de “ir a buscar ficha” por un flujo digital de reserva, check-in y cola, donde el estudiante puede conocer disponibilidad y estimaciones de espera antes y durante su atención.
+## Actores
 
-## 3. Actores
+### Estudiante
 
-### Estudiante Universitario
+- Puede registrarse y solicitar una cita.
+- Consulta sus próximas citas, atenciones y documentos que tenga permiso de ver.
+- Debe realizar al menos una consulta médica durante su carrera; el sistema permite verificar ese cumplimiento.
 
-- Busca atención.
-- Reserva citas.
-- Programa chequeo obligatorio.
-- Cancela y reprograma.
-- Recibe QR o acceso de teleconsulta.
-- Realiza check-in.
-- Consulta tiempo de espera.
-- Ingresa a lista de espera.
-- Recibe notificaciones.
+### Personal administrativo
 
-### Personal Médico Especialista
+- Registra o actualiza estudiantes y su primera toma de datos.
+- Crea, confirma y administra citas por cupos limitados, especialmente para pacientes recurrentes.
+- Gestiona el ingreso de pacientes y consulta reportes institucionales.
+- No sustituye el criterio clínico ni modifica historias clínicas cerradas.
 
-- Consulta su agenda.
-- Solicita modificaciones de disponibilidad.
-- Visualiza pacientes en cola.
-- Inicia y finaliza consultas.
-- Registra historia clínica correspondiente a su especialidad.
-- Participa en teleconsultas.
+### Médico de revisión estudiantil
 
-### Personal Administrativo
+- Realiza la primera evaluación clínica.
+- Crea y actualiza la historia clínica, registra diagnóstico y adjunta exámenes.
+- Deriva al estudiante a una especialidad con motivo clínico y comentario.
+- Consulta su cartera de pacientes y reportes de sus atenciones.
 
-- Gestiona médicos.
-- Asocia especialidades y modalidades.
-- Resuelve solicitudes de agenda.
-- Asigna y publica turnos médicos.
-- Configura campañas Tipo A.
-- Analiza capacidad y demanda.
-- Gestiona incidencias de agenda.
-- Realiza o asiste check-in cuando corresponda.
+### Médico especialista
 
-No existe el rol de “Coordinador de Salud”. Las responsabilidades de coordinación operativa se modelan mediante permisos del Personal Administrativo.
+- Atiende únicamente derivaciones asignadas a su especialidad.
+- Consulta la historia, documentos y motivo de derivación autorizados.
+- Añade evoluciones, diagnósticos, indicaciones, adjuntos y cierra o devuelve la derivación.
 
-## 4. Tipos de demanda
+## Datos mínimos del estudiante
 
-### Tipo A — Chequeo médico obligatorio único
+Cada paciente se identifica de forma única por número de carnet y código de registro. Debe conservarse nombre completo, fecha de nacimiento o edad, carrera, peso, datos de contacto y estado académico. Carnet y código de registro no pueden duplicarse.
 
-- Se realiza una sola vez durante la carrera.
-- Se maneja mediante campañas masivas.
-- La capacidad de campaña es independiente de los cupos de especialidades.
-- No debe consumir slots destinados a atención especializada.
-
-### Tipo B — Atención por especialidad
-
-- El estudiante puede reservar atención en una de las cuatro especialidades.
-- La oferta depende de turnos médicos publicados.
-- Existe fuerte variabilidad de demanda según fecha, horario y periodo académico.
-
-## 5. Flujo general del sistema
+## Flujo clínico principal
 
 ```text
-Administración de médicos
+Registro / actualización administrativa
         ↓
-Asignación de turnos
+Solicitud o creación administrativa de cita
         ↓
-Generación de slots
+Atención inicial por médico de revisión estudiantil
         ↓
-Exploración de disponibilidad
+Historia clínica + diagnóstico + documentos/exámenes
         ↓
-Reserva / campaña
-        ↓
-QR o teleconsulta
-        ↓
-Check-in
-        ↓
-Cola digital
-        ↓
-Estimación de espera
-        ↓
-Atención
-        ↓
-Historia clínica especializada
-        ↓
-Datos históricos
-        ↓
-Mejor estimación y planificación de capacidad
+¿Requiere especialidad?
+  ├─ No: cerrar atención y mantener seguimiento
+  └─ Sí: derivación con motivo y comentario
+                ↓
+       Atención por especialista asignado
+                ↓
+       Evolución, diagnóstico y cierre/retorno
+                ↓
+Reportes clínicos y administrativos con filtros
 ```
 
-## 6. Objetivo general propuesto
+## Alcance funcional
 
-Desarrollar un sistema web y móvil para la gestión de citas, agenda, atención e historias clínicas especializadas, incorporando herramientas de gestión de capacidad, cola digital y un modelo de inteligencia artificial para la estimación de tiempos de espera, con el propósito de mejorar la accesibilidad, eficiencia administrativa y continuidad de la atención médica universitaria.
+- Registro de estudiantes y datos clínicamente relevantes.
+- Gestión de citas por cupos limitados, creadas por Administración o solicitadas por el estudiante.
+- Atención inicial obligatoria antes de una especialidad.
+- Historias clínicas longitudinales con evoluciones, diagnósticos, etiquetas y adjuntos.
+- Carga segura de documentos escaneados y fotografías de exámenes, incluidas radiografías.
+- Derivaciones a Dermatología, Oftalmología, Medicina Interna y Urología, con motivo y comentario.
+- Historial de pacientes asignados a cada médico, con filtros por enfermedad/diagnóstico, fecha, carrera, edad y estado de derivación.
+- Reportes rápidos diarios y reportes filtrables para Administración y personal médico.
+- Auditoría, control de acceso por rol y trazabilidad clínica.
 
-## 7. Alcance funcional
+## Fuera de alcance inicial
 
-### Gestión de oferta médica
-
-- Alta y mantenimiento de médicos.
-- Especialidades y modalidades habilitadas.
-- Solicitudes de cambio de agenda.
-- Asignación de turnos.
-- Generación automática de slots.
-- Bloqueos y excepciones.
-
-### Citas y campañas
-
-- Búsqueda por especialidad, médico, fecha y modalidad.
-- Hold temporal de 10 minutos.
-- Reserva Tipo B.
-- Campañas Tipo A.
-- Cancelación y reprogramación.
-
-### Atención multimodal
-
-- Presencial con QR.
-- Teleconsulta con token temporal.
-- Sala de espera virtual.
-- Check-in digital.
-
-### Demanda y espera
-
-- Cola digital.
-- Estimación de tiempo de espera.
-- Clasificación de demanda.
-- Lista de espera.
-- Reasignación automática de slots liberados.
-- Dashboard capacidad vs demanda.
-
-### Historia clínica
-
-- Núcleo común de encuentro clínico.
-- Ficha Especialidad 1.
-- Ficha Especialidad 2.
-- Ficha Especialidad 3.
-- Ficha Especialidad 4.
-
-## 8. Fuera de alcance inicial recomendado
-
-Para no convertir el proyecto en una plataforma hospitalaria completa, se recomienda dejar fuera del MVP:
-
-- Laboratorio clínico.
-- Farmacia y dispensación.
-- Facturación.
-- Interoperabilidad nacional o externa.
-- Diagnóstico automatizado por IA.
-- Prescripción electrónica avanzada.
-- Gestión hospitalaria o internación.
-
+- Optimización de horarios, tiempos de espera, cola digital, QR, teleconsulta y predicción de demanda.
+- Decisiones o recomendaciones clínicas automáticas.
+- Eliminación física de historias, evoluciones o adjuntos clínicos.

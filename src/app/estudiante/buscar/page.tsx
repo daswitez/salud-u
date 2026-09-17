@@ -36,7 +36,7 @@ function SearchCareContent() {
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      <StudentNavigation active="search" />
+      <StudentNavigation active="request" />
       <div className="min-w-0 flex-1 pb-22 md:pb-0"><StudentHeader />
         <main className="mx-auto max-w-6xl px-5 py-7 md:px-8 md:py-10">
           <Link href="/estudiante" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"><span aria-hidden="true">←</span> Volver al inicio</Link>

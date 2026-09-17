@@ -1,350 +1,120 @@
 # Requisitos y procesos de negocio
 
-## 1. Reglas principales de negocio
+## Reglas de negocio
 
-1. El chequeo Tipo A solo puede completarse una vez durante la carrera del estudiante.
-2. La capacidad Tipo A no consume slots de atención especializada Tipo B.
-3. Todo turno médico publicado debe pertenecer a un profesional activo y a una especialidad habilitada.
-4. Un turno médico genera uno o más slots según horario, duración configurada y bloqueos.
-5. Un slot seleccionado puede quedar retenido por un máximo de 10 minutos.
-6. Un slot no puede estar reservado por dos citas activas simultáneamente.
-7. Una cita debe indicar modalidad presencial o teleconsulta.
-8. Las citas presenciales generan comprobante QR verificable.
-9. Las teleconsultas generan acceso temporal no predecible y revocable.
-10. Una cancelación libera el slot y puede disparar el proceso de lista de espera.
-11. La cola digital contiene pacientes que ya realizaron check-in.
-12. La lista de espera contiene estudiantes que aún no tienen cita confirmada.
-13. La IA estima tiempos operativos; no decide prioridad clínica.
-14. La ampliación de oferta médica requiere decisión administrativa o aceptación del médico cuando corresponda.
-15. Los registros clínicos solo pueden ser consultados o modificados por usuarios autorizados.
-16. Toda modificación clínica relevante debe ser auditable.
+1. El estudiante se identifica de manera única por número de carnet y código de registro; ambos se validan contra duplicados.
+2. Toda atención especializada requiere una derivación activa emitida desde revisión estudiantil, salvo autorización administrativa extraordinaria registrada y auditable.
+3. Las especialidades iniciales son Dermatología, Oftalmología, Medicina Interna y Urología.
+4. Una derivación debe incluir especialidad destino, motivo de consulta, comentario para el especialista, médico emisor, fecha y estado.
+5. La primera atención debe permitir registrar o adjuntar el examen de química sanguínea cuando esté disponible; su ausencia debe quedar explícita, no inventarse.
+6. La historia clínica es longitudinal: una nueva atención añade una evolución; no reemplaza el historial previo.
+7. Todo diagnóstico, enfermedad o problema clínico debe poder registrarse con etiqueta normalizada y texto libre de respaldo.
+8. Los adjuntos pueden ser documentos escaneados o fotografías clínicas/de exámenes. Se guardan con tipo, fecha, autor y relación a la atención.
+9. Un médico solo consulta los pacientes que le fueron asignados, atendió o recibió por derivación, según sus permisos clínicos.
+10. Las citas se controlan por cupos disponibles. Los pacientes recurrentes se atienden mediante los cupos que Administración habilite; no hay sobre-reserva automática.
+11. Una consulta médica al menos una vez en la carrera cuenta como cumplimiento solo si existe una atención clínica cerrada.
+12. Las correcciones clínicas son adendas auditables; no se permite borrar contenido asistencial cerrado.
+13. Los reportes muestran solo los datos habilitados para el rol y propósito institucional, con filtros y trazabilidad de exportación.
 
----
-
-# 2. Requisitos de Usuario — URS
+## Requisitos de usuario
 
 | ID | Actor | Necesidad |
 |---|---|---|
-| URS-01 | Administrativo | Administrar el registro y estado del personal médico. |
-| URS-02 | Administrativo | Configurar especialidades, modalidades y parámetros habilitados para cada médico. |
-| URS-03 | Médico | Consultar su agenda y turnos asignados. |
-| URS-04 | Médico | Solicitar modificaciones, bloqueos, ausencias o cambios de disponibilidad. |
-| URS-05 | Administrativo | Revisar y resolver solicitudes de modificación de agenda. |
-| URS-06 | Administrativo | Asignar y publicar turnos médicos. |
-| URS-07 | Administrativo | Planificar capacidad según demanda histórica y prevista. |
-| URS-08 | Estudiante | Buscar citas disponibles por especialidad, médico, fecha y modalidad. |
-| URS-09 | Estudiante | Retener temporalmente un slot mientras completa su reserva. |
-| URS-10 | Estudiante Tipo A | Programar el chequeo obligatorio mediante campañas independientes. |
-| URS-11 | Estudiante Tipo B | Reservar una cita de especialidad. |
-| URS-12 | Estudiante | Cancelar o reprogramar una cita de forma remota. |
-| URS-13 | Estudiante | Obtener un comprobante QR para atención presencial. |
-| URS-14 | Estudiante | Acceder de forma segura a una teleconsulta. |
-| URS-15 | Estudiante | Conocer el tiempo estimado de espera. |
-| URS-16 | Médico | Visualizar y gestionar pacientes en cola. |
-| URS-17 | Estudiante | Ingresar a lista de espera cuando no exista disponibilidad. |
-| URS-18 | Administrativo | Detectar y gestionar déficit de capacidad. |
-| URS-19 | Estudiante | Realizar check-in digital. |
-| URS-20 | Médico | Registrar y cerrar un encuentro clínico. |
-| URS-21 | Médico | Registrar la historia clínica de Especialidad 1. |
-| URS-22 | Médico | Registrar la historia clínica de Especialidad 2. |
-| URS-23 | Médico | Registrar la historia clínica de Especialidad 3. |
-| URS-24 | Médico | Registrar la historia clínica de Especialidad 4. |
+| URS-01 | Administrativo | Registrar estudiantes por carnet, código de registro, nombre, edad/fecha de nacimiento, carrera, peso y contacto. |
+| URS-02 | Administrativo | Buscar, actualizar y evitar duplicados de estudiantes. |
+| URS-03 | Administrativo | Crear y gestionar citas por cupo para estudiantes y pacientes recurrentes. |
+| URS-04 | Estudiante | Solicitar una cita y consultar su estado sin elegir directamente una especialidad. |
+| URS-05 | Médico de revisión | Ver sus pacientes asignados y crear una nueva atención clínica. |
+| URS-06 | Médico | Consultar el historial clínico permitido de un paciente atendido o asignado. |
+| URS-07 | Médico de revisión | Registrar anamnesis, signos/datos relevantes, diagnóstico, indicaciones y seguimiento. |
+| URS-08 | Médico | Cargar documentos escaneados y fotografías de exámenes, con descripción y etiquetas. |
+| URS-09 | Médico de revisión | Crear una derivación a una especialidad con motivo de consulta y comentario para el especialista. |
+| URS-10 | Especialista | Recibir derivaciones, revisar antecedentes y registrar evolución o cierre. |
+| URS-11 | Médico | Filtrar su historial de pacientes por enfermedad/diagnóstico, fecha de atención, carrera, edad y estado. |
+| URS-12 | Administrativo y médico | Consultar pacientes atendidos hoy, diagnósticos, derivaciones y datos demográficos relevantes. |
+| URS-13 | Administrativo | Generar informes de cumplimiento de consulta médica obligatoria. |
+| URS-14 | Personal autorizado | Exportar reportes filtrados para gestión o investigación conforme a permisos. |
+| URS-15 | Auditor | Consultar la trazabilidad de accesos, cambios y exportaciones clínicas. |
 
----
+## Procesos de negocio
 
-# 3. Procesos de Negocio — PRC
+### PRC-01 — Registro y actualización de estudiante
 
-## PRC-01 — Gestión de personal médico
+1. Administración busca por carnet o código de registro.
+2. Si no existe, registra datos mínimos; si existe, valida y actualiza datos administrativos permitidos.
+3. El sistema valida duplicados y deja auditoría.
+4. Se crea o actualiza el perfil longitudinal del paciente.
 
-**Disparador:** alta o modificación de un profesional.
+### PRC-02 — Gestión de cita por cupo
 
-**Entradas:** datos del profesional, estado, especialidad, modalidades.
+1. El estudiante puede solicitar una cita; Administración puede crearla directamente al registrar su llegada.
+2. La solicitud se dirige a atención inicial, no a una especialidad.
+3. Administración confirma una cita contra un cupo disponible y asigna el médico de revisión cuando corresponda.
+4. La cita queda como programada, atendida, cancelada o no asistió. El estado atendida se relaciona con una atención clínica.
 
-**Flujo resumido:**
+### PRC-03 — Atención inicial e historia clínica
 
-1. Administrativo busca al profesional.
-2. Crea o edita el registro.
-3. Asocia especialidad y modalidad.
-4. Valida duplicidad.
-5. Activa o desactiva según corresponda.
-6. Se registra auditoría.
+1. El médico abre el perfil del paciente asignado y consulta antecedentes y documentos autorizados.
+2. Crea una atención con fecha, motivo, evaluación, diagnóstico(s), indicaciones y estado de cierre.
+3. Registra peso u otros datos medidos cuando correspondan; no sobrescribe el valor histórico.
+4. Adjunta el examen de química sanguínea, si existe, o registra que está pendiente/no presentado.
+5. Cierra la evolución o la deja en borrador clínico.
 
-**Salida:** profesional disponible o no disponible para planificación de agenda.
+### PRC-04 — Adjuntar examen o documento clínico
 
-## PRC-02 — Configuración profesional
+1. El médico selecciona la atención o el historial del paciente.
+2. Carga un archivo o fotografía y clasifica su tipo (química sanguínea, radiografía, laboratorio, receta u otro).
+3. Añade fecha del estudio, descripción y etiquetas.
+4. El sistema conserva archivo original, metadatos, autor y auditoría.
 
-1. Seleccionar médico activo.
-2. Asociar especialidad(es) habilitada(s).
-3. Definir modalidad presencial, teleconsulta o ambas.
-4. Configurar parámetros de agenda permitidos.
-5. Guardar configuración.
+### PRC-05 — Derivación a especialidad
 
-## PRC-03 — Consulta de agenda médica
+1. El médico de revisión selecciona una especialidad habilitada.
+2. Registra motivo de consulta, comentario/instrucción para el especialista y prioridad si la institución la configura.
+3. El sistema vincula diagnóstico, atención y adjuntos relevantes.
+4. La derivación queda pendiente de asignación o asignada; el especialista la acepta, atiende, devuelve o cierra.
+5. Administración puede gestionar el cupo de la cita especializada sin alterar el contenido clínico.
 
-1. Médico accede a su agenda.
-2. Selecciona vista diaria, semanal o mensual.
-3. Sistema muestra turnos, citas, bloqueos y modalidad.
-4. Médico consulta detalle del paciente solo cuando tenga permiso.
+### PRC-06 — Atención especializada y seguimiento
 
-## PRC-04 — Solicitud de modificación de agenda
+1. El especialista abre una derivación asignada y revisa el contexto permitido.
+2. Crea una evolución especializada, agrega diagnóstico, indicaciones y adjuntos.
+3. Cierra la derivación, solicita seguimiento o la devuelve con una nota clínica auditable.
 
-Tipos sugeridos:
+### PRC-07 — Historial y búsqueda de pacientes del médico
 
-- Ausencia temporal.
-- Bloqueo de periodo.
-- Cambio de horario.
-- Cambio de modalidad.
-- Turno adicional.
-- Intercambio de turno.
+1. El médico abre “Mis pacientes”.
+2. El sistema muestra pacientes asignados, atendidos o derivados hacia él.
+3. Puede filtrar por diagnóstico/enfermedad, etiqueta, fecha, carrera, rango de edad, estado de atención y estado de derivación.
+4. Puede abrir el historial longitudinal y crear una nueva evolución solo si conserva autorización.
 
-El sistema debe mostrar al médico si la solicitud afecta citas ya confirmadas.
+### PRC-08 — Reportes
 
-## PRC-05 — Resolución administrativa de solicitud
+1. El usuario autorizado elige un acceso rápido o define filtros.
+2. El sistema muestra resultados agregados o nominales según permiso.
+3. Los accesos rápidos incluyen: pacientes atendidos hoy, diagnósticos del día, derivaciones del día y cumplimiento de consulta obligatoria.
+4. Los filtros incluyen fecha, médico, especialidad, diagnóstico, carrera, edad, sexo si está autorizado, estado de derivación y asistencia.
+5. Toda exportación registra quién, cuándo, filtros y finalidad declarada.
 
-1. Administrativo recibe solicitud.
-2. Visualiza impacto.
-3. Evalúa citas afectadas y capacidad alternativa.
-4. Aprueba, rechaza o solicita ajuste.
-5. Si se aprueba, se actualiza agenda.
-6. Si existen citas afectadas, se dispara contingencia de reprogramación.
-7. Se notifica al médico.
+## Requerimientos funcionales
 
-## PRC-06 — Asignación y publicación de turnos
+- RF-01: Registrar y buscar pacientes por carnet, código y nombre completo.
+- RF-02: Mantener una historia clínica longitudinal por paciente.
+- RF-03: Crear atenciones, evoluciones y adendas auditables.
+- RF-04: Administrar diagnósticos y etiquetas consultables.
+- RF-05: Cargar, previsualizar con control de acceso y descargar adjuntos clínicos autorizados.
+- RF-06: Crear, asignar, atender y cerrar derivaciones.
+- RF-07: Gestionar cupos y estados de cita sin usar la cita como sustituto de la atención clínica.
+- RF-08: Mostrar cartera de pacientes del médico con filtros combinables.
+- RF-09: Emitir reportes rápidos diarios y reportes filtrables/exportables.
+- RF-10: Calcular y exponer el estado de cumplimiento de consulta obligatoria.
+- RF-11: Aplicar permisos por rol, relación clínica y especialidad.
+- RF-12: Auditar cambios clínicos, accesos a historia y exportaciones.
 
-1. Seleccionar periodo.
-2. Seleccionar especialidad.
-3. Consultar médicos disponibles.
-4. Seleccionar profesional.
-5. Definir fecha, hora de inicio y fin.
-6. Definir modalidad.
-7. Definir duración de slot.
-8. Validar conflictos.
-9. Generar vista previa de slots.
-10. Añadir bloqueos o pausas.
-11. Publicar turno.
-12. Generar slots reservables.
+## Requerimientos no funcionales
 
-## PRC-07 — Planificación de capacidad
-
-1. Consultar demanda histórica.
-2. Consultar demanda reciente.
-3. Consultar lista de espera.
-4. Consultar capacidad publicada.
-5. Comparar demanda vs capacidad.
-6. Detectar déficit o exceso.
-7. Permitir al administrativo decidir ajustes de oferta.
-
-## PRC-08 — Búsqueda y exploración de citas
-
-1. Estudiante abre búsqueda.
-2. Selecciona especialidad.
-3. Opcionalmente filtra por médico.
-4. Selecciona modalidad.
-5. Selecciona fecha o rango.
-6. Sistema obtiene turnos publicados.
-7. Excluye slots ocupados, bloqueados o retenidos.
-8. Libera lógicamente holds vencidos.
-9. Consulta indicador de demanda/espera cuando exista.
-10. Muestra disponibilidad.
-11. Estudiante selecciona slot.
-12. Se inicia PRC-09.
-
-## PRC-09 — Bloqueo temporal de slot
-
-1. Recibir `slotId`.
-2. Validar disponibilidad en transacción.
-3. Crear hold exclusivo.
-4. Definir expiración = ahora + 10 minutos.
-5. Ocultar el slot a otros usuarios.
-6. Confirmar reserva o liberar al expirar.
-
-## PRC-10 — Agendamiento Tipo A
-
-1. Validar que el chequeo no haya sido completado previamente.
-2. Consultar campañas activas.
-3. Validar elegibilidad.
-4. Mostrar capacidad independiente.
-5. Reservar cupo.
-6. Crear cita Tipo A.
-7. Programar notificaciones.
-
-## PRC-11 — Agendamiento Tipo B
-
-1. Validar hold.
-2. Validar estudiante y especialidad.
-3. Crear cita dentro de transacción.
-4. Cambiar slot a ocupado.
-5. Generar QR o sesión virtual según modalidad.
-6. Programar notificaciones.
-
-## PRC-12 — Cancelación y reprogramación
-
-**Cancelación:**
-
-1. Validar cita.
-2. Aplicar política institucional.
-3. Cancelar.
-4. Liberar slot.
-5. Invalidar QR/token.
-6. Emitir evento de slot liberado.
-
-**Reprogramación:**
-
-1. Mantener la cita actual.
-2. Buscar nuevo slot.
-3. Crear hold nuevo.
-4. Confirmar nuevo slot.
-5. Recién entonces liberar el anterior.
-
-## PRC-13 — Emisión y validación QR
-
-1. Generar token opaco y seguro.
-2. Vincularlo a la cita.
-3. Mostrarlo como QR.
-4. Al escanear, validar estado, fecha y vigencia.
-5. Registrar check-in.
-
-## PRC-14 — Gestión de teleconsulta
-
-1. Crear sesión virtual.
-2. Generar token temporal.
-3. Permitir entrada a sala de espera en ventana válida.
-4. Alertar al médico.
-5. Médico admite paciente.
-6. Iniciar consulta.
-7. Invalidar acceso al finalizar o cancelar.
-
-## PRC-15 — Estimación inteligente de espera
-
-1. Obtener longitud de cola.
-2. Obtener médicos activos.
-3. Obtener pacientes en consulta.
-4. Obtener duración histórica.
-5. Obtener patrón temporal.
-6. Construir features.
-7. Consultar microservicio Python.
-8. Obtener estimación.
-9. Mostrar rango y nivel de demanda.
-10. Si IA falla, usar baseline estadístico.
-
-## PRC-16 — Gestión de cola digital
-
-Estados sugeridos:
-
-- WAITING
-- CALLED
-- IN_CONSULTATION
-- COMPLETED
-- LEFT
-
-El tiempo real de espera se calcula mediante:
-
-`consultation_started_at - checked_in_at`
-
-## PRC-17 — Lista de espera y reasignación
-
-1. Estudiante solicita entrar a lista.
-2. Registra preferencias.
-3. Slot liberado dispara búsqueda de candidatos.
-4. Sistema selecciona candidatos compatibles.
-5. Aplica reglas institucionales y FIFO entre equivalentes.
-6. Crea oferta temporal.
-7. Notifica estudiante.
-8. Si acepta, crea cita.
-9. Si rechaza o expira, pasa al siguiente.
-
-## PRC-18 — Gestión de déficit de capacidad
-
-1. Detectar déficit.
-2. Mostrar magnitud.
-3. Mostrar médicos potencialmente disponibles.
-4. Permitir crear solicitud de turno adicional.
-5. Si se aprueba/acepta, generar nuevo turno y slots.
-
-## PRC-19 — Check-in de paciente
-
-1. Escanear QR o localizar cita.
-2. Validar cita.
-3. Registrar hora de llegada.
-4. Cambiar estado.
-5. Insertar paciente en cola digital.
-6. Actualizar estimaciones.
-
-## PRC-20 — Atención y encuentro clínico
-
-1. Médico llama paciente.
-2. Inicia consulta.
-3. Crear `ClinicalEncounter`.
-4. Abrir ficha correspondiente a la especialidad.
-5. Permitir guardado de borrador.
-6. Completar atención.
-7. Cerrar encuentro.
-8. Registrar hora de finalización.
-9. Actualizar cola.
-
-## PRC-21 a PRC-24 — Atención especializada
-
-Cada especialidad posee una ficha y flujo clínico propio, validado durante el levantamiento con profesionales del área.
-
----
-
-# 4. Requerimientos Funcionales — RF
-
-| ID | Requerimiento |
-|---|---|
-| RF-01 | Registrar, editar, activar e inactivar personal médico. |
-| RF-02 | Asociar especialidades, modalidades y parámetros de agenda. |
-| RF-03 | Mostrar agenda diaria, semanal y detalle de citas. |
-| RF-04 | Crear solicitudes de cambio y analizar impacto. |
-| RF-05 | Aprobar, rechazar y auditar solicitudes. |
-| RF-06 | Crear turnos, validar conflictos y generar slots. |
-| RF-07 | Calcular capacidad, demanda y déficit. |
-| RF-08 | Filtrar disponibilidad por especialidad, médico, fecha y modalidad. |
-| RF-09 | Crear hold de 10 minutos y evitar colisiones. |
-| RF-10 | Gestionar campañas Tipo A con capacidad independiente. |
-| RF-11 | Validar hold, crear cita y ocupar slot. |
-| RF-12 | Cancelar, liberar slot y reprogramar. |
-| RF-13 | Generar, visualizar y validar QR. |
-| RF-14 | Generar sesión virtual, token temporal y sala de espera. |
-| RF-15 | Consultar modelo de IA y aplicar fallback estadístico. |
-| RF-16 | Crear y actualizar cola digital. |
-| RF-17 | Gestionar lista, ofertas y reasignación. |
-| RF-18 | Detectar déficit y gestionar ampliación de oferta. |
-| RF-19 | Registrar llegada y check-in. |
-| RF-20 | Crear, guardar y cerrar encuentro clínico. |
-| RF-21 | Gestionar ficha Especialidad 1. |
-| RF-22 | Gestionar ficha Especialidad 2. |
-| RF-23 | Gestionar ficha Especialidad 3. |
-| RF-24 | Gestionar ficha Especialidad 4. |
-
----
-
-# 5. Requerimientos No Funcionales — RNF
-
-| ID | Requerimiento |
-|---|---|
-| RNF-01 | Autorización mediante RBAC y auditoría del personal médico. |
-| RNF-02 | Integridad y trazabilidad de configuración profesional. |
-| RNF-03 | Operaciones estándar de agenda p95 < 200 ms. |
-| RNF-04 | 100% de cambios de agenda auditables. |
-| RNF-05 | 100% de decisiones administrativas de agenda trazables. |
-| RNF-06 | Cero conflictos de agenda y operaciones transaccionales. |
-| RNF-07 | Métricas de capacidad, latencia y rendimiento. |
-| RNF-08 | Búsquedas de disponibilidad p95 < 500 ms. |
-| RNF-09 | Cero double booking bajo pruebas concurrentes. |
-| RNF-10 | Separación íntegra entre capacidad Tipo A y Tipo B. |
-| RNF-11 | Reserva atómica y transaccional. |
-| RNF-12 | Auditoría y consistencia de reprogramaciones. |
-| RNF-13 | TLS 1.3 cuando sea compatible y QR con token no predecible. |
-| RNF-14 | Tokens temporales, expirables y revocables para teleconsulta. |
-| RNF-15 | Inferencia p95 < 300 ms y evaluación con MAE/RMSE. |
-| RNF-16 | Cambios de cola visibles en <= 5 segundos. |
-| RNF-17 | Reasignación consistente y notificaciones oportunas. |
-| RNF-18 | Observabilidad de demanda y capacidad. |
-| RNF-19 | Check-in íntegro, seguro y auditable. |
-| RNF-20 | Cifrado en tránsito, cifrado en reposo, RBAC y auditoría clínica. |
-| RNF-21 | Privacidad y trazabilidad de Especialidad 1. |
-| RNF-22 | Privacidad y trazabilidad de Especialidad 2. |
-| RNF-23 | Privacidad y trazabilidad de Especialidad 3. |
-| RNF-24 | Privacidad y trazabilidad de Especialidad 4. |
-
+- RNF-01: Datos clínicos cifrados en tránsito y en reposo.
+- RNF-02: Archivos validados por tipo/tamaño, con almacenamiento privado y URL temporal.
+- RNF-03: Las búsquedas y filtros habituales deben responder en menos de 3 segundos con la carga objetivo.
+- RNF-04: La auditoría es inmutable para usuarios operativos.
+- RNF-05: Las exportaciones deben respetar minimización de datos y permisos institucionales.

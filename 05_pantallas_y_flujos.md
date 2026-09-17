@@ -1,255 +1,41 @@
 # Pantallas y flujos
 
-## 1. Total recomendado
+## Pantallas prioritarias
 
-**32 pantallas principales**.
+| # | Pantalla | Actor | Propósito |
+|---|---|---|---|
+| 1 | Inicio de sesión | Todos | Acceso seguro por rol. |
+| 2 | Registro y búsqueda de estudiante | Administrativo | Buscar por carnet/código y crear o actualizar perfil. |
+| 3 | Solicitudes y citas por cupo | Administrativo/Estudiante | Gestionar solicitud, cupo, cita y asistencia. |
+| 4 | Inicio médico | Médico | Atajos: atendidos hoy, nueva atención, derivaciones pendientes y reportes. |
+| 5 | Mis pacientes | Médico | Cartera de pacientes asignados/atendidos con filtros. |
+| 6 | Ficha e historial del paciente | Médico autorizado | Línea de tiempo de atenciones, diagnósticos, adjuntos y derivaciones. |
+| 7 | Nueva atención / evolución | Médico | Crear borrador, registrar evaluación, diagnóstico, indicaciones y cierre. |
+| 8 | Adjuntos clínicos | Médico | Cargar, clasificar y consultar documentos o fotografías. |
+| 9 | Nueva derivación | Médico de revisión | Enviar a especialidad con motivo y comentario. |
+| 10 | Derivaciones recibidas | Especialista | Asignar, atender, devolver o cerrar derivaciones. |
+| 11 | Reportes | Administrativo/Médico | Accesos rápidos, filtros, tabla y exportación autorizada. |
+| 12 | Auditoría | Auditor/Administrativo autorizado | Consultar accesos, cambios y exportaciones. |
+| 13 | Portal del estudiante | Estudiante | Solicitar cita y consultar información habilitada. |
 
-No se cuentan como pantallas independientes:
+## Flujos prioritarios
 
-- modales;
-- diálogos de confirmación;
-- estados vacíos;
-- toasts;
-- drawers;
-- errores inline.
+### A. Ingreso y atención inicial
 
-## 2. Compartidas
+Administración busca o registra estudiante → crea/confirmar cita por cupo si aplica → médico abre paciente asignado → crea atención inicial → registra diagnóstico y adjuntos → cierra evolución.
 
-### 1. Inicio de sesión
+### B. Derivación
 
-Autenticación y redirección por rol.
+Médico de revisión cierra evaluación → selecciona Dermatología, Oftalmología, Medicina Interna o Urología → escribe motivo y comentario → adjunta antecedentes/exámenes relevantes → especialista recibe y atiende → agrega evolución → cierra o devuelve la derivación.
 
-### 2. Perfil y preferencias
+### C. Historial y seguimiento médico
 
-Datos básicos, preferencias de notificación, seguridad y sesión.
+Médico abre “Mis pacientes” → filtra por enfermedad, fecha, carrera o estado → abre ficha → revisa línea de tiempo y documentos → crea nueva evolución autorizada.
 
----
+### D. Reporte diario
 
-# 3. Estudiante — 10 pantallas
+Usuario autorizado abre Reportes → selecciona “Atendidos hoy” o “Derivaciones del día” → ajusta filtros → revisa resultados → exporta solo con finalidad y permisos válidos.
 
-### 3. Inicio del estudiante
+### E. Cumplimiento institucional
 
-Resumen de próxima cita, estado de cola, chequeo obligatorio, lista de espera y accesos rápidos.
-
-### 4. Buscar atención
-
-Filtros por especialidad, médico, fecha y modalidad. Muestra disponibilidad y tiempo estimado cuando aplique.
-
-### 5. Confirmación de reserva / hold
-
-Resumen de slot y contador de 10 minutos.
-
-### 6. Mis citas
-
-Futuras, anteriores, canceladas y completadas.
-
-### 7. Detalle de cita
-
-QR, acceso de teleconsulta, cancelar, reprogramar y estado.
-
-### 8. Chequeo obligatorio Tipo A
-
-Estado del chequeo y campañas disponibles.
-
-### 9. Lista de espera
-
-Preferencias, ofertas y estado.
-
-### 10. Cola digital
-
-Estado de atención y espera estimada.
-
-### 11. Teleconsulta
-
-Sala de espera y acceso a consulta.
-
-### 12. Notificaciones
-
-Recordatorios, ofertas y cambios.
-
----
-
-# 4. Médico — 11 pantallas
-
-### 13. Inicio médico
-
-Resumen operativo del día.
-
-### 14. Mi agenda
-
-Vista diaria/semanal/mensual.
-
-### 15. Solicitudes de agenda
-
-Crear y consultar solicitudes de cambios.
-
-### 16. Cola de pacientes
-
-Pacientes con check-in y acciones de llamado.
-
-### 17. Detalle paciente/cita
-
-Contexto previo a la atención.
-
-### 18. Resumen clínico
-
-Encuentros anteriores permitidos.
-
-### 19. Historia clínica Especialidad 1
-
-Ficha especializada.
-
-### 20. Historia clínica Especialidad 2
-
-Ficha especializada.
-
-### 21. Historia clínica Especialidad 3
-
-Ficha especializada.
-
-### 22. Historia clínica Especialidad 4
-
-Ficha especializada.
-
-### 23. Teleconsulta médica
-
-Sala virtual, pacientes conectados y consulta.
-
----
-
-# 5. Administrativo — 9 pantallas
-
-### 24. Dashboard administrativo
-
-Capacidad, saturación, citas, médicos e incidencias.
-
-### 25. Gestión de personal médico
-
-Alta, edición, activación y configuración profesional.
-
-### 26. Planificación de agenda y turnos
-
-Asignar turnos, generar slots, bloquear horarios y publicar capacidad.
-
-### 27. Solicitudes médicas
-
-Resolver ausencias, cambios y turnos adicionales.
-
-### 28. Capacidad y demanda
-
-Comparar demanda, capacidad, espera y lista de espera.
-
-### 29. Campañas Tipo A
-
-Crear campañas y administrar capacidad independiente.
-
-### 30. Gestión de citas y lista de espera
-
-Administrar excepciones operativas y reasignaciones.
-
-### 31. Recepción y check-in
-
-Validar QR y registrar llegada.
-
-### 32. Auditoría y trazabilidad
-
-Consultar cambios de agenda, citas y registros críticos según permisos.
-
----
-
-# 6. Pantallas prioritarias para Figma
-
-Diseñar primero estas 12:
-
-1. Inicio de sesión.
-2. Inicio estudiante.
-3. Buscar atención.
-4. Confirmación de reserva.
-5. Detalle de cita.
-6. Cola digital.
-7. Inicio médico.
-8. Agenda médica.
-9. Historia especializada base.
-10. Dashboard administrativo.
-11. Planificación de turnos.
-12. Capacidad y demanda.
-
-Con estas se define la mayor parte del design system.
-
----
-
-# 7. Flujos prioritarios
-
-## Flujo A — Reserva Tipo B
-
-```text
-Inicio estudiante
-→ Buscar atención
-→ Aplicar filtros
-→ Seleccionar slot
-→ Hold 10 min
-→ Confirmar
-→ Detalle cita
-```
-
-## Flujo B — Presencial
-
-```text
-Detalle cita
-→ QR
-→ Recepción
-→ Check-in
-→ Cola digital
-→ Médico llama
-→ Consulta
-→ Encuentro finalizado
-```
-
-## Flujo C — Teleconsulta
-
-```text
-Detalle cita
-→ Acceso virtual
-→ Sala de espera
-→ Médico recibe alerta
-→ Médico admite
-→ Consulta
-→ Finalización
-```
-
-## Flujo D — Lista de espera
-
-```text
-Sin disponibilidad
-→ Unirse a lista
-→ Slot liberado
-→ Oferta temporal
-→ Aceptar
-→ Cita confirmada
-```
-
-## Flujo E — Planificación médica
-
-```text
-Dashboard admin
-→ Capacidad y demanda
-→ Déficit detectado
-→ Planificación de turnos
-→ Seleccionar médico
-→ Crear turno
-→ Generar slots
-→ Publicar
-```
-
-## Flujo F — Cambio solicitado por médico
-
-```text
-Agenda médica
-→ Solicitar cambio
-→ Impacto calculado
-→ Administrativo revisa
-→ Aprobar/rechazar
-→ Ajustar agenda
-→ Notificar afectados
-```
-
+Administración filtra estudiantes por gestión/carrera → sistema identifica atención clínica cerrada durante la carrera → genera informe de cumplidos y pendientes para el proceso que corresponda.

@@ -9,19 +9,20 @@ export async function signIn(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const remember = formData.get("remember") === "on";
   const mockUser = findMockUser(email);
-  const role: AppRole = mockUser?.role ?? "estudiante";
+  const clinicalRole = mockUser?.clinicalRole ?? "STUDENT";
 
   if (!email.includes("@") || password.length < 8) {
     redirect("/iniciar-sesion?error=credentials");
   }
 
-  await writeSession(createDemoSession(email, role, mockUser?.name), remember);
-  redirect(`/${role}`);
+  const session = createDemoSession(email, clinicalRole, mockUser?.name);
+  await writeSession(session, remember);
+  redirect(`/${session.role}`);
 }
 
 export async function updateProfile(formData: FormData) {
   const requestedRole = String(formData.get("role") ?? "") as AppRole;
-  const session = await getSession() ?? createDemoSession("", ["estudiante", "medico", "administrativo"].includes(requestedRole) ? requestedRole : "estudiante");
+  const session = await getSession() ?? createDemoSession("", requestedRole === "administrativo" ? "ADMINISTRATIVE" : requestedRole === "medico" ? "REVIEW_DOCTOR" : "STUDENT");
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
