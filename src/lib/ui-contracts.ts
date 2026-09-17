@@ -53,7 +53,7 @@ export const CLINICAL_PERMISSIONS = [
 export type ClinicalPermission = (typeof CLINICAL_PERMISSIONS)[number];
 
 export const ROLE_PERMISSIONS: Record<ClinicalRole, readonly ClinicalPermission[]> = {
-  ADMINISTRATIVE: ["PATIENT_READ_ADMINISTRATIVE", "PATIENT_WRITE_ADMINISTRATIVE", "APPOINTMENT_MANAGE_CAPACITY", "APPOINTMENT_MARK_ATTENDED", "REPORT_VIEW_OPERATIONAL", "REPORT_EXPORT_AUTHORIZED", "AUDIT_VIEW"],
+  ADMINISTRATIVE: ["PATIENT_READ_ADMINISTRATIVE", "PATIENT_WRITE_ADMINISTRATIVE", "APPOINTMENT_MANAGE_CAPACITY", "APPOINTMENT_MARK_ATTENDED", "REPORT_VIEW_OPERATIONAL", "REPORT_EXPORT_AUTHORIZED"],
   REVIEW_DOCTOR: ["CLINICAL_HISTORY_READ_ASSIGNED", "CLINICAL_ENCOUNTER_CREATE", "CLINICAL_ENCOUNTER_CLOSE", "CLINICAL_ENCOUNTER_AMEND", "CLINICAL_DOCUMENT_UPLOAD", "CLINICAL_DOCUMENT_READ_ASSIGNED", "REFERRAL_CREATE", "REFERRAL_READ_ASSIGNED", "REPORT_VIEW_OPERATIONAL"],
   SPECIALIST: ["CLINICAL_HISTORY_READ_ASSIGNED", "CLINICAL_ENCOUNTER_CREATE", "CLINICAL_ENCOUNTER_CLOSE", "CLINICAL_ENCOUNTER_AMEND", "CLINICAL_DOCUMENT_UPLOAD", "CLINICAL_DOCUMENT_READ_ASSIGNED", "REFERRAL_READ_ASSIGNED", "REFERRAL_MANAGE_ASSIGNED", "REPORT_VIEW_OPERATIONAL"],
   STUDENT: ["APPOINTMENT_REQUEST"],
@@ -65,7 +65,7 @@ export function hasClinicalPermission(role: ClinicalRole, permission: ClinicalPe
 
 export const APPOINTMENT_STATUSES = ["REQUESTED", "SCHEDULED", "CANCELLED", "NO_SHOW", "ATTENDED"] as const;
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
-export const APPOINTMENT_TYPES = ["INITIAL", "REFERRAL"] as const;
+export const APPOINTMENT_TYPES = ["INITIAL", "SPECIALTY", "REFERRAL"] as const;
 export type AppointmentType = (typeof APPOINTMENT_TYPES)[number];
 export const CLINICAL_ENCOUNTER_STATUSES = ["DRAFT", "CLOSED", "AMENDED"] as const;
 export type ClinicalEncounterStatus = (typeof CLINICAL_ENCOUNTER_STATUSES)[number];
@@ -93,7 +93,16 @@ export type Patient = {
   updatedAt: string;
 };
 
-export type ClinicalHistory = { id: string; patientId: string; createdAt: string; createdBy: string };
+export type ClinicalIntake = {
+  allergies?: string;
+  chronicConditions?: string;
+  currentMedications?: string;
+  relevantHistory?: string;
+  emergencyContact?: string;
+  updatedAt: string;
+  updatedBy: string;
+};
+export type ClinicalHistory = { id: string; patientId: string; createdAt: string; createdBy: string; intake?: ClinicalIntake };
 export type Diagnosis = { id: string; encounterId: string; code?: string; label: string; note?: string; createdAt: string };
 export type Measurement = { id: string; encounterId: string; type: "WEIGHT" | "HEIGHT" | "BLOOD_PRESSURE" | "OTHER"; value: number; unit: string; measuredAt: string };
 
@@ -158,6 +167,8 @@ export type Appointment = {
   capacityId: string;
   requestedBy: string;
   assignedDoctorId?: string;
+  /** Solo aplica a reservas directas en una especialidad. */
+  specialty?: Specialty;
   referralId?: string;
   scheduledFor: string;
   createdAt: string;

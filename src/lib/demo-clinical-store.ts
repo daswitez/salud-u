@@ -7,6 +7,7 @@ import type {
   ClinicalDocumentType,
   ClinicalEncounter,
   ClinicalHistory,
+  ClinicalIntake,
   ClinicalRole,
   Diagnosis,
   Measurement,
@@ -159,6 +160,12 @@ export function getClinicalPatient(patientId: string) {
   return readState().patients.find((patient) => patient.id === patientId);
 }
 
+export function findPatientByIdentity(carnet: string, registrationCode: string) {
+  const normalizedCarnet = carnet.trim();
+  const normalizedCode = registrationCode.trim();
+  return readState().patients.find((patient) => patient.carnet === normalizedCarnet || patient.registrationCode === normalizedCode);
+}
+
 export function searchClinicalPatients(query: string) {
   const normalized = query.trim().toLocaleLowerCase();
   if (!normalized) return readState().patients;
@@ -168,6 +175,16 @@ export function searchClinicalPatients(query: string) {
 export function getClinicalHistory(patientId: string) {
   const state = readState();
   return state.histories.find((history) => history.patientId === patientId);
+}
+
+export function updateClinicalIntake(patientId: string, input: Omit<ClinicalIntake, "updatedAt" | "updatedBy">, updatedBy: string): ClinicalStoreResult<ClinicalHistory> {
+  const state = readState();
+  const history = state.histories.find((item) => item.patientId === patientId);
+  if (!history) return { ok: false, code: "NOT_FOUND", message: "No se encontró la historia clínica del estudiante." };
+  const intake: ClinicalIntake = { allergies: input.allergies?.trim(), chronicConditions: input.chronicConditions?.trim(), currentMedications: input.currentMedications?.trim(), relevantHistory: input.relevantHistory?.trim(), emergencyContact: input.emergencyContact?.trim(), updatedAt: timestamp(), updatedBy };
+  const updated = { ...history, intake };
+  writeState({ ...state, histories: state.histories.map((item) => item.id === history.id ? updated : item) });
+  return { ok: true, data: updated };
 }
 
 export function getPatientClinicalSnapshot(patientId: string) {
@@ -198,6 +215,26 @@ export function createClinicalPatient(input: Omit<Patient, "id" | "createdAt" | 
   const history: ClinicalHistory = { id: nextId("HIS-NEW", state.histories), patientId: patient.id, createdAt: now, createdBy };
   writeState({ ...state, patients: [...state.patients, patient], histories: [...state.histories, history] });
   return { ok: true, data: { patient, history } };
+}
+
+export type AdministrativePatientUpdate = Pick<Patient, "fullName" | "birthDate" | "career" | "email" | "phone" | "academicStatus" | "isRecurrent">;
+
+export function updateAdministrativePatient(patientId: string, input: AdministrativePatientUpdate): ClinicalStoreResult<Patient> {
+  const state = readState();
+  const patient = state.patients.find((item) => item.id === patientId);
+  if (!patient) return { ok: false, code: "NOT_FOUND", message: "No se encontró el estudiante solicitado." };
+  if (!input.fullName.trim() || !input.career.trim()) return { ok: false, code: "VALIDATION", message: "Nombre completo y carrera son obligatorios." };
+  const updated: Patient = {
+    ...patient,
+    ...input,
+    fullName: input.fullName.trim(),
+    career: input.career.trim(),
+    email: input.email?.trim(),
+    phone: input.phone?.trim(),
+    updatedAt: timestamp(),
+  };
+  writeState({ ...state, patients: state.patients.map((item) => item.id === patientId ? updated : item) });
+  return { ok: true, data: updated };
 }
 
 export function createClinicalEncounter(input: Omit<ClinicalEncounter, "id" | "historyId" | "status" | "occurredAt"> & { occurredAt?: string }): ClinicalStoreResult<ClinicalEncounter> {
@@ -269,6 +306,66 @@ export function createClinicalAppointment(input: Omit<Appointment, "id" | "creat
   const appointment: Appointment = { ...input, id: nextId("APT-NEW", state.appointments), status: input.status ?? "REQUESTED", createdAt: now, updatedAt: now };
   writeState({ ...state, appointments: [...state.appointments, appointment] });
   return { ok: true, data: appointment };
+}
+
+/** Acciones de la gestión mínima de citas por cupo para revisión estudiantil. */
+export function getClinicalAppointment(appointmentId: string) {
+  return readState().appointments.find((appointment) => appointment.id === appointmentId);
+}
+
+export function getPatientClinicalAppointments(patientId: string) {
+  return readState().appointments
+    .filter((appointment) => appointment.patientId === patientId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+export function requestInitialClinicalAppointment(patientId: string, requestedBy: string): ClinicalStoreResult<Appointment> {
+  const state = readState();
+  if (!state.patients.some((patient) => patient.id === patientId)) return { ok: false, code: "NOT_FOUND", message: "No se encontró el estudiante para la solicitud." };
+  const active = state.appointments.find((appointment) => appointment.patientId === patientId && appointment.type === "INITIAL" && (appointment.status === "REQUESTED" || appointment.status === "SCHEDULED"));
+  if (active) return { ok: false, code: "CONFLICT", message: "Este estudiante ya tiene una solicitud o cita inicial activa." };
+  return createClinicalAppointment({ patientId, type: "INITIAL", capacityId: "PENDING_CAPACITY", requestedBy, scheduledFor: timestamp(), status: "REQUESTED" });
+}
+
+export function scheduleInitialClinicalAppointment(appointmentId: string, capacity: { id: string; scheduledFor: string; doctorId: string }): ClinicalStoreResult<Appointment> {
+  const state = readState();
+  const appointment = state.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return { ok: false, code: "NOT_FOUND", message: "No se encontró la solicitud de cita." };
+  if (appointment.type !== "INITIAL" || appointment.status !== "REQUESTED") return { ok: false, code: "CONFLICT", message: "Solo se puede asignar cupo a una solicitud inicial pendiente." };
+  const updated: Appointment = { ...appointment, status: "SCHEDULED", capacityId: capacity.id, scheduledFor: capacity.scheduledFor, assignedDoctorId: capacity.doctorId, updatedAt: timestamp() };
+  writeState({ ...state, appointments: state.appointments.map((item) => item.id === appointmentId ? updated : item) });
+  return { ok: true, data: updated };
+}
+
+export function cancelInitialClinicalAppointment(appointmentId: string): ClinicalStoreResult<Appointment> {
+  const state = readState();
+  const appointment = state.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return { ok: false, code: "NOT_FOUND", message: "No se encontró la cita." };
+  if (!(["REQUESTED", "SCHEDULED"] as AppointmentStatus[]).includes(appointment.status)) return { ok: false, code: "CONFLICT", message: "Esta cita ya no puede cancelarse." };
+  const updated: Appointment = { ...appointment, status: "CANCELLED", updatedAt: timestamp() };
+  writeState({ ...state, appointments: state.appointments.map((item) => item.id === appointmentId ? updated : item) });
+  return { ok: true, data: updated };
+}
+
+export function markInitialClinicalAppointmentNoShow(appointmentId: string): ClinicalStoreResult<Appointment> {
+  const state = readState();
+  const appointment = state.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return { ok: false, code: "NOT_FOUND", message: "No se encontró la cita." };
+  if (appointment.status !== "SCHEDULED") return { ok: false, code: "CONFLICT", message: "Solo una cita programada puede marcarse como inasistencia." };
+  const updated: Appointment = { ...appointment, status: "NO_SHOW", updatedAt: timestamp() };
+  writeState({ ...state, appointments: state.appointments.map((item) => item.id === appointmentId ? updated : item) });
+  return { ok: true, data: updated };
+}
+
+/** Inicia el borrador clínico; la cita pasa a ATTENDED únicamente al cerrarlo. */
+export function startInitialClinicalEncounter(appointmentId: string, doctorId: string): ClinicalStoreResult<ClinicalEncounter> {
+  const state = readState();
+  const appointment = state.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return { ok: false, code: "NOT_FOUND", message: "No se encontró la cita." };
+  if (appointment.status !== "SCHEDULED" || appointment.type !== "INITIAL") return { ok: false, code: "CONFLICT", message: "La cita debe estar programada para iniciar una atención." };
+  const existing = state.encounters.find((encounter) => encounter.appointmentId === appointmentId);
+  if (existing) return { ok: true, data: existing };
+  return createClinicalEncounter({ patientId: appointment.patientId, appointmentId, doctorId, type: "INITIAL", chiefComplaint: "Pendiente de evaluación en revisión estudiantil.", bloodChemistryStatus: "PENDING" });
 }
 
 export function getClinicalReportRows(filter: ReportFilter = {}) {

@@ -1,4 +1,17 @@
 import { AppointmentHold, DEMO_TODAY, INITIAL_APPOINTMENTS, INITIAL_CLINICAL_ENCOUNTERS, INITIAL_QUEUE, MockAppointment, MockClinicalEncounter, MockQueueEntry, MockSlot } from "@/lib/mock-clinic";
+import {
+  cancelInitialClinicalAppointment,
+  getClinicalDemoState,
+  getClinicalAppointment,
+  getPatientClinicalAppointments,
+  markInitialClinicalAppointmentNoShow,
+  requestInitialClinicalAppointment,
+  scheduleInitialClinicalAppointment,
+  startInitialClinicalEncounter,
+  createClinicalAppointment,
+  type ClinicalStoreResult,
+} from "@/lib/demo-clinical-store";
+import type { Appointment, AppointmentType, ClinicalEncounter, Specialty } from "@/lib/ui-contracts";
 
 type BookingState = { appointments: MockAppointment[]; holds: AppointmentHold[]; queue: MockQueueEntry[]; encounters: MockClinicalEncounter[] };
 const STORAGE_KEY = "salud-universitaria-booking-demo-v1";
@@ -140,4 +153,120 @@ export function finalizeClinicalEncounter(encounterId: string, doctorId: string,
   const updated = { ...encounter, formData, status: "FINALIZED" as const, updatedAt: timestamp, endedAt: timestamp };
   writeState({ ...state, encounters: state.encounters.map((item) => item.id === encounterId ? updated : item), queue: state.queue.map((item) => item.id === queueEntry.id ? { ...item, status: "COMPLETED" as const, updatedAt: timestamp } : item), appointments: state.appointments.map((item) => item.id === encounter.appointmentId ? { ...item, status: "COMPLETED" as const } : item) });
   return updated;
+}
+
+// B4. Citas por cupo. Este adaptador usa exclusivamente el store clínico
+// central; los helpers anteriores se conservan sólo para rutas heredadas.
+export type CareCapacity = {
+  id: string;
+  scheduledFor: string;
+  doctorId: string;
+  doctorName: string;
+  appointmentType: Extract<AppointmentType, "INITIAL" | "SPECIALTY">;
+  specialty?: Specialty;
+  durationMinutes: number;
+};
+
+export type MedicalSchedule = {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  appointmentType: Extract<AppointmentType, "INITIAL" | "SPECIALTY">;
+  specialty?: Specialty;
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  blocks: { startTime: string; endTime: string; reason: string }[];
+};
+
+const CAPACITY_STORAGE_KEY = "salud-universitaria-medical-schedules-v1";
+const INITIAL_SCHEDULES: readonly MedicalSchedule[] = [
+  { id: "SCH-REV-001", doctorId: "DOC-REV-001", doctorName: "Dra. Valeria Mendoza", appointmentType: "INITIAL", date: "2026-09-18", startTime: "09:00", endTime: "11:00", durationMinutes: 30, blocks: [{ startTime: "10:00", endTime: "10:30", reason: "Bloqueo administrativo" }] },
+  { id: "SCH-DER-001", doctorId: "DOC-DER-001", doctorName: "Dra. Sofía Álvarez", appointmentType: "SPECIALTY", specialty: "DERMATOLOGY", date: "2026-09-19", startTime: "09:00", endTime: "11:00", durationMinutes: 30, blocks: [] },
+  { id: "SCH-OFT-001", doctorId: "DOC-OFT-001", doctorName: "Dr. Andrés Flores", appointmentType: "SPECIALTY", specialty: "OPHTHALMOLOGY", date: "2026-09-19", startTime: "14:00", endTime: "16:00", durationMinutes: 30, blocks: [{ startTime: "15:00", endTime: "15:30", reason: "Bloqueo clínico" }] },
+];
+
+function cloneSchedules() { return JSON.parse(JSON.stringify(INITIAL_SCHEDULES)) as MedicalSchedule[]; }
+function readSchedules() { if (typeof window === "undefined") return cloneSchedules(); try { return JSON.parse(window.localStorage.getItem(CAPACITY_STORAGE_KEY) ?? "null") as MedicalSchedule[] ?? cloneSchedules(); } catch { return cloneSchedules(); } }
+function writeSchedules(schedules: MedicalSchedule[]) { if (typeof window !== "undefined") window.localStorage.setItem(CAPACITY_STORAGE_KEY, JSON.stringify(schedules)); }
+function toMinutes(time: string) { const [hours, minutes] = time.split(":").map(Number); return hours * 60 + minutes; }
+function toTime(value: number) { return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`; }
+function overlaps(start: string, end: string, blockStart: string, blockEnd: string) { return toMinutes(start) < toMinutes(blockEnd) && toMinutes(end) > toMinutes(blockStart); }
+
+export type AvailableCareCapacity = CareCapacity & { availableAppointments: number };
+export type AvailableInitialCareCapacity = AvailableCareCapacity;
+
+export function getMedicalSchedules(doctorId?: string) { return readSchedules().filter((schedule) => !doctorId || schedule.doctorId === doctorId).sort((left, right) => `${left.date}${left.startTime}`.localeCompare(`${right.date}${right.startTime}`)); }
+
+export function saveMedicalSchedule(input: Omit<MedicalSchedule, "id" | "doctorName">): ClinicalStoreResult<MedicalSchedule> {
+  const doctor = getClinicalDemoState().professionals.find((professional) => professional.id === input.doctorId);
+  if (!doctor || !input.date || toMinutes(input.startTime) >= toMinutes(input.endTime) || ![15, 30, 45, 60].includes(input.durationMinutes)) return { ok: false, code: "VALIDATION", message: "Revisa fecha, horario y duración de cada cita." };
+  if (input.appointmentType === "SPECIALTY" && (!input.specialty || doctor.specialty !== input.specialty)) return { ok: false, code: "VALIDATION", message: "La especialidad debe corresponder al profesional." };
+  if (input.appointmentType === "INITIAL" && doctor.role !== "REVIEW_DOCTOR") return { ok: false, code: "VALIDATION", message: "Solo el médico de revisión puede publicar cupos iniciales." };
+  if (input.blocks.some((block) => toMinutes(block.startTime) >= toMinutes(block.endTime) || toMinutes(block.startTime) < toMinutes(input.startTime) || toMinutes(block.endTime) > toMinutes(input.endTime))) return { ok: false, code: "VALIDATION", message: "Los bloqueos deben estar dentro del horario publicado." };
+  const schedules = readSchedules();
+  const schedule: MedicalSchedule = { ...input, id: `SCH-NEW-${String(schedules.length + 1).padStart(3, "0")}`, doctorName: doctor.fullName };
+  writeSchedules([...schedules, schedule]);
+  return { ok: true, data: schedule };
+}
+
+export function getAvailableCareCapacities(filter: { appointmentType?: "INITIAL" | "SPECIALTY"; specialty?: Specialty } = {}): AvailableCareCapacity[] {
+  const appointments = getClinicalDemoState().appointments;
+  return getMedicalSchedules().flatMap((schedule) => {
+    if (filter.appointmentType && schedule.appointmentType !== filter.appointmentType) return [];
+    if (filter.specialty && schedule.specialty !== filter.specialty) return [];
+    const capacities: AvailableCareCapacity[] = [];
+    for (let start = toMinutes(schedule.startTime); start + schedule.durationMinutes <= toMinutes(schedule.endTime); start += schedule.durationMinutes) {
+      const startTime = toTime(start); const endTime = toTime(start + schedule.durationMinutes);
+      if (schedule.blocks.some((block) => overlaps(startTime, endTime, block.startTime, block.endTime))) continue;
+      const id = `CAP-${schedule.id}-${startTime.replace(":", "")}`;
+      const occupied = appointments.some((appointment) => appointment.capacityId === id && ["SCHEDULED", "ATTENDED"].includes(appointment.status));
+      capacities.push({ id, scheduledFor: `${schedule.date}T${startTime}:00.000Z`, doctorId: schedule.doctorId, doctorName: schedule.doctorName, appointmentType: schedule.appointmentType, specialty: schedule.specialty, durationMinutes: schedule.durationMinutes, availableAppointments: occupied ? 0 : 1 });
+    }
+    return capacities;
+  });
+}
+
+export function getInitialCareCapacities(): AvailableInitialCareCapacity[] {
+  return getAvailableCareCapacities({ appointmentType: "INITIAL" });
+}
+
+export function requestStudentInitialAppointment(patientId: string, requestedBy = "U-EST-001") {
+  return requestInitialClinicalAppointment(patientId, requestedBy);
+}
+
+export function getClinicalInitialAppointment(appointmentId: string) {
+  return getClinicalAppointment(appointmentId);
+}
+
+export function getInitialAppointmentsForPatient(patientId: string) {
+  return getPatientClinicalAppointments(patientId);
+}
+
+export function confirmInitialAppointmentAgainstCapacity(appointmentId: string, capacityId: string): ClinicalStoreResult<Appointment> {
+  const capacity = getInitialCareCapacities().find((item) => item.id === capacityId);
+  if (!capacity) return { ok: false, code: "NOT_FOUND", message: "No se encontró el cupo seleccionado." };
+  if (capacity.availableAppointments <= 0) return { ok: false, code: "CONFLICT", message: "El cupo ya fue ocupado. Elige otro cupo disponible." };
+  return scheduleInitialClinicalAppointment(appointmentId, capacity);
+}
+
+/** Reserva hecha por Administración tras buscar al estudiante por carnet, código o nombre. */
+export function createAdministrativeAppointment(patientId: string, capacityId: string): ClinicalStoreResult<Appointment> {
+  const capacity = getAvailableCareCapacities().find((item) => item.id === capacityId);
+  if (!capacity) return { ok: false, code: "NOT_FOUND", message: "No se encontró el cupo seleccionado." };
+  if (!capacity.availableAppointments) return { ok: false, code: "CONFLICT", message: "El cupo ya está ocupado. Selecciona otro horario." };
+  return createClinicalAppointment({ patientId, type: capacity.appointmentType, specialty: capacity.specialty, capacityId: capacity.id, requestedBy: "ADMIN-001", assignedDoctorId: capacity.doctorId, scheduledFor: capacity.scheduledFor, status: "SCHEDULED" });
+}
+
+export function cancelInitialAppointment(appointmentId: string) {
+  return cancelInitialClinicalAppointment(appointmentId);
+}
+
+export function markInitialAppointmentNoShow(appointmentId: string) {
+  return markInitialClinicalAppointmentNoShow(appointmentId);
+}
+
+export function beginInitialAppointmentAttention(appointmentId: string, doctorId: string): ClinicalStoreResult<ClinicalEncounter> {
+  return startInitialClinicalEncounter(appointmentId, doctorId);
 }

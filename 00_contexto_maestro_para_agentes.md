@@ -20,7 +20,7 @@ Historia clínica, diagnóstico(s), mediciones y adjuntos
  └─ sí → derivación documentada → especialista → evolución y cierre
 ```
 
-El estudiante no elige una especialidad directamente. La derivación clínica es la puerta de entrada a Dermatología, Oftalmología, Medicina Interna y Urología. La única excepción debe estar explícitamente autorizada y ser auditable.
+El estudiante no elige una especialidad directamente. La derivación clínica es la puerta clínica habitual hacia Dermatología, Oftalmología, Medicina Interna y Urología; sin embargo, Administración puede registrar una reserva directa de especialidad cuando la solicitud se recibe por el proceso operativo del centro. Esa reserva debe quedar identificada como administrativa/directa y no reemplaza ni inventa una derivación clínica.
 
 ## Problema que resuelve
 
@@ -41,7 +41,7 @@ No debe interpretar el proceso como una reserva de servicios independientes. La 
 
 ### La atención inicial es la entrada clínica
 
-El médico de revisión estudiantil es el primer profesional clínico del recorrido. Registra la evaluación inicial, revisa o adjunta estudios disponibles y determina si procede seguimiento general o una derivación. El sistema no ofrece al estudiante un camino de reserva directa hacia una especialidad.
+El médico de revisión estudiantil es el primer profesional clínico del recorrido. Registra la evaluación inicial, revisa o adjunta estudios disponibles y determina si procede seguimiento general o una derivación. El sistema no ofrece al estudiante un camino de reserva directa hacia una especialidad; Administración sí puede gestionar una solicitud directa cuando el centro la recibe así.
 
 ### Administración forma parte del flujo, no es un actor externo
 
@@ -133,7 +133,7 @@ Una derivación tiene atención origen, paciente, especialidad destino, motivo d
 
 Las citas siguen existiendo para la organización administrativa. Pueden ser solicitadas por el estudiante o creadas por Administración y se limitan a cupos disponibles; los pacientes recurrentes usan los cupos habilitados. Estados: `REQUESTED`, `SCHEDULED`, `CANCELLED`, `NO_SHOW`, `ATTENDED`. Una cita atendida debe enlazarse a una atención clínica, pero no sustituye la historia.
 
-Un cupo representa capacidad disponible para una atención, no un diagnóstico ni una especialidad elegida libremente por el estudiante. La administración operativa de la capacidad queda fuera del núcleo clínico descrito en este documento.
+Un cupo representa capacidad disponible para una atención, no un diagnóstico ni una especialidad elegida libremente por el estudiante. Cada médico publica sus días, rangos horarios, duración de cita y bloqueos; el sistema genera los turnos disponibles a partir de esa configuración. Administración usa esos turnos para reservar revisión o especialidad, sin sobre-reserva.
 
 ## Conceptos de dominio que no deben confundirse
 

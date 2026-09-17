@@ -9,7 +9,8 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
   const isSpecialist = clinicalRole === "SPECIALIST";
   return [
     { key: "home", href: "/medico", label: "Inicio", icon: "home" },
-    { key: "patients", label: "Mis pacientes", icon: "users", comingSoon: true },
+    { key: "availability", href: "/medico/horarios", label: "Mi disponibilidad", icon: "calendar" },
+    { key: "patients", href: "/medico/pacientes", label: "Mis pacientes", icon: "users" },
     ...(isSpecialist ? [{ key: "referrals", label: "Derivaciones recibidas", icon: "referral" as const, comingSoon: true }] : [{ key: "new-encounter", label: "Nueva atención", icon: "document" as const, comingSoon: true }, { key: "referrals", label: "Derivaciones emitidas", icon: "referral" as const, comingSoon: true }]),
     { key: "reports", label: "Reportes", icon: "chart", comingSoon: true },
     { key: "tele", label: "Teleconsulta · próximamente", icon: "tele", comingSoon: true },
@@ -26,11 +27,10 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
   ];
   if (role === "administrativo") return [
     { key: "home", href: "/administrativo", label: "Inicio", icon: "home" },
-    { key: "students", label: "Estudiantes", icon: "users", comingSoon: true },
-    { key: "appointments", label: "Citas por cupo", icon: "calendar", comingSoon: true },
-    { key: "admission", label: "Ingreso y asistencia", icon: "folder", comingSoon: true },
+    { key: "students", href: "/administrativo/estudiantes", label: "Estudiantes", icon: "users" },
+    { key: "appointments", href: "/administrativo/check-in", label: "Citas por cupo", icon: "calendar" },
+    { key: "admission", href: "/administrativo/check-in", label: "Ingreso y asistencia", icon: "folder" },
     { key: "reports", label: "Reportes", icon: "chart", comingSoon: true },
-    { key: "audit", href: "/administrativo/auditoria", label: "Auditoría", icon: "document" },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil", icon: "user" },
   ];
   return medicalNavigation(clinicalRole ?? "REVIEW_DOCTOR");

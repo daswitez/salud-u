@@ -80,7 +80,7 @@ Rediseñar la navegación según el flujo actualizado.
 
 | Actor | Menú final mínimo |
 |---|---|
-| Administración | Inicio, Estudiantes, Citas por cupo, Ingreso/asistencia, Reportes, Auditoría. |
+| Administración | Inicio, Estudiantes, Citas por cupo, Ingreso/asistencia y Reportes. |
 | Médico de revisión | Inicio, Mis pacientes, Nueva atención, Derivaciones emitidas, Reportes. |
 | Especialista | Inicio, Derivaciones recibidas, Mis pacientes, Reportes. |
 | Estudiante | Solicitar cita, Mis citas, Mi información habilitada. |
@@ -97,6 +97,7 @@ Rediseñar la navegación según el flujo actualizado.
 **Tipo:** Nueva + Migrar.
 **Depende de:** B0, B1, B2.
 **Ruta objetivo:** `/administrativo/estudiantes` y `/administrativo/estudiantes/nuevo`.
+**Estado:** Implementado, incluida la ficha administrativa `/administrativo/estudiantes/[patientId]`.
 
 Crear la primera pantalla del flujo real: búsqueda y registro administrativo del estudiante antes de su atención.
 
@@ -111,11 +112,13 @@ Crear la primera pantalla del flujo real: búsqueda y registro administrativo de
 
 ### B4. Citas por cupo para atención inicial
 
+**Estado:** Implementado.
+
 **Tipo:** Migrar.
 **Depende de:** B1, B3.
 **Archivos a adaptar:** `src/app/estudiante/buscar/page.tsx`, `src/app/estudiante/reservar/page.tsx`, `src/app/estudiante/citas/*`, `src/app/administrativo/check-in/page.tsx`, `src/lib/demo-booking-store.ts`.
 
-Mantener únicamente la mínima gestión de solicitud, cupo, confirmación, cancelación, no asistencia y atención. La solicitud del estudiante siempre es para revisión estudiantil; Administración puede crearla directamente.
+Mantener únicamente la mínima gestión de solicitud, cupo, confirmación, cancelación, no asistencia y atención. La solicitud del estudiante siempre es para revisión estudiantil; Administración puede crear una cita inmediata para revisión o especialidad, identificando el origen directo cuando no proviene de una derivación.
 
 **Criterios de terminado:**
 
@@ -126,7 +129,17 @@ Mantener únicamente la mínima gestión de solicitud, cupo, confirmación, canc
 - Marcar `ATTENDED` requiere enlazar o iniciar una atención clínica en el mock.
 - Se retiran mensajes, temporizadores o datos sobre hold, QR, tiempo de espera y cola.
 
+### B4.1. Disponibilidad publicada por médicos
+
+**Estado:** Implementado.
+
+Cada médico configura por día sus rangos de atención, duración por cita y bloqueos. Al publicar, se generan turnos disponibles para que Administración reserve citas sin sobre-reserva. La disponibilidad de revisión solo puede ser publicada por el médico de revisión; la especializada se limita a la especialidad del médico.
+
 ### B5. Ficha de paciente e historia clínica longitudinal
+
+**Estado:** Implementado.
+
+**Ampliación implementada:** La admisión inicial incluye cuestionario clínico editable y adjuntos con tipo, descripción y etiquetas; el médico autorizado puede actualizar los mismos datos desde la ficha del paciente.
 
 **Tipo:** Nueva + Migrar.
 **Depende de:** B1, B3.

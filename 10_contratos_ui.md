@@ -59,6 +59,15 @@ type ClinicalHistory = {
   patientId: string;
   createdAt: string;
   createdBy: string;
+  intake?: {
+    allergies?: string;
+    chronicConditions?: string;
+    currentMedications?: string;
+    relevantHistory?: string;
+    emergencyContact?: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
 };
 
 type ClinicalEncounter = {
@@ -149,11 +158,12 @@ type Referral = {
 type Appointment = {
   id: string;
   patientId: string;
-  type: "INITIAL" | "REFERRAL";
+  type: "INITIAL" | "SPECIALTY" | "REFERRAL";
   status: AppointmentStatus;
   capacityId: string;
   requestedBy: string;
   assignedDoctorId?: string;
+  specialty?: Specialty;
   referralId?: string;
   scheduledFor: string;
   createdAt: string;
@@ -161,7 +171,7 @@ type Appointment = {
 };
 ```
 
-Una derivación no se habilita sin especialidad, motivo y comentario. Una cita `REFERRAL` exige `referralId`; una cita `INITIAL` no permite que el estudiante seleccione directamente una especialidad.
+Una derivación no se habilita sin especialidad, motivo y comentario. Una cita `REFERRAL` exige `referralId`; una cita `INITIAL` no permite que el estudiante seleccione directamente una especialidad. `SPECIALTY` representa una reserva directa creada por Administración contra un cupo publicado por el especialista y conserva la especialidad solicitada, sin simular una derivación clínica.
 
 ## Filtros y estados de vista
 
