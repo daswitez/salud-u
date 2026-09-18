@@ -399,6 +399,56 @@ export function startInitialClinicalEncounter(appointmentId: string, doctorId: s
   return createClinicalEncounter({ patientId: appointment.patientId, appointmentId, doctorId, type: "INITIAL", chiefComplaint: "Pendiente de evaluación en revisión estudiantil.", bloodChemistryStatus: "PENDING" });
 }
 
+export function startSpecialtyClinicalEncounter(referralId: string, doctorId: string, specialty: string): ClinicalStoreResult<ClinicalEncounter> {
+  const state = readState();
+  const referral = state.referrals.find((item) => item.id === referralId);
+  if (!referral) return { ok: false, code: "NOT_FOUND", message: "No se encontró la derivación." };
+  if (referral.status !== "ASSIGNED" && referral.status !== "PENDING_ASSIGNMENT") return { ok: false, code: "CONFLICT", message: "La derivación debe estar asignada o pendiente para iniciar la atención." };
+  
+  const existing = state.encounters.find((encounter) => encounter.referralId === referralId);
+  if (existing) return { ok: true, data: existing };
+  
+  // Mark referral as IN_PROGRESS
+  const updatedReferral: Referral = { ...referral, status: "IN_PROGRESS", updatedAt: timestamp() };
+  
+  // Create draft encounter
+  const history = state.histories.find((item) => item.patientId === referral.patientId);
+  if (!history) return { ok: false, code: "NOT_FOUND", message: "El paciente no tiene historia clínica." };
+  
+  const encounter: ClinicalEncounter = { 
+    id: nextId("ENC-NEW", state.encounters),
+    historyId: history.id,
+    patientId: referral.patientId, 
+    referralId, 
+    doctorId, 
+    type: "SPECIALTY", 
+    specialty: specialty as any,
+    status: "DRAFT",
+    occurredAt: timestamp(),
+    chiefComplaint: referral.reason,
+    bloodChemistryStatus: "NOT_PRESENTED" 
+  };
+
+  writeState({ 
+    ...state, 
+    referrals: state.referrals.map((item) => item.id === referralId ? updatedReferral : item),
+    encounters: [...state.encounters, encounter] 
+  });
+  
+  return { ok: true, data: encounter };
+}
+
+export function markSpecialtyReferralNoShow(referralId: string): ClinicalStoreResult<Referral> {
+  const state = readState();
+  const referral = state.referrals.find((item) => item.id === referralId);
+  if (!referral) return { ok: false, code: "NOT_FOUND", message: "No se encontró la derivación." };
+  if (referral.status !== "ASSIGNED" && referral.status !== "PENDING_ASSIGNMENT") return { ok: false, code: "CONFLICT", message: "Solo una derivación asignada puede marcarse como inasistencia." };
+  
+  const updated: Referral = { ...referral, status: "RETURNED", closingNote: "Paciente no asistió a la cita de especialidad.", updatedAt: timestamp() };
+  writeState({ ...state, referrals: state.referrals.map((item) => item.id === referralId ? updated : item) });
+  return { ok: true, data: updated };
+}
+
 export function getClinicalReportRows(filter: ReportFilter = {}) {
   const state = readState();
   const patientById = new Map(state.patients.map((patient) => [patient.id, patient]));

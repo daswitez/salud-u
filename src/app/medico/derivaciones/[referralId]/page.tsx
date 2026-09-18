@@ -7,6 +7,7 @@ import { requireClinicalRole } from "@/lib/demo-session";
 import { ReferralActionController } from "@/components/referral-action-controller";
 import { ClinicalDocumentUploader } from "@/components/clinical-document-uploader";
 import { DeleteDocumentButton } from "@/components/delete-document-button";
+import { ClinicalChartViewer } from "@/components/clinical-chart-viewer";
 
 function age(birthDate?: string) { 
   if (!birthDate) return "—"; 
@@ -108,80 +109,22 @@ export default async function MedicalReferralContextPage({ params }: { params: P
             </div>
           </header>
 
-          <div className="mt-7 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-            <section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-bold text-text-primary">Línea de tiempo completa</h2>
-                  <p className="mt-1 text-sm text-text-secondary">Atenciones vinculadas a esta historia, ordenadas de la más reciente.</p>
-                </div>
-              </div>
-              <div className="mt-6 space-y-4">
-                {snapshot.encounters.map((encounter) => (
-                  <article key={encounter.id} className="rounded-xl border border-divider p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-text-primary">{encounter.type === "INITIAL" ? "Revisión estudiantil" : "Atención especializada"}</p>
-                        <p className="mt-1 text-sm text-text-secondary">{new Date(encounter.occurredAt).toLocaleString("es-BO", { dateStyle: "medium", timeStyle: "short" })}</p>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${encounter.status === "CLOSED" ? "bg-success-container text-success" : "bg-warning-container text-warning"}`}>{encounter.status === "CLOSED" ? "Cerrada" : "Borrador"}</span>
-                    </div>
-                    <p className="mt-4 text-sm font-semibold text-text-primary">{encounter.chiefComplaint}</p>
-                    {encounter.assessment && <p className="mt-2 text-sm text-text-secondary">{encounter.assessment}</p>}
-                  </article>
-                ))}
-                {!snapshot.encounters.length && <p className="py-8 text-sm text-text-secondary">No hay atenciones clínicas previas.</p>}
-              </div>
-            </section>
+          <div className="mt-7 grid gap-6 xl:grid-cols-[1fr_350px]">
+            {/* Visor de Historial Clínico en Pestañas */}
+            <div className="min-w-0">
+              <ClinicalChartViewer 
+                snapshot={snapshot} 
+                context={{ 
+                  type: "SPECIALTY", 
+                  referral, 
+                  sourceEncounter: state.encounters.find(e => e.id === referral.sourceEncounterId) || {},
+                  sourceDiagnoses 
+                }} 
+              />
+            </div>
+
+            {/* Panel de Documentos de la Cita Actual (Side) */}
             <aside className="space-y-6">
-              {snapshot.history?.intake && (
-                <section className="rounded-2xl border border-divider bg-surface p-5">
-                  <h2 className="text-lg font-bold text-text-primary">Antecedentes Médicos</h2>
-                  <dl className="mt-4 grid gap-y-3 text-sm">
-                    {snapshot.history.intake.allergies && (
-                      <div>
-                        <dt className="text-text-secondary text-xs">Alergias</dt>
-                        <dd className="font-medium text-error-600">{snapshot.history.intake.allergies}</dd>
-                      </div>
-                    )}
-                    {snapshot.history.intake.chronicConditions && (
-                      <div>
-                        <dt className="text-text-secondary text-xs">Condiciones Crónicas</dt>
-                        <dd className="font-medium text-text-primary">{snapshot.history.intake.chronicConditions}</dd>
-                      </div>
-                    )}
-                    {snapshot.history.intake.relevantHistory && (
-                      <div>
-                        <dt className="text-text-secondary text-xs">Historia Relevante / Cirugías</dt>
-                        <dd className="font-medium text-text-primary">{snapshot.history.intake.relevantHistory}</dd>
-                      </div>
-                    )}
-                    {snapshot.history.intake.currentMedications && (
-                      <div>
-                        <dt className="text-text-secondary text-xs">Medicación Actual</dt>
-                        <dd className="font-medium text-text-primary">{snapshot.history.intake.currentMedications}</dd>
-                      </div>
-                    )}
-                  </dl>
-                </section>
-              )}
-              <section className="rounded-2xl border border-divider bg-surface p-5">
-                <h2 className="text-lg font-bold text-text-primary">Diagnósticos y mediciones</h2>
-                <div className="mt-4 space-y-3">
-                  {snapshot.diagnoses.map((diagnosis) => (
-                    <div key={diagnosis.id} className="rounded-lg bg-surface-secondary p-3">
-                      <p className="font-semibold text-text-primary">{diagnosis.label}</p>
-                      <p className="mt-1 text-xs text-text-secondary">{diagnosis.code ?? "Sin código"}</p>
-                    </div>
-                  ))}
-                  {snapshot.measurements.map((measurement) => (
-                    <div key={measurement.id} className="flex items-center justify-between rounded-lg border border-divider p-3 text-sm">
-                      <span className="text-text-secondary">{measurement.type === "WEIGHT" ? "Peso" : measurement.type}</span>
-                      <span className="font-bold text-text-primary">{measurement.value} {measurement.unit}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
               <section className="rounded-2xl border border-divider bg-surface p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <h2 className="text-lg font-bold text-text-primary">Documentos de la Cita</h2>

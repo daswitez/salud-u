@@ -20,6 +20,7 @@ export function ClinicalForm({ patientId, historyId, doctorId, doctorName, clini
   const [instructions, setInstructions] = useState("");
   const [weight, setWeight] = useState("");
   const [bloodChemistryStatus, setBloodChemistryStatus] = useState<"ATTACHED" | "PENDING" | "NOT_PRESENTED">("NOT_PRESENTED");
+  const [specialtyData, setSpecialtyData] = useState<Record<string, any>>({});
   
   const [notice, setNotice] = useState("");
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
@@ -35,7 +36,8 @@ export function ClinicalForm({ patientId, historyId, doctorId, doctorName, clini
       setAssessment(draft.assessment || "");
       setInstructions(draft.instructions || "");
       setBloodChemistryStatus(draft.bloodChemistryStatus);
-      const weightMeasurement = snapshot.measurements.find(m => m.encounterId === draft.id && m.type === "WEIGHT");
+      setSpecialtyData(draft.specialtyData || {});
+      const weightMeasurement = snapshot.measurements.find((m: any) => m.encounterId === draft.id && m.type === "WEIGHT");
       if (weightMeasurement) setWeight(String(weightMeasurement.value));
       setDocuments(snapshot.documents.filter(d => d.encounterId === draft.id));
     }
@@ -80,6 +82,7 @@ export function ClinicalForm({ patientId, historyId, doctorId, doctorName, clini
         assessment,
         instructions,
         bloodChemistryStatus,
+        specialtyData
       });
 
       if (result.ok) {
@@ -217,7 +220,7 @@ export function ClinicalForm({ patientId, historyId, doctorId, doctorName, clini
 
               {/* Evaluación */}
               <label className="block">
-                <span className="text-sm font-semibold text-text-primary">Evaluación Clínica</span>
+                <span className="text-sm font-semibold text-text-primary">Evaluación Clínica General</span>
                 <span className="mt-1 block text-xs text-text-tertiary">Desarrollo de la revisión, síntomas y hallazgos.</span>
                 <textarea
                   disabled={isFinalized}
@@ -227,6 +230,83 @@ export function ClinicalForm({ patientId, historyId, doctorId, doctorName, clini
                   className="mt-2 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 disabled:bg-surface-secondary disabled:text-text-secondary"
                 />
               </label>
+
+              {/* SPECIALTY SPECIFIC FIELDS */}
+              {encounter?.type === "SPECIALTY" && encounter.specialty === "DERMATOLOGY" && (
+                <div className="space-y-4 border-l-4 border-primary-500 pl-4 py-2">
+                  <h4 className="font-bold text-primary-900 text-sm uppercase tracking-wider">Evolución Dermatológica</h4>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Tipo de lesión</span>
+                    <input type="text" value={specialtyData.lesionType || ""} onChange={e => setSpecialtyData({...specialtyData, lesionType: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Ej: Mácula, Pápula, Nódulo..." />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Topografía / Distribución</span>
+                    <input type="text" value={specialtyData.topography || ""} onChange={e => setSpecialtyData({...specialtyData, topography: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Ej: Rostro, extremidades superiores..." />
+                  </label>
+                </div>
+              )}
+
+              {encounter?.type === "SPECIALTY" && encounter.specialty === "OPHTHALMOLOGY" && (
+                <div className="space-y-4 border-l-4 border-primary-500 pl-4 py-2">
+                  <h4 className="font-bold text-primary-900 text-sm uppercase tracking-wider">Evolución Oftalmológica</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-text-primary">Agudeza Visual (OD)</span>
+                      <input type="text" value={specialtyData.visualAcuityOD || ""} onChange={e => setSpecialtyData({...specialtyData, visualAcuityOD: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Ej: 20/20" />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-semibold text-text-primary">Agudeza Visual (OI)</span>
+                      <input type="text" value={specialtyData.visualAcuityOS || ""} onChange={e => setSpecialtyData({...specialtyData, visualAcuityOS: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Ej: 20/40" />
+                    </label>
+                  </div>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Fondo de ojo</span>
+                    <textarea value={specialtyData.fundus || ""} onChange={e => setSpecialtyData({...specialtyData, fundus: e.target.value})} disabled={isFinalized} rows={2} className="mt-2 block w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" />
+                  </label>
+                </div>
+              )}
+
+              {encounter?.type === "SPECIALTY" && encounter.specialty === "INTERNAL_MEDICINE" && (
+                <div className="space-y-4 border-l-4 border-primary-500 pl-4 py-2">
+                  <h4 className="font-bold text-primary-900 text-sm uppercase tracking-wider">Evolución de Medicina Interna</h4>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Presión Arterial (mmHg)</span>
+                    <input type="text" value={specialtyData.bloodPressure || ""} onChange={e => setSpecialtyData({...specialtyData, bloodPressure: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Ej: 120/80" />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Auscultación Cardiopulmonar</span>
+                    <textarea value={specialtyData.auscultation || ""} onChange={e => setSpecialtyData({...specialtyData, auscultation: e.target.value})} disabled={isFinalized} rows={2} className="mt-2 block w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" />
+                  </label>
+                </div>
+              )}
+
+              {encounter?.type === "SPECIALTY" && encounter.specialty === "UROLOGY" && (
+                <div className="space-y-4 border-l-4 border-primary-500 pl-4 py-2">
+                  <h4 className="font-bold text-primary-900 text-sm uppercase tracking-wider">Evolución Urológica</h4>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Síntomas del Tracto Urinario Inferior (STUI)</span>
+                    <textarea value={specialtyData.stui || ""} onChange={e => setSpecialtyData({...specialtyData, stui: e.target.value})} disabled={isFinalized} rows={2} className="mt-2 block w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" placeholder="Disuria, polaquiuria, etc." />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Examen Físico Urológico</span>
+                    <textarea value={specialtyData.urologicalExam || ""} onChange={e => setSpecialtyData({...specialtyData, urologicalExam: e.target.value})} disabled={isFinalized} rows={2} className="mt-2 block w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" />
+                  </label>
+                </div>
+              )}
+
+              {encounter?.type === "SPECIALTY" && encounter.specialty === "GYNECOLOGY" && (
+                <div className="space-y-4 border-l-4 border-primary-500 pl-4 py-2">
+                  <h4 className="font-bold text-primary-900 text-sm uppercase tracking-wider">Evolución Ginecológica</h4>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Fecha de Última Menstruación (FUM)</span>
+                    <input type="date" value={specialtyData.fum || ""} onChange={e => setSpecialtyData({...specialtyData, fum: e.target.value})} disabled={isFinalized} className="mt-2 block w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-primary">Examen Ginecológico</span>
+                    <textarea value={specialtyData.gynecologicalExam || ""} onChange={e => setSpecialtyData({...specialtyData, gynecologicalExam: e.target.value})} disabled={isFinalized} rows={2} className="mt-2 block w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary-200" />
+                  </label>
+                </div>
+              )}
 
               {/* Indicaciones / Seguimiento */}
               <label className="block">

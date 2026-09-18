@@ -241,14 +241,23 @@ Crear una bandeja única para especialistas y usar plantillas/formularios espec�
 - El especialista crea una evolución `SPECIALTY` que **utiliza el formulario específico de su especialidad**, capturando datos categóricos propios (ej. exámenes ginecológicos vs oftalmológicos) sin sobrescribir la atención inicial y relacionados al núcleo base.
 - Puede cerrar o devolver la derivación con nota clínica.
 - Las cuatro rutas de “especialidad-N” dejan de estar enlazadas y se sustituyen por rutas/plantillas con nombres reales de especialidad (Dermatología, Oftalmología, Medicina Interna, Urología).
+- Implementada lógica de bandeja filtrando por especialidad asignada al doctor.
+- Creados campos dinámicos específicos (Topografía, Agudeza Visual, Fondo de ojo, Auscultación, STUI, FUM, etc.) para Dermatología, Oftalmología, Medicina Interna, Urología y Ginecología en `ClinicalForm`.
+- Eliminadas rutas obsoletas `fichas/especialidad-N`.
 
 ## 4. P1 — Consulta diaria, reportes y trazabilidad
 
 ### B10. Inicio médico y accesos rápidos clínicos
 
+**Estado:** ✅ **Completado** (18-Sept)
+
 **Tipo:** Migrar.
 **Depende de:** B5, B8, B9.
 **Archivo a adaptar:** `src/app/medico/page.tsx`.
+
+- Reestructurado `src/app/medico/page.tsx` con las 4 tarjetas solicitadas (Atendidos hoy, Borradores, Derivaciones pendientes, Derivaciones en curso).
+- Eliminadas las métricas irrelevantes (agenda programada).
+- Añadidos botones de accesos rápidos a Mis Pacientes, Nueva Atención y Derivaciones.
 
 **Criterios de terminado:**
 
