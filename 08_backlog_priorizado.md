@@ -267,7 +267,7 @@ Crear una bandeja única para especialistas y usar plantillas/formularios espec�
 - No muestra métricas de agenda, cola, espera o teleconsulta.
 
 ### B11. Mis pacientes e historial filtrable
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Nueva.
 **Depende de:** B1, B5, B9.
 **Ruta objetivo:** `/medico/pacientes`.
@@ -281,7 +281,7 @@ Crear una bandeja única para especialistas y usar plantillas/formularios espec�
 - Diferencia correctamente lista vacía por filtros y ausencia de pacientes autorizados.
 
 ### B12. Dashboard administrativo adaptado
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Migrar.
 **Depende de:** B1, B3, B4, B6, B8.
 **Archivo a adaptar:** `src/app/administrativo/page.tsx`.
@@ -296,7 +296,7 @@ Reemplazar indicadores de oferta/demanda por información operativa útil para r
 - Presenta alertas no clínicas: datos administrativos incompletos, cupos agotados y derivaciones sin asignar.
 
 ### B13. Reportes rápidos diarios
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Nueva.
 **Depende de:** B1, B6, B8, B9.
 **Ruta objetivo:** `/administrativo/reportes` y `/medico/reportes`.
@@ -309,7 +309,7 @@ Reemplazar indicadores de oferta/demanda por información operativa útil para r
 - Administración ve la información operacional que su permiso permite sin editar texto clínico.
 
 ### B14. Reportes filtrables, investigación y exportación
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Nueva.
 **Depende de:** B13, B0.
 **Ruta objetivo:** `/administrativo/reportes/clinicos`.

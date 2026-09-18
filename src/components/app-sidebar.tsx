@@ -12,7 +12,7 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
     { key: "availability", href: "/medico/horarios", label: "Mi disponibilidad", icon: "calendar" },
     { key: "patients", href: "/medico/pacientes", label: "Mis pacientes", icon: "users" },
     { key: "referrals", href: "/medico/derivaciones", label: isSpecialist ? "Derivaciones recibidas" : "Derivaciones emitidas", icon: "referral" },
-    { key: "reports", label: "Reportes", icon: "chart", comingSoon: true },
+    { key: "reports", href: "/medico/reportes", label: "Reportes", icon: "chart" },
     { key: "tele", label: "Teleconsulta · próximamente", icon: "tele", comingSoon: true },
     { key: "profile", href: "/perfil?rol=medico", label: "Perfil", icon: "user" },
   ];
@@ -28,9 +28,8 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
   if (role === "administrativo") return [
     { key: "home", href: "/administrativo", label: "Inicio", icon: "home" },
     { key: "students", href: "/administrativo/estudiantes", label: "Estudiantes", icon: "users" },
-    { key: "appointments", href: "/administrativo/check-in", label: "Citas por cupo", icon: "calendar" },
-    { key: "admission", href: "/administrativo/check-in", label: "Ingreso y asistencia", icon: "folder" },
-    { key: "reports", label: "Reportes", icon: "chart", comingSoon: true },
+    { key: "admission", href: "/administrativo/check-in", label: "Citas y asistencia", icon: "calendar" },
+    { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil", icon: "user" },
   ];
   return medicalNavigation(clinicalRole ?? "REVIEW_DOCTOR");

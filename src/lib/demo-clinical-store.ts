@@ -80,6 +80,7 @@ export const CLINICAL_DEMO_SEED: ClinicalDemoState = {
     { id: "ENC-2026-003", historyId: "HIS-2026-002", patientId: "PAT-2026-002", appointmentId: "APT-2026-003", doctorId: "DOC-REV-001", type: "INITIAL", status: "CLOSED", occurredAt: "2026-08-21T09:00:00.000Z", chiefComplaint: "Seguimiento de paciente recurrente", assessment: "Control de evolución y actualización de indicaciones.", instructions: "Continuar con las indicaciones previamente registradas.", bloodChemistryStatus: "NOT_PRESENTED", closedAt: "2026-08-21T09:30:00.000Z" },
     { id: "ENC-2026-004", historyId: "HIS-2026-003", patientId: "PAT-2026-003", appointmentId: "APT-2026-004", doctorId: "DOC-REV-001", type: "INITIAL", status: "CLOSED", occurredAt: "2026-09-14T11:00:00.000Z", chiefComplaint: "Consulta general", assessment: "Caso resuelto en revisión estudiantil.", instructions: "Volver a consulta si el malestar persiste.", bloodChemistryStatus: "NOT_PRESENTED", closedAt: "2026-09-14T11:35:00.000Z" },
     { id: "ENC-2026-005", historyId: "HIS-2026-004", patientId: "PAT-2026-004", appointmentId: "APT-2026-005", doctorId: "DOC-REV-001", type: "INITIAL", status: "CLOSED", occurredAt: "2026-09-16T09:15:00.000Z", chiefComplaint: "Dificultad visual reportada", assessment: "Requiere valoración por Oftalmología.", instructions: "Presentar el estudio adjunto en la atención especializada.", bloodChemistryStatus: "PENDING", closedAt: "2026-09-16T09:50:00.000Z" },
+    { id: "ENC-2026-006", historyId: "HIS-2026-001", patientId: "PAT-2026-001", appointmentId: "APT-2026-007", doctorId: "DOC-REV-001", type: "INITIAL", status: "CLOSED", occurredAt: "2026-09-17T14:30:00.000Z", chiefComplaint: "Dolor de cabeza", assessment: "Migraña leve.", instructions: "Descanso.", bloodChemistryStatus: "NOT_PRESENTED", closedAt: "2026-09-17T14:45:00.000Z" },
   ],
   diagnoses: [
     { id: "DIA-2026-001", encounterId: "ENC-2026-001", code: "DERM-OBS", label: "Lesión cutánea en evaluación", note: "Derivación a Dermatología.", createdAt: "2026-09-10T11:00:00.000Z" },
@@ -87,6 +88,7 @@ export const CLINICAL_DEMO_SEED: ClinicalDemoState = {
     { id: "DIA-2026-003", encounterId: "ENC-2026-003", code: "GEN-SEGUIMIENTO", label: "Seguimiento clínico", createdAt: "2026-08-21T09:20:00.000Z" },
     { id: "DIA-2026-004", encounterId: "ENC-2026-004", code: "GEN-RESUELTO", label: "Consulta general resuelta", createdAt: "2026-09-14T11:20:00.000Z" },
     { id: "DIA-2026-005", encounterId: "ENC-2026-005", code: "OFT-OBS", label: "Alteración visual en evaluación", note: "Derivación a Oftalmología.", createdAt: "2026-09-16T09:40:00.000Z" },
+    { id: "DIA-2026-006", encounterId: "ENC-2026-006", code: "NEURO-MIG", label: "Migraña episódica", createdAt: "2026-09-17T14:40:00.000Z" },
   ],
   measurements: [
     { id: "MEA-2026-001", encounterId: "ENC-2026-001", type: "WEIGHT", value: 58, unit: "kg", measuredAt: "2026-09-10T10:45:00.000Z" },

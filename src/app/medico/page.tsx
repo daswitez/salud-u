@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { getClinicalDemoState } from "@/lib/demo-clinical-store";
 import { requireClinicalRole } from "@/lib/demo-session";
+import { DashboardAppointmentItem } from "@/components/dashboard-appointment-item";
 
 const dateKey = "2026-09-17";
 
@@ -22,6 +23,8 @@ export default async function DoctorHomePage() {
   const inProgressReferrals = referrals.filter((referral) => referral.status === "IN_PROGRESS").length;
 
   const recentPatients = encounters.slice().sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 4).map((encounter) => ({ encounter, patient: state.patients.find((patient) => patient.id === encounter.patientId) }));
+
+  const scheduledAppointments = doctorId ? state.appointments.filter(a => a.assignedDoctorId === doctorId && a.scheduledFor.startsWith(dateKey) && a.status === "SCHEDULED") : [];
 
   const cards = [
     { label: "Pacientes atendidos hoy", value: attendedToday, detail: "Registro clínico del día", tone: "text-success" },
@@ -69,6 +72,25 @@ export default async function DoctorHomePage() {
 
           <section className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
             <div className="space-y-6">
+              {scheduledAppointments.length > 0 && (
+                <article className="rounded-2xl border border-primary-200 bg-surface p-5 sm:p-6 shadow-sm">
+                  <div className="mb-5">
+                    <h2 className="text-lg font-bold text-primary-900">Atenciones de Hoy</h2>
+                    <p className="mt-1 text-sm text-primary-800">Citas programadas pendientes de inicio.</p>
+                  </div>
+                  <div className="grid gap-3">
+                    {scheduledAppointments.map(appointment => (
+                      <DashboardAppointmentItem 
+                        key={appointment.id} 
+                        appointment={appointment} 
+                        patient={state.patients.find(p => p.id === appointment.patientId)} 
+                        doctorId={doctorId!} 
+                      />
+                    ))}
+                  </div>
+                </article>
+              )}
+
               <article className="rounded-2xl border border-divider bg-surface p-5 sm:p-6 shadow-sm">
                 <div>
                   <h2 className="text-lg font-bold text-text-primary">Pacientes recientes</h2>
