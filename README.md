@@ -18,4 +18,6 @@ pnpm dev
 
 ## Documentación funcional
 
-Comenzar por [00_contexto_maestro_para_agentes.md](./00_contexto_maestro_para_agentes.md), seguido de [01_requisitos_y_procesos.md](./01_requisitos_y_procesos.md) y [08_backlog_priorizado.md](./08_backlog_priorizado.md).
+Comenzar por [00_contexto_maestro_para_agentes.md](./00_contexto_maestro_para_agentes.md), seguido de [01_requisitos_y_procesos.md](./01_requisitos_y_procesos.md) y [08_backlog_priorizado.md](./08_backlog_priorizado.md). Para la implementación del backend con Supabase, consultar [11_arquitectura_supabase_y_modelo_datos.md](./11_arquitectura_supabase_y_modelo_datos.md).
+
+La migración inicial ejecutable para Supabase se encuentra en [20260918150000_initial_clinical_schema.sql](./supabase/migrations/20260918150000_initial_clinical_schema.sql).

@@ -8,7 +8,7 @@ export default async function AuditoriaPage() {
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      <AppSidebar role="administrativo" active="audit" />
+      <AppSidebar role="administrativo" active="reports" />
       <main className="min-w-0 flex-1 pb-22 md:pb-0">
         <AppHeader role="administrativo" name={session.name} />
         <div className="mx-auto max-w-7xl p-5 sm:p-8">
