@@ -164,11 +164,12 @@ Crear la ficha clínica principal para médicos autorizados. Es la pantalla más
 **Ruta objetivo:** `/medico/pacientes/[patientId]/atenciones/nueva`.
 **Archivo a adaptar:** `src/components/clinical-form.tsx`.
 
-Transformar el formulario actual en un formulario clínico común, no en cuatro fichas aisladas por especialidad.
+Transformar el formulario actual en el **formulario de historia clínica base**. Esta es la revisión mínima necesaria para todos los pacientes. Aunque existe una historia clínica longitudinal unificada, por detrás cada especialidad extenderá o tendrá su propio sub-modelo/plantilla relacionado a esta base para capturar datos categóricos específicos (necesarios para sus propios reportes).
 
 **Criterios de terminado:**
 
-- El formulario incluye motivo de consulta, evaluación, diagnósticos, indicaciones, seguimiento y estado de borrador/cierre.
+- El formulario base incluye motivo de consulta, evaluación, diagnósticos, indicaciones, seguimiento y estado de borrador/cierre.
+- Representa la revisión general; los datos especializados se añaden sobre esta base o mediante un historial relacionado a la especialidad.
 - Permite registrar peso con valor, unidad y fecha como medición histórica.
 - Incluye estado del examen de química sanguínea: adjunto, pendiente o no presentado.
 - Permite guardar borrador sin contar la consulta como cumplimiento.
@@ -209,22 +210,37 @@ La derivación es el puente entre la atención inicial y la especialidad.
 - Crea derivación `PENDING_ASSIGNMENT` con fecha y médico emisor.
 - Administración puede gestionar la cita asociada, pero no editar el motivo/comentario clínico.
 
+### B8.5. Refactor del Paradigma de Flujo de Consultas (UX/UI Crítico)
+
+**Tipo:** Refactorización Arquitectónica.
+**Depende de:** B6, B8.
+**Ruta objetivo:** `/medico/citas/[id]`, `/medico/derivaciones/[id]`, `/medico/pacientes/[id]/atenciones/nueva`.
+
+**Corrección conceptual requerida:** El médico NO llena el cuestionario mientras transcurre la consulta de forma simultánea. La "Sala de Consulta" debe ser un visor de sólo lectura que contenga TODO el historial médico. El cuestionario clínico de evolución es un paso final de cierre documental.
+
+**Criterios de terminado:**
+- La Sala de Consulta (`citas/[id]` y `derivaciones/[id]`) no muestra el formulario de evolución ni redirige a él de inmediato.
+- La Sala de Consulta muestra el Historial Completo a pantalla completa (Antecedentes, Línea de Tiempo, Diagnósticos, Archivos adjuntos).
+- El botón "Empezar consulta" simplemente activa el estado de la cita, permitiendo revisar la historia sin distracciones.
+- Se debe agregar un botón **"Finalizar Consulta"** en la Sala, el cual ES el único que redirige al cuestionario clínico de evolución (`/atenciones/nueva` o los formularios de la especialidad).
+- El formulario de evolución vuelve a ser de foco central, diseñado para que el médico vacíe todo lo que diagnosticó durante la sesión presencial.
+
 ### B9. Bandeja de derivaciones y atención especializada
 
 **Tipo:** Nueva + Migrar.
 **Depende de:** B1, B5, B8.
 **Archivos a retirar/reemplazar:** `src/app/medico/fichas/especialidad-1/page.tsx`, `especialidad-2`, `especialidad-3`, `especialidad-4`.
 
-Crear una bandeja única para especialistas y usar el mismo núcleo de historia para la evolución especializada.
+Crear una bandeja única para especialistas y usar plantillas/formularios específicos por especialidad para la evolución, manteniendo la relación con la historia base.
 
 **Criterios de terminado:**
 
 - El especialista ve solo derivaciones asignadas/autorizadas para su especialidad.
 - Estados: `PENDING_ASSIGNMENT`, `ASSIGNED`, `IN_PROGRESS`, `RETURNED`, `CLOSED`, `CANCELLED`.
 - El detalle muestra motivo, comentario, atención origen, diagnósticos y adjuntos vinculados.
-- El especialista crea una evolución `SPECIALTY` sin sobrescribir la atención inicial.
+- El especialista crea una evolución `SPECIALTY` que **utiliza el formulario específico de su especialidad**, capturando datos categóricos propios (ej. exámenes ginecológicos vs oftalmológicos) sin sobrescribir la atención inicial y relacionados al núcleo base.
 - Puede cerrar o devolver la derivación con nota clínica.
-- Las cuatro rutas de “especialidad-N” dejan de estar enlazadas y se sustituyen por rutas/plantillas con nombres reales de especialidad.
+- Las cuatro rutas de “especialidad-N” dejan de estar enlazadas y se sustituyen por rutas/plantillas con nombres reales de especialidad (Dermatología, Oftalmología, Medicina Interna, Urología).
 
 ## 4. P1 — Consulta diaria, reportes y trazabilidad
 

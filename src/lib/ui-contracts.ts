@@ -75,7 +75,7 @@ export const CLINICAL_DOCUMENT_TYPES = ["BLOOD_CHEMISTRY", "LAB_RESULT", "RADIOG
 export type ClinicalDocumentType = (typeof CLINICAL_DOCUMENT_TYPES)[number];
 export const REFERRAL_STATUSES = ["PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "RETURNED", "CLOSED", "CANCELLED"] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
-export const SPECIALTIES = ["DERMATOLOGY", "OPHTHALMOLOGY", "INTERNAL_MEDICINE", "UROLOGY"] as const;
+export const SPECIALTIES = ["DERMATOLOGY", "OPHTHALMOLOGY", "INTERNAL_MEDICINE", "UROLOGY", "GYNECOLOGY"] as const;
 export type Specialty = (typeof SPECIALTIES)[number];
 
 export type Patient = {
@@ -139,6 +139,7 @@ export type ClinicalEncounter = {
   bloodChemistryStatus: "ATTACHED" | "PENDING" | "NOT_PRESENTED";
   closedAt?: string;
   amendmentOfId?: string;
+  specialtyData?: Record<string, any>;
 };
 
 export type Referral = {

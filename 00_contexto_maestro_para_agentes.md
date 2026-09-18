@@ -93,7 +93,8 @@ Las especialidades configuradas para la primera versión son:
 3. Medicina Interna.
 4. Urología.
 
-El núcleo de la historia es común. Una especialidad puede añadir secciones o plantillas propias más adelante, pero no debe crear una historia aislada que oculte al resto del equipo autorizado las atenciones previas.
+El núcleo de la historia (revisión general) es la base común. Sobre ella, **cada especialidad tiene su propio historial o formulario específico** que captura datos categóricos propios (ej. exámenes de ginecología vs oftalmología). Esta separación estructural es fundamental para que cada especialista pueda generar reportes específicos y precisos de su área, aunque todos mantengan la capacidad de consultar el historial global completo unificado a través de la relación de estas especialidades con la atención base.
+
 
 ## Datos que deben existir
 

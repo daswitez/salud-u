@@ -87,10 +87,11 @@ type ClinicalEncounter = {
   bloodChemistryStatus: "ATTACHED" | "PENDING" | "NOT_PRESENTED";
   closedAt?: string;
   amendmentOfId?: string;
+  specialtyData?: Record<string, any>; // Extensión para datos categóricos propios de la especialidad (ej. agudeza visual, etc.)
 };
 ```
 
-Una historia pertenece a un paciente y tiene muchas atenciones. Una atención cerrada es de solo lectura; una corrección se representa por una nueva atención/adenda que conserva `amendmentOfId`.
+Una historia pertenece a un paciente y tiene muchas atenciones. La atención inicial sirve de base común. Los encuentros de especialidad se extienden con datos específicos (`specialtyData`) para alimentar reportes propios de la rama médica sin perder la conexión con la historia unificada. Una atención cerrada es de solo lectura; una corrección se representa por una nueva atención/adenda que conserva `amendmentOfId`.
 
 ## Diagnósticos, mediciones y documentos
 

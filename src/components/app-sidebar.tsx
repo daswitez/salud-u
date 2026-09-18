@@ -11,7 +11,7 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
     { key: "home", href: "/medico", label: "Inicio", icon: "home" },
     { key: "availability", href: "/medico/horarios", label: "Mi disponibilidad", icon: "calendar" },
     { key: "patients", href: "/medico/pacientes", label: "Mis pacientes", icon: "users" },
-    ...(isSpecialist ? [{ key: "referrals", label: "Derivaciones recibidas", icon: "referral" as const, comingSoon: true }] : [{ key: "new-encounter", label: "Nueva atención", icon: "document" as const, comingSoon: true }, { key: "referrals", label: "Derivaciones emitidas", icon: "referral" as const, comingSoon: true }]),
+    { key: "referrals", href: "/medico/derivaciones", label: isSpecialist ? "Derivaciones recibidas" : "Derivaciones emitidas", icon: "referral" },
     { key: "reports", label: "Reportes", icon: "chart", comingSoon: true },
     { key: "tele", label: "Teleconsulta · próximamente", icon: "tele", comingSoon: true },
     { key: "profile", href: "/perfil?rol=medico", label: "Perfil", icon: "user" },

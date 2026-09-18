@@ -1,4 +1,0 @@
-"use client";
-import { Suspense } from "react";
-import { ClinicalForm } from "@/components/clinical-form";
-export default function SpecialtyFourFormPage() { return <Suspense fallback={<main className="grid min-h-screen place-items-center bg-background text-text-secondary">Cargando ficha…</main>}><ClinicalForm specialty="Especialidad 4" doctorId="MED-004" fields={[{ id: "motivo", label: "Motivo de consulta", helper: "Registra el motivo de atención." }, { id: "valoracion", label: "Valoración de Especialidad 4", helper: "Documenta campos propios de la especialidad." }, { id: "procedimiento", label: "Procedimiento o indicación", helper: "Registra procedimiento, indicación o resultado." }, { id: "plan", label: "Plan y seguimiento", helper: "Define acciones posteriores y control." }]} /></Suspense>; }

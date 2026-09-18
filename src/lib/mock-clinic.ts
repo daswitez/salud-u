@@ -21,12 +21,7 @@ export type MockClinicalEncounter = { id: string; queueId: string; appointmentId
 export const DEMO_TODAY = "2026-09-17";
 export type AppointmentHold = { slotId: string; expiresAt: number; rescheduleId?: string };
 
-const specialtyLabel: Record<Specialty, string> = {
-  DERMATOLOGY: "Dermatología",
-  OPHTHALMOLOGY: "Oftalmología",
-  INTERNAL_MEDICINE: "Medicina Interna",
-  UROLOGY: "Urología",
-};
+const specialtyLabel: Record<Specialty, string> = { DERMATOLOGY: "Dermatología", OPHTHALMOLOGY: "Oftalmología", INTERNAL_MEDICINE: "Medicina interna", UROLOGY: "Urología", GYNECOLOGY: "Ginecología" };
 
 function appointmentStatus(status: ClinicalAppointment["status"]): AppointmentStatus {
   if (status === "ATTENDED") return "COMPLETED";

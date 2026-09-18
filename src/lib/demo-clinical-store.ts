@@ -41,7 +41,7 @@ export type ClinicalStoreFailure = { ok: false; code: "CONFLICT" | "NOT_FOUND" |
 export type ClinicalStoreSuccess<T> = { ok: true; data: T };
 export type ClinicalStoreResult<T> = ClinicalStoreSuccess<T> | ClinicalStoreFailure;
 
-const STORAGE_KEY = "salud-universitaria-clinical-demo-v1";
+const STORAGE_KEY = "salud-universitaria-clinical-demo-v3";
 const NOW = "2026-09-17T10:00:00.000Z";
 
 export const CLINICAL_DEMO_SEED: ClinicalDemoState = {
@@ -59,7 +59,7 @@ export const CLINICAL_DEMO_SEED: ClinicalDemoState = {
     { id: "PAT-2026-004", carnet: "12345681", registrationCode: "REG-2026-004", fullName: "Andrés Mamani", birthDate: "2002-07-30", career: "Arquitectura", email: "andres.mamani@demo.com", phone: "+591 700 123 48", academicStatus: "ACTIVE", isRecurrent: false, createdAt: NOW, updatedAt: NOW },
   ],
   histories: [
-    { id: "HIS-2026-001", patientId: "PAT-2026-001", createdAt: "2026-09-10T10:30:00.000Z", createdBy: "DOC-REV-001" },
+    { id: "HIS-2026-001", patientId: "PAT-2026-001", createdAt: "2026-09-10T10:30:00.000Z", createdBy: "DOC-REV-001", intake: { allergies: "Penicilina", relevantHistory: "Apendicectomía (2018)", chronicConditions: "Ninguna", currentMedications: "Ninguna", emergencyContact: "Madre: 70011122", updatedAt: "2026-09-10T10:30:00.000Z", updatedBy: "ADMIN-001" } },
     { id: "HIS-2026-002", patientId: "PAT-2026-002", createdAt: "2025-03-10T10:30:00.000Z", createdBy: "DOC-REV-001" },
     { id: "HIS-2026-003", patientId: "PAT-2026-003", createdAt: "2026-09-14T11:00:00.000Z", createdBy: "DOC-REV-001" },
     { id: "HIS-2026-004", patientId: "PAT-2026-004", createdAt: "2026-09-16T09:15:00.000Z", createdBy: "DOC-REV-001" },
@@ -71,6 +71,8 @@ export const CLINICAL_DEMO_SEED: ClinicalDemoState = {
     { id: "APT-2026-004", patientId: "PAT-2026-003", type: "INITIAL", status: "ATTENDED", capacityId: "CAP-REV-004", requestedBy: "ADMIN-001", assignedDoctorId: "DOC-REV-001", scheduledFor: "2026-09-14T11:00:00.000Z", createdAt: "2026-09-13T10:00:00.000Z", updatedAt: "2026-09-14T11:35:00.000Z" },
     { id: "APT-2026-005", patientId: "PAT-2026-004", type: "INITIAL", status: "ATTENDED", capacityId: "CAP-REV-005", requestedBy: "ADMIN-001", assignedDoctorId: "DOC-REV-001", scheduledFor: "2026-09-16T09:15:00.000Z", createdAt: "2026-09-15T10:00:00.000Z", updatedAt: "2026-09-16T09:50:00.000Z" },
     { id: "APT-2026-006", patientId: "PAT-2026-004", type: "REFERRAL", status: "SCHEDULED", capacityId: "CAP-OFT-001", requestedBy: "ADMIN-001", assignedDoctorId: "DOC-OFT-001", referralId: "REF-2026-002", scheduledFor: "2026-09-21T09:00:00.000Z", createdAt: "2026-09-16T10:00:00.000Z", updatedAt: "2026-09-16T10:00:00.000Z" },
+    { id: "APT-2026-007", patientId: "PAT-2026-001", type: "INITIAL", status: "SCHEDULED", capacityId: "CAP-REV-006", requestedBy: "ADMIN-001", assignedDoctorId: "DOC-REV-001", scheduledFor: "2026-09-17T14:30:00.000Z", createdAt: "2026-09-17T08:00:00.000Z", updatedAt: "2026-09-17T08:00:00.000Z" },
+    { id: "APT-2026-008", patientId: "PAT-2026-003", type: "INITIAL", status: "SCHEDULED", capacityId: "CAP-REV-007", requestedBy: "ADMIN-001", assignedDoctorId: "DOC-REV-001", scheduledFor: "2026-09-17T15:00:00.000Z", createdAt: "2026-09-17T08:15:00.000Z", updatedAt: "2026-09-17T08:15:00.000Z" },
   ],
   encounters: [
     { id: "ENC-2026-001", historyId: "HIS-2026-001", patientId: "PAT-2026-001", appointmentId: "APT-2026-001", doctorId: "DOC-REV-001", type: "INITIAL", status: "CLOSED", occurredAt: "2026-09-10T10:30:00.000Z", chiefComplaint: "Lesiones cutáneas persistentes", assessment: "Evaluación inicial con hallazgos que requieren valoración dermatológica.", instructions: "Presentar resultados adjuntos en la atención especializada.", bloodChemistryStatus: "ATTACHED", closedAt: "2026-09-10T11:10:00.000Z" },
@@ -247,6 +249,23 @@ export function createClinicalEncounter(input: Omit<ClinicalEncounter, "id" | "h
   return { ok: true, data: encounter };
 }
 
+export function updateClinicalEncounter(encounterId: string, doctorId: string, updates: Partial<Pick<ClinicalEncounter, "chiefComplaint" | "assessment" | "instructions" | "bloodChemistryStatus" | "specialtyData">>): ClinicalStoreResult<ClinicalEncounter> {
+  const state = readState();
+  const encounter = state.encounters.find((item) => item.id === encounterId && item.doctorId === doctorId);
+  if (!encounter) return { ok: false, code: "NOT_FOUND", message: "No se encontró una atención editable para el profesional." };
+  if (encounter.status !== "DRAFT") return { ok: false, code: "CONFLICT", message: "La atención ya fue cerrada y no puede ser modificada directamente." };
+  
+  if (updates.chiefComplaint !== undefined && !updates.chiefComplaint.trim()) {
+    return { ok: false, code: "VALIDATION", message: "El motivo de consulta es obligatorio." };
+  }
+
+  const updated: ClinicalEncounter = { ...encounter, ...updates };
+  if (updates.chiefComplaint !== undefined) updated.chiefComplaint = updates.chiefComplaint.trim();
+  
+  writeState({ ...state, encounters: state.encounters.map((item) => item.id === encounterId ? updated : item) });
+  return { ok: true, data: updated };
+}
+
 export function addDiagnosis(encounterId: string, input: Omit<Diagnosis, "id" | "encounterId" | "createdAt">): ClinicalStoreResult<Diagnosis> {
   const state = readState();
   if (!state.encounters.some((encounter) => encounter.id === encounterId)) return { ok: false, code: "NOT_FOUND", message: "No se encontró la atención clínica." };
@@ -274,6 +293,18 @@ export function addClinicalDocument(input: Omit<ClinicalDocument, "id" | "upload
   const encounters = input.type === "BLOOD_CHEMISTRY" && input.encounterId ? state.encounters.map((encounter) => encounter.id === input.encounterId ? { ...encounter, bloodChemistryStatus: "ATTACHED" as const } : encounter) : state.encounters;
   writeState({ ...state, documents: [...state.documents, document], encounters });
   return { ok: true, data: document };
+}
+
+export function removeClinicalDocument(documentId: string): ClinicalStoreResult<{ success: true }> {
+  const state = readState();
+  const document = state.documents.find((doc) => doc.id === documentId);
+  if (!document) return { ok: false, code: "NOT_FOUND", message: "Documento no encontrado." };
+  
+  writeState({ 
+    ...state, 
+    documents: state.documents.filter((doc) => doc.id !== documentId) 
+  });
+  return { ok: true, data: { success: true } };
 }
 
 export function closeClinicalEncounter(encounterId: string, doctorId: string): ClinicalStoreResult<ClinicalEncounter> {

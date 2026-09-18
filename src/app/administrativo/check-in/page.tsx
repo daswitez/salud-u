@@ -10,7 +10,7 @@ import { getClinicalDemoState, getClinicalPatient, searchClinicalPatients } from
 import type { Appointment, AppointmentStatus, Patient, Specialty } from "@/lib/ui-contracts";
 
 const PAGE_SIZE = 10;
-const specialtyLabels: Record<Specialty, string> = { DERMATOLOGY: "Dermatología", OPHTHALMOLOGY: "Oftalmología", INTERNAL_MEDICINE: "Medicina interna", UROLOGY: "Urología" };
+const specialtyLabels: Record<Specialty, string> = { DERMATOLOGY: "Dermatología", OPHTHALMOLOGY: "Oftalmología", INTERNAL_MEDICINE: "Medicina interna", UROLOGY: "Urología", GYNECOLOGY: "Ginecología" };
 const statusLabels: Record<AppointmentStatus, string> = { REQUESTED: "Solicitada", SCHEDULED: "Programada", CANCELLED: "Cancelada", NO_SHOW: "No asistió", ATTENDED: "Atendida" };
 type AppointmentRow = { appointment: Appointment; patient?: Patient };
 
