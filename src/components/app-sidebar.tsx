@@ -30,6 +30,7 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "students", href: "/administrativo/estudiantes", label: "Estudiantes", icon: "users" },
     { key: "admission", href: "/administrativo/check-in", label: "Citas y asistencia", icon: "calendar" },
     { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
+    { key: "audit", href: "/administrativo/auditoria", label: "Auditoría", icon: "document" },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil", icon: "user" },
   ];
   return medicalNavigation(clinicalRole ?? "REVIEW_DOCTOR");

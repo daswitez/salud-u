@@ -48,9 +48,16 @@ export function ReportsView({
           <h1 className="mt-1 text-2xl font-bold text-text-primary">Reportes rápidos</h1>
           <p className="mt-2 text-text-secondary">Visión general de las atenciones, diagnósticos y derivaciones del día.</p>
         </div>
-        <Link href={role === "ADMINISTRATIVE" ? "/administrativo/reportes/clinicos" : "/medico/reportes/clinicos"} className="rounded-lg bg-surface-secondary border border-divider px-4 py-2 text-sm font-bold text-text-primary hover:bg-divider transition-colors">
-          Constructor Avanzado de Reportes
-        </Link>
+        <div className="flex gap-3">
+          {role === "ADMINISTRATIVE" && (
+            <Link href="/administrativo/reportes/cumplimiento" className="rounded-lg bg-surface-secondary border border-divider px-4 py-2 text-sm font-bold text-text-primary hover:bg-divider transition-colors">
+              Cumplimiento de Revisión
+            </Link>
+          )}
+          <Link href={role === "ADMINISTRATIVE" ? "/administrativo/reportes/clinicos" : "/medico/reportes/clinicos"} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-600 transition-colors">
+            Constructor Avanzado de Reportes
+          </Link>
+        </div>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

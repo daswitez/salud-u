@@ -323,7 +323,7 @@ Reemplazar indicadores de oferta/demanda por información operativa útil para r
 - Para investigación, ofrece una opción de vista seudonimizada cuando el caso demo lo permita.
 
 ### B15. Cumplimiento de consulta médica obligatoria
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Nueva.
 **Depende de:** B1, B6, B13.
 **Ruta objetivo:** `/administrativo/reportes/cumplimiento`.
@@ -336,7 +336,7 @@ Reemplazar indicadores de oferta/demanda por información operativa útil para r
 - El resultado puede alimentar una exportación autorizada y auditoría.
 
 ### B16. Auditoría clínica y de reportes
-
+**Estado:** ✅ **Completado** (18-Sept)
 **Tipo:** Migrar.
 **Depende de:** B1–B15.
 **Archivo a adaptar:** `src/app/administrativo/auditoria/page.tsx`, `src/lib/demo-audit-store.ts`.
