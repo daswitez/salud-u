@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const authorization = await requireApiRole("ADMINISTRATIVE", "REVIEW_DOCTOR", "SPECIALIST");
   if (isApiError(authorization)) return authorization;
   const supabase = await createSupabaseServerClient();
-  let statement = supabase.from("availability_slot").select("id,specialty_id,starts_at,ends_at,capacity,booked_count,status").eq("status", "PUBLISHED").gt("starts_at", new Date().toISOString()).order("starts_at").limit(100);
+  let statement = supabase.from("availability_slot").select("id,specialty_id,starts_at,ends_at,capacity,booked_count,status,staff:staff_member_id(profile:profile_id(display_name))").eq("status", "PUBLISHED").gt("starts_at", new Date().toISOString()).order("starts_at").limit(100);
   if (authorization.clinicalRole !== "ADMINISTRATIVE") {
     const { data: staff, error: staffError } = await supabase.from("staff_member").select("id").eq("profile_id", authorization.id).maybeSingle();
     if (staffError) return supabaseError(staffError);
@@ -19,7 +19,13 @@ export async function GET(request: NextRequest) {
   if (request.nextUrl.searchParams.get("initial") === "true") statement = statement.is("specialty_id", null);
   const { data, error } = await statement;
   if (error) return supabaseError(error);
-  return NextResponse.json({ ok: true, data: data ?? [] });
+  const slots = (data ?? []).map((slot) => {
+    const relation = slot as unknown as { staff: { profile: { display_name: string | null } | { display_name: string | null }[] | null } | { profile: { display_name: string | null } | { display_name: string | null }[] | null }[] | null };
+    const staff = Array.isArray(relation.staff) ? relation.staff[0] : relation.staff;
+    const profile = staff && (Array.isArray(staff.profile) ? staff.profile[0] : staff.profile);
+    return { ...slot, doctorName: profile?.display_name ?? "Médico de revisión" };
+  });
+  return NextResponse.json({ ok: true, data: slots });
 }
 
 export async function POST(request: Request) {

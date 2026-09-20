@@ -15,6 +15,25 @@ export type AdministrativePatient = {
   enrollment: { id: string; academicPeriod: string; startedOn: string; status: string } | null;
 };
 
+export type MedicalAppointment = {
+  id: string;
+  appointmentType: "INITIAL" | "REFERRAL";
+  status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED" | "NO_SHOW" | "ATTENDED";
+  scheduledFor: string;
+  checkedInAt: string | null;
+  endsAt: string | null;
+  specialty: string;
+  patient: {
+    id: string;
+    carnet: string;
+    registrationCode: string;
+    fullName: string;
+    birthDate: string | null;
+    phone: string | null;
+    email: string | null;
+  } | null;
+};
+
 export async function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) } });
   const payload = await response.json().catch(() => ({ ok: false, error: "Respuesta inválida del servidor." }));
