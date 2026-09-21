@@ -32,6 +32,7 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
   const [ageMax, setAgeMax] = useState("");
   const [recurrent, setRecurrent] = useState("TODOS");
   const [referralStatus, setReferralStatus] = useState("TODOS");
+  const [quickFilter, setQuickFilter] = useState<"ALL" | "TODAY" | "WITH_REFERRAL" | "WITHOUT_REFERRAL">("ALL");
 
   // Visualización
   const [mode, setMode] = useState<"NOMINAL" | "AGREGADO">("NOMINAL");
@@ -101,9 +102,12 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
     if (referralStatus !== "TODOS") {
       filtered = filtered.filter(row => row.referral?.status === referralStatus);
     }
+    if (quickFilter === "TODAY") filtered = filtered.filter(row => row.encounter.occurredAt.slice(0, 10) === new Date().toISOString().slice(0, 10));
+    if (quickFilter === "WITH_REFERRAL") filtered = filtered.filter(row => Boolean(row.referral));
+    if (quickFilter === "WITHOUT_REFERRAL") filtered = filtered.filter(row => !row.referral);
 
     return filtered;
-  }, [state, dateFrom, dateTo, selectedDoctorId, specialty, diagnosisQuery, career, ageMin, ageMax, recurrent, referralStatus, fixedDoctorId]);
+  }, [state, dateFrom, dateTo, selectedDoctorId, specialty, diagnosisQuery, career, ageMin, ageMax, recurrent, referralStatus, fixedDoctorId, quickFilter]);
 
   // Agrupación si es modo AGREGADO
   const aggregatedResults = useMemo(() => {
@@ -131,14 +135,14 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
       let header: string[] = [];
       
       if (mode === "NOMINAL") {
-        header = ["Fecha Atención", "Identificador de Paciente", "Perfil Académico", "Diagnósticos", "Derivación"];
+        header = ["Fecha Atención", "Identificador de Paciente", "Perfil Académico", "Diagnósticos", "Observación clínica", "Derivación"];
         dataToExport = results.map(row => {
           const date = new Date(row.encounter.occurredAt).toLocaleString("es-BO");
           const patientId = pseudonymized ? `PACIENTE_${row.patient!.id.split("-")[0]}` : `${row.patient!.fullName} (${row.patient!.carnet})`;
           const profile = `${row.patient!.career} - ${getAge(row.patient!.birthDate) ?? "?"} años`;
           const diagnoses = row.diagnoses.map(d => `${d.code || "S/C"} ${d.label}`).join("; ");
           const referral = row.referral ? `${row.referral.specialty} (${row.referral.status})` : "Ninguna";
-          return [date, patientId, profile, diagnoses, referral];
+          return [date, patientId, profile, diagnoses, row.encounter.assessment || row.encounter.chiefComplaint || "Sin observación registrada", referral];
         });
       } else {
         header = ["Agrupación (Tipo/Especialidad - Carrera)", "Total de Casos", "Porcentaje de la Muestra"];
@@ -203,6 +207,10 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
           </label>
         </div>
       </header>
+
+      <section className="flex flex-wrap gap-2" aria-label="Accesos rápidos de reportes">
+        {[['ALL','Todos'],['TODAY','Pacientes atendidos hoy'],['WITH_REFERRAL','Con derivación'],['WITHOUT_REFERRAL','Sin derivación']].map(([value, label]) => <button key={value} onClick={() => setQuickFilter(value as typeof quickFilter)} className={`rounded-lg px-4 py-2 text-sm font-semibold ${quickFilter === value ? "bg-primary text-white" : "bg-surface-secondary text-text-secondary hover:bg-divider"}`}>{label}</button>)}
+      </section>
 
       {/* Constructor de Filtros */}
       <section className="bg-surface border border-divider rounded-2xl p-5 sm:p-6 shadow-sm">
@@ -272,7 +280,7 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
         </div>
         <div className="mt-5 flex gap-3">
           <button onClick={() => {
-            setDateFrom(""); setDateTo(""); setSelectedDoctorId(fixedDoctorId || ""); setSpecialty(""); setDiagnosisQuery(""); setCareer(""); setAgeMin(""); setAgeMax(""); setRecurrent("TODOS"); setReferralStatus("TODOS");
+            setDateFrom(""); setDateTo(""); setSelectedDoctorId(fixedDoctorId || ""); setSpecialty(""); setDiagnosisQuery(""); setCareer(""); setAgeMin(""); setAgeMax(""); setRecurrent("TODOS"); setReferralStatus("TODOS"); setQuickFilter("ALL");
           }} className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors">Limpiar todos los filtros</button>
         </div>
       </section>
@@ -299,6 +307,7 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
                   <th className="px-5 py-4 font-semibold">Identificador de Paciente</th>
                   <th className="px-5 py-4 font-semibold">Perfil Académico</th>
                   <th className="px-5 py-4 font-semibold">Diagnósticos</th>
+                  <th className="px-5 py-4 font-semibold">Observación clínica</th>
                   <th className="px-5 py-4 font-semibold">Derivación</th>
                 </tr>
               </thead>
@@ -329,6 +338,7 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
                         </ul>
                       ) : <span className="text-text-disabled italic">Ninguno</span>}
                     </td>
+                    <td className="px-5 py-4 text-xs text-text-secondary max-w-xs">{row.encounter.assessment || row.encounter.chiefComplaint || "Sin observación registrada"}</td>
                     <td className="px-5 py-4">
                       {row.referral ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-primary-50 text-primary-900 border border-primary-200">
@@ -339,7 +349,7 @@ export function AdvancedReportsClient({ state, userName, fixedDoctorId }: { stat
                   </tr>
                 ))}
                 {results.length === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-12 text-center text-text-secondary">No se encontraron atenciones que coincidan con los filtros combinados.</td></tr>
+                  <tr><td colSpan={6} className="px-5 py-12 text-center text-text-secondary">No se encontraron atenciones que coincidan con los filtros combinados.</td></tr>
                 )}
               </tbody>
             </table>
