@@ -1,20 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signOut, updatePassword, updateProfile } from "@/app/actions/session";
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationPreferences } from "@/components/notification-preferences";
-import { type AppRole, createDemoSession, getSession } from "@/lib/demo-session";
-import { MOCK_USERS } from "@/lib/mock-users";
+import { getSession } from "@/lib/demo-session";
 
 type ProfilePageProps = { searchParams: Promise<{ success?: string; error?: string; rol?: string }> };
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const params = await searchParams;
-  const selectedRole = (["estudiante", "medico", "administrativo"] as AppRole[]).includes(params.rol as AppRole) ? params.rol as AppRole : undefined;
-  const existingSession = await getSession();
-  const mockUser = !existingSession && selectedRole ? MOCK_USERS.find((user) => user.role === selectedRole) : undefined;
-  const session = existingSession ?? (mockUser ? createDemoSession(mockUser.email, mockUser.clinicalRole, mockUser.name) : null);
-  if (!session) return null;
+  const session = await getSession();
+  if (!session) redirect("/iniciar-sesion?error=session");
 
   const success = params.success === "profile" ? "Tus datos básicos se guardaron correctamente." : params.success === "password" ? "La contraseña se actualizó correctamente." : "";
   const error = params.error === "profile" ? "Revisa tu nombre y correo electrónico." : params.error === "password" ? "La contraseña actual y la nueva deben tener al menos 8 caracteres." : "";

@@ -1,19 +1,9 @@
 import { signIn } from "@/app/actions/session";
-import { MOCK_USERS, findMockUser } from "@/lib/mock-users";
-
 type SignInPageProps = { searchParams: Promise<{ error?: string; success?: string; email?: string }> };
-
-const clinicalRoleLabel = {
-  ADMINISTRATIVE: "Administrativo",
-  REVIEW_DOCTOR: "Médico de revisión",
-  SPECIALIST: "Médico especialista",
-  STUDENT: "Estudiante",
-} as const;
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
-  const selectedUser = params.email ? findMockUser(params.email) : undefined;
-  const errorMessage = params.error === "credentials" ? "Ingresa un correo válido y una contraseña de al menos 8 caracteres." : params.error === "session" ? "Tu sesión venció. Vuelve a iniciar sesión." : undefined;
+  const errorMessage = params.error === "credentials" ? "El correo o la contraseña son incorrectos." : params.error === "unauthorized" ? "Tu cuenta no tiene un rol activo en la plataforma." : params.error === "session" ? "Tu sesión venció. Vuelve a iniciar sesión." : undefined;
 
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-[1.1fr_0.9fr]">
@@ -33,10 +23,10 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <form action={signIn} className="mt-8 space-y-5">
             <label className="block text-sm font-semibold text-text-secondary">Correo electrónico<input required name="email" type="email" defaultValue={params.email} placeholder="nombre@correo.com" className="mt-2 w-full rounded-lg border border-border bg-surface px-3.5 py-3 text-text-primary placeholder:text-text-tertiary" /></label>
             <label className="block text-sm font-semibold text-text-secondary">Contraseña<input required name="password" type="password" minLength={8} placeholder="Ingresa tu contraseña" className="mt-2 w-full rounded-lg border border-border bg-surface px-3.5 py-3 text-text-primary placeholder:text-text-tertiary" /></label>
-            <div className="flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm text-text-secondary"><input type="checkbox" className="size-4 accent-primary" />Recordarme</label><button type="button" className="text-sm font-semibold text-primary hover:underline">¿Olvidaste tu contraseña?</button></div>
+            <div className="flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm text-text-secondary"><input name="remember" type="checkbox" className="size-4 accent-primary" />Recordarme</label><span className="text-sm text-text-tertiary">Acceso seguro</span></div>
             <button type="submit" className="w-full rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold text-on-primary shadow-sm hover:bg-primary-hover">Iniciar sesión</button>
           </form>
-          <div className="mt-8 rounded-xl border border-info-container bg-info-container/40 p-4"><p className="text-sm font-semibold text-info">Usuarios de demostración</p><p className="mt-1 text-sm leading-6 text-text-secondary">El rol clínico se obtiene del correo de prueba. Selecciona una cuenta para precargar su correo; contraseña sugerida: <strong>Demo2026!</strong>.</p><div className="mt-4 grid gap-2">{MOCK_USERS.map((account) => <a key={account.id} href={`/iniciar-sesion?email=${account.email}`} className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${selectedUser?.id === account.id ? "border-primary bg-surface text-primary" : "border-transparent bg-white/70 text-text-secondary hover:border-border"}`}>{account.name} · {clinicalRoleLabel[account.clinicalRole]}</a>)}</div></div>
+          <div className="mt-8 rounded-xl border border-info-container bg-info-container/40 p-4"><p className="text-sm font-semibold text-info">Acceso de pruebas</p><p className="mt-1 text-sm leading-6 text-text-secondary">Usa una cuenta creada en Supabase Auth. Para las cuentas de prueba creadas por el seed, la contraseña inicial es <strong>SaludDemo2026!</strong>.</p></div>
           <p className="mt-8 text-center text-xs leading-5 text-text-tertiary">Al ingresar aceptas el uso responsable de la información según las políticas institucionales.</p>
         </div>
       </section>
