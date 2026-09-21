@@ -29,6 +29,7 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "home", href: "/administrativo", label: "Inicio", icon: "home" },
     { key: "students", href: "/administrativo/estudiantes", label: "Estudiantes", icon: "users" },
     { key: "admission", href: "/administrativo/check-in", label: "Citas y asistencia", icon: "calendar" },
+    { key: "referrals", href: "/administrativo/derivaciones", label: "Derivaciones", icon: "referral" },
     { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil", icon: "user" },
   ];

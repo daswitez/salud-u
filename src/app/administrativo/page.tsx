@@ -96,7 +96,7 @@ export default async function AdminHomePage() {
                         <p className="font-bold text-primary-900">Derivaciones sin asignar</p>
                         <p className="text-sm text-primary-800 mt-1">Hay {pendingReferrals} derivaciones médicas a la espera de ser asignadas a un especialista.</p>
                       </div>
-                      <Link href="/administrativo/planificacion" className="text-sm font-bold text-primary-900 bg-primary-100 px-3 py-1.5 rounded-lg hover:bg-primary-200 transition-colors">Asignar ahora</Link>
+                      <Link href="/administrativo/derivaciones" className="text-sm font-bold text-primary-900 bg-primary-100 px-3 py-1.5 rounded-lg hover:bg-primary-200 transition-colors">Asignar ahora</Link>
                     </div>
                   )}
                   
@@ -122,7 +122,7 @@ export default async function AdminHomePage() {
                     <p className="font-bold text-text-primary">Ingreso y Asistencia (Check-in)</p>
                     <p className="mt-1 text-xs text-text-secondary">Control de citas por cupo y confirmación presencial.</p>
                   </Link>
-                  <Link href="/administrativo/planificacion" className="block rounded-xl border border-transparent bg-surface-secondary p-4 hover:border-primary-200 transition-colors">
+                  <Link href="/administrativo/derivaciones" className="block rounded-xl border border-transparent bg-surface-secondary p-4 hover:border-primary-200 transition-colors">
                     <p className="font-bold text-text-primary">Gestión de Derivaciones</p>
                     <p className="mt-1 text-xs text-text-secondary">Asignación de casos derivados a especialistas.</p>
                   </Link>

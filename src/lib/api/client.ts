@@ -17,7 +17,7 @@ export type AdministrativePatient = {
 
 export type MedicalAppointment = {
   id: string;
-  appointmentType: "INITIAL" | "REFERRAL";
+  appointmentType: "INITIAL" | "REFERRAL" | "SPECIALTY";
   status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED" | "NO_SHOW" | "ATTENDED";
   scheduledFor: string;
   checkedInAt: string | null;

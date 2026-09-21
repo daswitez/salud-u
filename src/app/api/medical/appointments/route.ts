@@ -19,7 +19,7 @@ type EmbeddedSpecialty = { code: string; name: string };
 type EmbeddedSlot = { starts_at: string; ends_at: string; specialty: EmbeddedSpecialty | EmbeddedSpecialty[] | null };
 type AppointmentRow = {
   id: string;
-  appointment_type: "INITIAL" | "REFERRAL";
+  appointment_type: "INITIAL" | "REFERRAL" | "SPECIALTY";
   status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED" | "NO_SHOW" | "ATTENDED";
   scheduled_for: string;
   checked_in_at: string | null;
