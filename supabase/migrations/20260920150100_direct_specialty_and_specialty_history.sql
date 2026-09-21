@@ -1,5 +1,5 @@
 -- Debe ejecutarse después de 20260920150000_add_specialty_appointment_type.sql.
-+begin;
+begin;
 
 alter table public.appointment_request
   add column if not exists specialty_id uuid references public.specialty(id) on delete restrict;

@@ -34,9 +34,13 @@ export type MedicalAppointment = {
   } | null;
 };
 
-export async function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) } });
+export async function apiJson<T>(url: string, options?: RequestInit, retryAuthentication = true): Promise<T> {
+  const response = await fetch(url, { ...options, credentials: "same-origin", cache: "no-store", headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) } });
   const payload = await response.json().catch(() => ({ ok: false, error: "Respuesta inválida del servidor." }));
+  if (response.status === 401 && payload.error === "unauthenticated" && retryAuthentication) {
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+    return apiJson<T>(url, options, false);
+  }
   if (!response.ok || !payload.ok) throw new Error(payload.error ?? "No se pudo completar la operación.");
   return payload.data as T;
 }

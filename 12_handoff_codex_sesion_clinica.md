@@ -63,6 +63,16 @@ No reemplazar una vista por otra: el buscador y el detalle por atención complem
 - Se habilitó inicio/cierre de citas para especialistas; la ruta `/medico/citas/[appointmentId]` acepta `REVIEW_DOCTOR` y `SPECIALIST`.
 - Se creó la bandeja administrativa de derivaciones y su API `/api/administrative/referrals`.
 - Se mejoró la ficha médica con búsqueda, detalle de atención, archivos por atención y botón de inicio de cita activa.
+- Se mejoró la pantalla de **Reportes clínicos** con accesos rápidos: todos, pacientes atendidos hoy, con derivación y sin derivación. Estos accesos se combinan con los filtros avanzados existentes.
+- Las exportaciones CSV, Excel y PDF de Reportes incluyen fecha, paciente/perfil, diagnósticos, observación clínica y estado de derivación.
+
+## Reportes: estado y siguiente paso
+
+Los reportes operativos en `/administrativo/reportes` y `/medico/reportes` ya leen `rpc_daily_activity`; el informe de cumplimiento usa `rpc_compliance_report`. El dashboard administrativo también obtiene sus indicadores desde Supabase.
+
+Se retiraron la vista avanzada, sus exportaciones CSV/XLSX/PDF y los componentes clínicos heredados que dependían de `demo-clinical-store`. Las rutas avanzadas redirigen al reporte operativo para no presentar información simulada.
+
+**Pendiente antes de recuperar reportes nominales o exportables:** crear una API/RPC auditable, con RLS, que consulte `clinical_encounter`, `encounter_diagnosis`, `referral`, `patient` y el profesional responsable. Esa API debe ser la única fuente para filtros clínicos complejos, seudonimización y exportaciones; no consultar directamente desde componentes cliente.
 
 ## Migraciones nuevas y orden obligatorio
 
