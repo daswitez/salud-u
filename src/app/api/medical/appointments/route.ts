@@ -70,6 +70,7 @@ export async function GET() {
       checkedInAt: row.checked_in_at,
       endsAt: slot?.ends_at ?? null,
       specialty: specialty?.name ?? "Revisión estudiantil",
+      specialtyCode: specialty?.code ?? null,
       patient: patient
         ? {
             id: patient.id,

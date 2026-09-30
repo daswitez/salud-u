@@ -32,6 +32,19 @@ function reviewHistory(value: unknown) {
   };
 }
 
+function specialtyHistory(value: unknown) {
+  const source = record(value);
+  const personalHistory = record(source.personalHistory); const ophthalmology = record(source.ophthalmology); const gynecology = record(source.gynecology);
+  const option = (item: unknown, options: readonly string[]) => typeof item === "string" && options.includes(item) ? item : null;
+  const list = (item: unknown, options: readonly string[]) => Array.isArray(item) ? [...new Set(item.filter((entry): entry is string => typeof entry === "string" && options.includes(entry)))].slice(0, 8) : [];
+  return {
+    schemaVersion: 1, specialtyCode: text(source.specialtyCode, 80),
+    personalHistory: { pathological: text(personalHistory.pathological, 4000) || null, surgical: text(personalHistory.surgical, 4000) || null, allergic: text(personalHistory.allergic, 4000) || null, family: text(personalHistory.family, 4000) || null },
+    ophthalmology: { currentIllness: text(ophthalmology.currentIllness, 8000) || null, visualAcuityRight: text(ophthalmology.visualAcuityRight, 100) || null, visualAcuityLeft: text(ophthalmology.visualAcuityLeft, 100) || null },
+    gynecology: { onset: option(gynecology.onset, ["ACUTE", "SUBACUTE", "CHRONIC"]), symptoms: text(gynecology.symptoms, 8000) || null, previousTreatments: text(gynecology.previousTreatments, 8000) || null, menarcheAge: number(gynecology.menarcheAge), menstrualPattern: option(gynecology.menstrualPattern, ["REGULAR", "IRREGULAR"]), cycleDays: number(gynecology.cycleDays), lastMenstrualPeriod: text(gynecology.lastMenstrualPeriod, 10) || null, dysmenorrhea: option(gynecology.dysmenorrhea, ["YES", "NO"]), leucorrhea: option(gynecology.leucorrhea, ["YES", "NO"]), previousSti: option(gynecology.previousSti, ["YES", "NO"]), stiDetails: text(gynecology.stiDetails, 4000) || null, contraceptiveMethods: list(gynecology.contraceptiveMethods, ["NONE", "ORAL", "INJECTABLE", "IUD", "IMPLANT", "CONDOM"]), contraceptiveOther: text(gynecology.contraceptiveOther, 500) || null, lastPap: text(gynecology.lastPap, 10) || null, papResult: option(gynecology.papResult, ["NORMAL", "ALTERED"]), papDetails: text(gynecology.papDetails, 4000) || null, familyGynecologicalCancer: gynecology.familyGynecologicalCancer === true, familyBreastCancer: gynecology.familyBreastCancer === true, familyDiabetes: gynecology.familyDiabetes === true, familyOther: text(gynecology.familyOther, 4000) || null, breastExam: text(gynecology.breastExam, 8000) || null, externalGenitalExam: text(gynecology.externalGenitalExam, 8000) || null, speculumExam: text(gynecology.speculumExam, 8000) || null, vaginalExam: text(gynecology.vaginalExam, 8000) || null, cervixExam: text(gynecology.cervixExam, 8000) || null },
+  };
+}
+
 export async function POST(request: Request, context: { params: Promise<{ encounterId: string }> }) {
   const authorization = await requireApiRole("REVIEW_DOCTOR", "SPECIALIST");
   if (isApiError(authorization)) return authorization;
@@ -59,12 +72,9 @@ export async function POST(request: Request, context: { params: Promise<{ encoun
       p_encounter_id: encounterId, p_chief_complaint: chiefComplaint, p_assessment: assessment,
       p_instructions: text(body?.instructions, 8000) || null, p_follow_up_text: text(body?.followUpText, 4000) || null,
       p_diagnosis_text: text(body?.diagnosisText, 2000) || null,
+      p_specialty_history: specialtyHistory(body?.specialtyHistory),
     });
   const { data, error } = result;
   if (error) return supabaseError(error);
-  if (authorization.clinicalRole === "SPECIALIST" && text(body?.specialtyHistory, 8000)) {
-    const { error: historyError } = await supabase.rpc("rpc_record_specialty_history_intake", { p_encounter_id: encounterId, p_data: { summary: text(body?.specialtyHistory, 8000) }, p_template_id: null });
-    if (historyError) return supabaseError(historyError);
-  }
   return NextResponse.json({ ok: true, data });
 }

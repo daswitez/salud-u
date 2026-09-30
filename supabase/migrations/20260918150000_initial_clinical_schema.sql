@@ -297,15 +297,15 @@ create table if not exists public.integration_outbox (
   attempts integer not null default 0 check(attempts >= 0), available_at timestamptz not null default now(), created_at timestamptz not null default now(), sent_at timestamptz
 );
 
--- Catálogos mínimos; Ginecología se deja inactiva hasta decisión institucional.
+-- Catálogos mínimos.
 insert into public.app_role(code,name) values
   ('ADMINISTRATIVE','Personal administrativo'),('REVIEW_DOCTOR','Médico de revisión estudiantil'),('SPECIALIST','Médico especialista'),
   ('STUDENT','Estudiante'),('AUDITOR','Auditor'),('REPORTING_OFFICER','Responsable de reportes')
 on conflict(code) do update set name = excluded.name;
 insert into public.specialty(code,name,is_enabled) values
   ('DERMATOLOGY','Dermatología',true),('OPHTHALMOLOGY','Oftalmología',true),('INTERNAL_MEDICINE','Medicina Interna',true),
-  ('UROLOGY','Urología',true),('GYNECOLOGY','Ginecología',false)
-on conflict(code) do update set name = excluded.name;
+  ('UROLOGY','Urología',true),('GYNECOLOGY','Ginecología',true)
+on conflict(code) do update set name = excluded.name, is_enabled = excluded.is_enabled;
 insert into public.measurement_type(code,name,default_unit,value_kind) values
   ('WEIGHT','Peso','kg','NUMERIC'),('HEIGHT','Talla','cm','NUMERIC'),
   ('BLOOD_PRESSURE_SYSTOLIC','Presión arterial sistólica','mmHg','NUMERIC'),('BLOOD_PRESSURE_DIASTOLIC','Presión arterial diastólica','mmHg','NUMERIC'),

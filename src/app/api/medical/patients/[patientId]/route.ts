@@ -34,10 +34,17 @@ export async function GET(_request: Request, context: { params: Promise<{ patien
   });
   const encounterIds = encounters.map((item) => item.id);
   const reviewEncounterIds = encounters.filter((item) => item.encounter_type === "INITIAL").map((item) => item.id);
-  const { data: reviewVersions, error: reviewVersionError } = reviewEncounterIds.length
-    ? await supabase.from("review_history_version").select("encounter_id,data,recorded_at,version_no").in("encounter_id", reviewEncounterIds).order("recorded_at", { ascending: false })
-    : { data: [], error: null };
-  if (reviewVersionError) return supabaseError(reviewVersionError);
+  const specialtyEncounterIds = encounters.filter((item) => item.encounter_type === "SPECIALTY").map((item) => item.id);
+  const [reviewVersionResult, specialtyVersionResult] = await Promise.all([
+    reviewEncounterIds.length
+      ? supabase.from("review_history_version").select("encounter_id,data,recorded_at,version_no").in("encounter_id", reviewEncounterIds).order("recorded_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    specialtyEncounterIds.length
+      ? supabase.from("specialty_history_intake_version").select("encounter_id,data,recorded_at,version_no").in("encounter_id", specialtyEncounterIds).order("recorded_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (reviewVersionResult.error) return supabaseError(reviewVersionResult.error);
+  if (specialtyVersionResult.error) return supabaseError(specialtyVersionResult.error);
   const { data: diagnoses, error: diagnosisError } = encounterIds.length
     ? await supabase.from("encounter_diagnosis").select("id,encounter_id,free_text,diagnosis_kind,is_primary,condition:condition_id(display_name)").in("encounter_id", encounterIds)
     : { data: [], error: null };
@@ -50,9 +57,14 @@ export async function GET(_request: Request, context: { params: Promise<{ patien
     const relation = row as typeof row & { condition: { display_name: string } | { display_name: string }[] | null };
     return { ...row, label: first(relation.condition)?.display_name ?? row.free_text ?? "Diagnóstico registrado" };
   });
-  const reviewVersionsByEncounter = new Map((reviewVersions ?? []).map((version) => [version.encounter_id, version]));
-  const encountersWithHistory = encounters.map((encounter) => ({ ...encounter, reviewHistory: reviewVersionsByEncounter.get(encounter.id)?.data ?? null }));
-  const latestReview = reviewVersions?.[0] as { data: Record<string, unknown>; recorded_at: string } | undefined;
+  const reviewVersionsByEncounter = new Map((reviewVersionResult.data ?? []).map((version) => [version.encounter_id, version]));
+  const specialtyVersionsByEncounter = new Map((specialtyVersionResult.data ?? []).map((version) => [version.encounter_id, version]));
+  const encountersWithHistory = encounters.map((encounter) => ({
+    ...encounter,
+    reviewHistory: reviewVersionsByEncounter.get(encounter.id)?.data ?? null,
+    specialtyHistory: specialtyVersionsByEncounter.get(encounter.id)?.data ?? null,
+  }));
+  const latestReview = reviewVersionResult.data?.[0] as { data: Record<string, unknown>; recorded_at: string } | undefined;
   const personalHistory = latestReview?.data.personalHistory && typeof latestReview.data.personalHistory === "object" ? latestReview.data.personalHistory as Record<string, unknown> : {};
   const intake = latestReview ? {
     allergies: typeof personalHistory.allergic === "string" ? personalHistory.allergic : null,

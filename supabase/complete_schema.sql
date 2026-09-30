@@ -304,15 +304,15 @@ create table if not exists public.integration_outbox (
   attempts integer not null default 0 check(attempts >= 0), available_at timestamptz not null default now(), created_at timestamptz not null default now(), sent_at timestamptz
 );
 
--- Catálogos mínimos; Ginecología se deja inactiva hasta decisión institucional.
+-- Catálogos mínimos.
 insert into public.app_role(code,name) values
   ('ADMINISTRATIVE','Personal administrativo'),('REVIEW_DOCTOR','Médico de revisión estudiantil'),('SPECIALIST','Médico especialista'),
   ('STUDENT','Estudiante'),('AUDITOR','Auditor'),('REPORTING_OFFICER','Responsable de reportes')
 on conflict(code) do update set name = excluded.name;
 insert into public.specialty(code,name,is_enabled) values
   ('DERMATOLOGY','Dermatología',true),('OPHTHALMOLOGY','Oftalmología',true),('INTERNAL_MEDICINE','Medicina Interna',true),
-  ('UROLOGY','Urología',true),('GYNECOLOGY','Ginecología',false)
-on conflict(code) do update set name = excluded.name;
+  ('UROLOGY','Urología',true),('GYNECOLOGY','Ginecología',true)
+on conflict(code) do update set name = excluded.name, is_enabled = excluded.is_enabled;
 insert into public.measurement_type(code,name,default_unit,value_kind) values
   ('WEIGHT','Peso','kg','NUMERIC'),('HEIGHT','Talla','cm','NUMERIC'),
   ('BLOOD_PRESSURE_SYSTOLIC','Presión arterial sistólica','mmHg','NUMERIC'),('BLOOD_PRESSURE_DIASTOLIC','Presión arterial diastólica','mmHg','NUMERIC'),
@@ -1894,6 +1894,7 @@ grant execute on function public.rpc_list_referrals_for_administration() to auth
 notify pgrst, 'reload schema';
 
 commit;
+
 -- FILE: 20260921100000_review_history_versions.sql
 -- La ficha de revisión se conserva por cita: cada cierre produce una versión inmutable.
 begin;
@@ -2037,5 +2038,60 @@ grant execute on function public.rpc_finalize_initial_encounter(uuid,text,text,t
 revoke all on function public.rpc_record_specialty_history_intake(uuid,jsonb,uuid) from public, anon;
 grant execute on function public.rpc_record_specialty_history_intake(uuid,jsonb,uuid) to authenticated;
 
+notify pgrst, 'reload schema';
+commit;
+
+-- FILE: 20260930190000_atomic_specialty_history_finalize.sql
+begin;
+drop function if exists public.rpc_finalize_specialty_encounter(uuid,text,text,text,text,text);
+create function public.rpc_finalize_specialty_encounter(p_encounter_id uuid,p_chief_complaint text,p_assessment text,p_instructions text default null,p_follow_up_text text default null,p_diagnosis_text text default null,p_specialty_history jsonb default null) returns void language plpgsql security definer set search_path = '' as $$
+declare v_encounter public.clinical_encounter%rowtype; v_previous public.appointment_status_code; v_specialty_code text; v_history_version integer; v_history_id uuid;
+begin
+  select * into v_encounter from public.clinical_encounter where id=p_encounter_id for update;
+  if not found or v_encounter.encounter_type<>'SPECIALTY' or v_encounter.status<>'DRAFT' or not private.has_active_role('SPECIALIST') or v_encounter.responsible_staff_id is distinct from private.current_staff_id() then raise exception 'No autorizado para finalizar esta atención especializada' using errcode='42501'; end if;
+  if length(btrim(coalesce(p_chief_complaint,'')))=0 or length(btrim(coalesce(p_assessment,'')))=0 then raise exception 'El motivo de consulta y la evaluación son obligatorios' using errcode='22023'; end if;
+  if jsonb_typeof(p_specialty_history) <> 'object' or v_encounter.specialty_history_id is null then raise exception 'La ficha estructurada de especialidad es obligatoria' using errcode='22023'; end if;
+  select code into v_specialty_code from public.specialty where id=v_encounter.specialty_id;
+  if v_specialty_code is null or p_specialty_history->>'specialtyCode' is distinct from v_specialty_code then raise exception 'La ficha no corresponde a la especialidad de esta cita' using errcode='23514'; end if;
+  if exists(select 1 from public.specialty_history_intake_version where encounter_id=p_encounter_id) then raise exception 'Esta cita ya tiene una versión de ficha de especialidad' using errcode='23505'; end if;
+  select coalesce(max(version_no),0)+1 into v_history_version from public.specialty_history_intake_version where specialty_history_id=v_encounter.specialty_history_id;
+  insert into public.specialty_history_intake_version(specialty_history_id,encounter_id,template_id,version_no,data,recorded_by) values(v_encounter.specialty_history_id,p_encounter_id,null,v_history_version,p_specialty_history,(select auth.uid())) returning id into v_history_id;
+  update public.clinical_encounter set chief_complaint=btrim(p_chief_complaint),assessment=btrim(p_assessment),instructions=nullif(btrim(coalesce(p_instructions,'')),''),follow_up_text=nullif(btrim(coalesce(p_follow_up_text,'')),''),status='CLOSED',closed_at=now(),updated_at=now(),updated_by=(select auth.uid()) where id=p_encounter_id;
+  if length(btrim(coalesce(p_diagnosis_text,'')))>0 then insert into public.encounter_diagnosis(encounter_id,free_text,diagnosis_kind,is_primary,created_by) values(p_encounter_id,btrim(p_diagnosis_text),'CONFIRMED',true,(select auth.uid())); end if;
+  select status into v_previous from public.appointment where id=v_encounter.appointment_id for update;
+  if v_previous in ('SCHEDULED','CHECKED_IN') then update public.appointment set status='ATTENDED',updated_at=now() where id=v_encounter.appointment_id; insert into public.appointment_status_event(appointment_id,from_status,to_status,actor_id) values(v_encounter.appointment_id,v_previous,'ATTENDED',(select auth.uid())); end if;
+  if v_encounter.referral_id is not null then update public.referral set status='CLOSED',closed_at=now(),updated_at=now() where id=v_encounter.referral_id and status='IN_PROGRESS'; if found then insert into public.referral_status_event(referral_id,from_status,to_status,actor_id) values(v_encounter.referral_id,'IN_PROGRESS','CLOSED',(select auth.uid())); end if; end if;
+  perform private.write_audit('SPECIALTY_HISTORY_RECORDED','specialty_history_intake_version',v_history_id,v_encounter.patient_id,'SUCCESS',jsonb_build_object('version_no',v_history_version)); perform private.write_audit('SPECIALTY_ENCOUNTER_CLOSED','clinical_encounter',p_encounter_id,v_encounter.patient_id);
+end;
+$$;
+revoke all on function public.rpc_finalize_specialty_encounter(uuid,text,text,text,text,text,jsonb) from public,anon;
+grant execute on function public.rpc_finalize_specialty_encounter(uuid,text,text,text,text,text,jsonb) to authenticated;
+notify pgrst, 'reload schema';
+commit;
+
+-- FILE: 20260930200000_flexible_clinical_reports.sql
+begin;
+create or replace function public.rpc_clinical_report(p_filters jsonb default '{}'::jsonb)
+returns table(encounter_id uuid,closed_at timestamptz,encounter_type public.encounter_type_code,specialty_name text,patient_id uuid,carnet text,patient_name text,birth_date date,chief_complaint text,assessment text,instructions text,follow_up_text text,diagnoses text,allergies text,habits jsonb,specialty_history jsonb) language sql stable security definer set search_path = '' as $$
+  with scope as (select ce.* from public.clinical_encounter ce where ce.status='CLOSED' and (private.has_active_role('ADMINISTRATIVE') or private.has_active_role('REPORTING_OFFICER') or ((private.has_active_role('REVIEW_DOCTOR') or private.has_active_role('SPECIALIST')) and ce.responsible_staff_id=private.current_staff_id())))
+  select ce.id,ce.closed_at,ce.encounter_type,s.name,p.id,p.carnet,concat_ws(' ',p.given_names,p.family_names),p.birth_date,ce.chief_complaint,ce.assessment,ce.instructions,ce.follow_up_text,coalesce(dx.labels,''),coalesce(review.data #>> '{personalHistory,allergic}',''),coalesce(review.data->'habits','{}'::jsonb),specialty_version.data
+  from scope ce join public.patient p on p.id=ce.patient_id left join public.specialty s on s.id=ce.specialty_id
+  left join lateral (select string_agg(coalesce(cc.display_name,ed.free_text),' · ' order by ed.is_primary desc,ed.created_at) labels from public.encounter_diagnosis ed left join public.clinical_condition_catalog cc on cc.id=ed.condition_id where ed.encounter_id=ce.id) dx on true
+  left join lateral (select rhv.data from public.review_history_version rhv join public.clinical_encounter initial on initial.id=rhv.encounter_id where initial.patient_id=ce.patient_id and initial.encounter_type='INITIAL' order by rhv.recorded_at desc limit 1) review on true
+  left join lateral (select shv.data from public.specialty_history_intake_version shv where shv.encounter_id=ce.id) specialty_version on true
+  where ce.closed_at::date between coalesce(nullif(p_filters->>'from','')::date,current_date-30) and coalesce(nullif(p_filters->>'to','')::date,current_date)
+    and (nullif(p_filters->>'encounterType','') is null or ce.encounter_type::text=p_filters->>'encounterType') and (nullif(p_filters->>'specialtyId','') is null or ce.specialty_id=(p_filters->>'specialtyId')::uuid)
+    and (nullif(p_filters->>'diagnosis','') is null or coalesce(dx.labels,'') ilike concat('%',p_filters->>'diagnosis','%')) and (nullif(p_filters->>'allergy','') is null or coalesce(review.data #>> '{personalHistory,allergic}','') ilike concat('%',p_filters->>'allergy','%'))
+    and (nullif(p_filters->>'habit','') is null or coalesce(review.data->'habits'->>(p_filters->>'habit'),'')='YES') order by ce.closed_at desc;
+$$;
+create or replace function public.rpc_log_clinical_report_export(p_filters jsonb,p_format text,p_row_count integer,p_purpose text default 'Gestión clínica') returns uuid language plpgsql security definer set search_path = '' as $$ declare v_id uuid; begin if not (private.has_active_role('ADMINISTRATIVE') or private.has_active_role('REPORTING_OFFICER') or private.has_active_role('REVIEW_DOCTOR') or private.has_active_role('SPECIALIST')) then raise exception 'No autorizado para exportar reportes' using errcode='42501'; end if; if p_format not in ('CSV','XLSX','PDF') or p_row_count<0 then raise exception 'Formato o cantidad inválida' using errcode='22023'; end if; insert into public.report_export(requested_by,report_code,purpose,filters,field_set,result_mode,status,row_count,completed_at) values((select auth.uid()),'CLINICAL_DETAIL',coalesce(nullif(btrim(p_purpose),''),'Gestión clínica'),p_filters,jsonb_build_array('encounter','patient','diagnosis','history'),'NOMINAL','AVAILABLE',p_row_count,now()) returning id into v_id; perform private.write_audit('REPORT_EXPORTED','report_export',v_id,null,'SUCCESS',jsonb_build_object('format',p_format,'row_count',p_row_count)); return v_id; end; $$;
+revoke all on function public.rpc_clinical_report(jsonb),public.rpc_log_clinical_report_export(jsonb,text,integer,text) from public,anon;
+grant execute on function public.rpc_clinical_report(jsonb),public.rpc_log_clinical_report_export(jsonb,text,integer,text) to authenticated;
+notify pgrst, 'reload schema';
+commit;
+
+-- FILE: 20260930210000_enable_gynecology.sql
+begin;
+update public.specialty set is_enabled = true where code = 'GYNECOLOGY';
 notify pgrst, 'reload schema';
 commit;

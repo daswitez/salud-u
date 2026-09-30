@@ -23,6 +23,7 @@ export type MedicalAppointment = {
   checkedInAt: string | null;
   endsAt: string | null;
   specialty: string;
+  specialtyCode: string | null;
   patient: {
     id: string;
     carnet: string;

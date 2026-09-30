@@ -8,6 +8,7 @@ import { appointmentStatusClass, appointmentStatusLabel, formatAppointmentTime }
 import { MedicalDocumentUploader } from "@/components/medical-document-uploader";
 import type { PatientRecord } from "@/components/medical-patient-record";
 import { ReviewHistoryForm } from "@/components/review-history-form";
+import { emptySpecialtyHistory, SpecialtyHistoryForm, type SpecialtyHistoryDraft } from "@/components/specialty-history-form";
 import { apiJson, type MedicalAppointment } from "@/lib/api/client";
 import { emptyReviewHistory, type ReviewHistoryDraft } from "@/lib/review-history";
 
@@ -28,7 +29,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   const [diagnosisText, setDiagnosisText] = useState("");
   const [instructions, setInstructions] = useState("");
   const [followUpText, setFollowUpText] = useState("");
-  const [specialtyHistory, setSpecialtyHistory] = useState("");
+  const [specialtyHistory, setSpecialtyHistory] = useState<SpecialtyHistoryDraft>(emptySpecialtyHistory("GENERAL"));
   const [bloodChemistryStatus, setBloodChemistryStatus] = useState("NOT_PRESENTED");
   const [reviewHistory, setReviewHistory] = useState<ReviewHistoryDraft>(emptyReviewHistory);
   const [referralSpecialtyId, setReferralSpecialtyId] = useState("");
@@ -47,6 +48,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
         if (!active) return;
         setAppointment(current);
         setRecord(patientRecord);
+        setSpecialtyHistory(emptySpecialtyHistory(current.specialtyCode ?? "GENERAL"));
         const existing = patientRecord.encounters.find((item) => item.appointment_id === appointmentId);
         if (existing?.status === "DRAFT") {
           setEncounterId(existing.id);
@@ -103,7 +105,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
           diagnosisText,
           instructions: isReview ? reviewHistory.observations : instructions,
           followUpText: isReview ? (reviewHistory.conduct.medicalFollowUp ? "Control médico" : null) : followUpText,
-          specialtyHistory,
+          specialtyHistory: isReview ? null : specialtyHistory,
           bloodChemistryStatus,
           reviewHistory: isReview ? reviewHistory : null,
           referralSpecialtyId: isReview && referralSelected ? referralSpecialtyId : null,
@@ -155,7 +157,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   </>;
 }
 
-function SpecialtyDraft({ chiefComplaint, assessment, diagnosisText, instructions, followUpText, specialtyHistory, onChiefComplaint, onAssessment, onDiagnosis, onInstructions, onFollowUp, onHistory, patientId, encounterId }: { chiefComplaint: string; assessment: string; diagnosisText: string; instructions: string; followUpText: string; specialtyHistory: string; onChiefComplaint: (value: string) => void; onAssessment: (value: string) => void; onDiagnosis: (value: string) => void; onInstructions: (value: string) => void; onFollowUp: (value: string) => void; onHistory: (value: string) => void; patientId: string; encounterId: string }) {
+function SpecialtyDraft({ chiefComplaint, assessment, diagnosisText, instructions, followUpText, specialtyHistory, onChiefComplaint, onAssessment, onDiagnosis, onInstructions, onFollowUp, onHistory, patientId, encounterId }: { chiefComplaint: string; assessment: string; diagnosisText: string; instructions: string; followUpText: string; specialtyHistory: SpecialtyHistoryDraft; onChiefComplaint: (value: string) => void; onAssessment: (value: string) => void; onDiagnosis: (value: string) => void; onInstructions: (value: string) => void; onFollowUp: (value: string) => void; onHistory: (value: SpecialtyHistoryDraft) => void; patientId: string; encounterId: string }) {
   const field = "mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 outline-none focus:border-primary";
-  return <section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6"><p className="text-sm font-semibold tracking-wide text-primary">REGISTRO PROVISIONAL DE ESPECIALIDAD</p><p className="mt-1 text-sm text-text-secondary">La ficha específica de cada especialidad se definirá con su formulario. Esta evolución ya queda versionada por cita.</p><div className="mt-6 grid gap-5"><label><span className="text-sm font-semibold text-text-primary">Motivo de consulta *</span><textarea required value={chiefComplaint} onChange={(event) => onChiefComplaint(event.target.value)} rows={3} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Evaluación clínica *</span><textarea required value={assessment} onChange={(event) => onAssessment(event.target.value)} rows={5} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Diagnóstico principal</span><input value={diagnosisText} onChange={(event) => onDiagnosis(event.target.value)} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Resumen evolutivo</span><textarea value={specialtyHistory} onChange={(event) => onHistory(event.target.value)} rows={4} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Indicaciones</span><textarea value={instructions} onChange={(event) => onInstructions(event.target.value)} rows={3} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Seguimiento sugerido</span><input value={followUpText} onChange={(event) => onFollowUp(event.target.value)} className={field} /></label><MedicalDocumentUploader patientId={patientId} encounterId={encounterId} /></div></section>;
+  return <><section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6"><p className="text-sm font-semibold tracking-wide text-primary">EVOLUCIÓN DE ESPECIALIDAD</p><div className="mt-6 grid gap-5"><label><span className="text-sm font-semibold text-text-primary">Motivo de consulta *</span><textarea required value={chiefComplaint} onChange={(event) => onChiefComplaint(event.target.value)} rows={3} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Impresión diagnóstica *</span><textarea required value={assessment} onChange={(event) => onAssessment(event.target.value)} rows={5} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Diagnóstico principal</span><input value={diagnosisText} onChange={(event) => onDiagnosis(event.target.value)} className={field} /></label></div></section><SpecialtyHistoryForm value={specialtyHistory} onChange={onHistory} /><section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6"><div className="grid gap-5"><label><span className="text-sm font-semibold text-text-primary">Plan y tratamiento</span><textarea value={instructions} onChange={(event) => onInstructions(event.target.value)} rows={3} className={field} /></label><label><span className="text-sm font-semibold text-text-primary">Fecha / indicación de control médico</span><input value={followUpText} onChange={(event) => onFollowUp(event.target.value)} className={field} /></label><MedicalDocumentUploader patientId={patientId} encounterId={encounterId} /></div></section></>;
 }
