@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ClinicalRole } from "@/lib/ui-contracts";
 
 export type AppRole = "estudiante" | "medico" | "administrativo";
@@ -57,10 +58,10 @@ export function AppSidebar({ role, active, clinicalRole }: { role: AppRole; acti
   const items = navigationFor(role, clinicalRole);
   const subtitle = clinicalRole === "REVIEW_DOCTOR" ? "Revisión estudiantil" : clinicalRole === "SPECIALIST" ? "Atención especializada" : role === "administrativo" ? "Área administrativa" : "Atención estudiantil";
   return <aside className="fixed inset-x-0 bottom-0 z-30 border-t border-divider bg-surface px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 md:static md:flex md:min-h-screen md:w-64 md:shrink-0 md:flex-col md:border-r md:border-t-0 md:px-3 md:py-6">
-    <Link href={`/${role}`} className="mb-8 hidden items-center gap-3 px-3 md:flex"><span className="grid size-10 place-items-center rounded-xl bg-primary text-sm font-bold text-on-primary">SU</span><span><span className="block text-sm font-semibold text-text-primary">Salud Universitaria</span><span className="block text-xs text-text-tertiary">{subtitle}</span></span></Link>
+    <Link href={`/${role}`} className="mb-8 hidden items-center gap-3 px-3 md:flex"><span className="flex items-center -space-x-2" aria-hidden="true"><Image src="/branding/fcsh-uagrm-emblem.png" alt="" width={96} height={96} className="size-11 rounded-full bg-white object-contain p-0.5 ring-1 ring-secondary-container" /><Image src="/branding/centro-especialidades-emblem.png" alt="" width={96} height={96} className="size-11 rounded-full bg-white object-contain p-0.5 ring-1 ring-primary-200" /></span><span><span className="block text-sm font-semibold text-text-primary">Salud Universitaria</span><span className="block text-xs text-text-tertiary">{subtitle}</span></span></Link>
     <nav aria-label="Navegación principal" className="flex w-full justify-between md:block">{items.map((item) => {
       const disabled = !item.href;
-      const classes = `flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors md:mb-1 md:w-full md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm ${active === item.key ? "bg-primary-container text-primary" : disabled ? "cursor-not-allowed text-text-disabled" : "text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary"}`;
+      const classes = `flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors md:mb-1 md:w-full md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm ${active === item.key ? "bg-primary-container text-primary md:border-l-4 md:border-secondary md:pl-2" : disabled ? "cursor-not-allowed text-text-disabled" : "text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary"}`;
       const label = <><Icon name={item.icon} /><span className="text-center md:text-left">{item.label}</span></>;
       return item.href ? <Link key={item.key} href={item.href} className={classes}>{label}</Link> : <span key={item.key} aria-disabled="true" title={item.comingSoon ? "Disponible en el siguiente bloque" : undefined} className={classes}>{label}</span>;
     })}</nav>

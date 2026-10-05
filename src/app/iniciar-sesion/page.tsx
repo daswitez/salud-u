@@ -11,7 +11,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <div className="relative z-10 flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-white/15 text-base font-bold">SU</span><span><span className="block font-semibold">Salud Universitaria</span><span className="block text-sm text-white/75">Atención médica estudiantil</span></span></div>
         <div className="relative z-10 max-w-xl"><p className="text-sm font-semibold tracking-[0.16em] text-white/75">ATENCIÓN CLÍNICA UNIVERSITARIA</p><h1 className="mt-4 text-5xl font-bold leading-tight tracking-tight">Historias clínicas y atención conectadas.</h1><p className="mt-6 max-w-md text-lg leading-8 text-white/85">Registra, consulta y da seguimiento a la atención estudiantil desde un solo lugar.</p></div>
         <p className="relative z-10 text-sm text-white/70">Universidad pública · Servicio de salud estudiantil</p>
-        <div aria-hidden="true" className="absolute -bottom-40 -right-28 size-140 rounded-full border-[48px] border-white/10" /><div aria-hidden="true" className="absolute -top-24 right-30 size-80 rounded-full bg-secondary/40 blur-3xl" />
+        <div aria-hidden="true" className="absolute -bottom-40 -right-28 size-140 rounded-full border-[48px] border-white/10" />
       </section>
 
       <section className="flex items-center justify-center px-5 py-10 sm:px-8">

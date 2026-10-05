@@ -57,6 +57,7 @@ const users = [
   { key: "reviewThree", email: "revision.elena.demo@salud-universitaria.test", name: "Dra. Elena Revisión Demo", role: "REVIEW_DOCTOR", employeeCode: "TEST-REV-003" },
   { key: "dermatology", email: "dermatologia.demo@salud-universitaria.test", name: "Dra. Dermatología Demo", role: "SPECIALIST", employeeCode: "TEST-DER-001", specialty: "DERMATOLOGY" },
   { key: "ophthalmology", email: "oftalmologia.demo@salud-universitaria.test", name: "Dr. Oftalmología Demo", role: "SPECIALIST", employeeCode: "TEST-OFT-001", specialty: "OPHTHALMOLOGY" },
+  { key: "gynecology", email: "ginecologia.demo@salud-universitaria.test", name: "Dra. Ginecología Demo", role: "SPECIALIST", employeeCode: "TEST-GYN-001", specialty: "GYNECOLOGY" },
   { key: "internalMedicine", email: "interna.demo@salud-universitaria.test", name: "Dra. Medicina Interna Demo", role: "SPECIALIST", employeeCode: "TEST-INT-001", specialty: "INTERNAL_MEDICINE" },
   { key: "urology", email: "urologia.demo@salud-universitaria.test", name: "Dr. Urología Demo", role: "SPECIALIST", employeeCode: "TEST-URO-001", specialty: "UROLOGY" },
   { key: "student01", email: "estudiante.ana.demo@salud-universitaria.test", name: "Ana Estudiante Demo", role: "STUDENT", carnet: "TEST-2026-001", registrationCode: "REG-TEST-001", givenNames: "Ana", familyNames: "Estudiante Demo" },
