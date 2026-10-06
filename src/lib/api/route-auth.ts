@@ -24,7 +24,7 @@ export function isApiError(value: unknown): value is NextResponse {
 }
 
 export function supabaseError(error: { code?: string; message: string }) {
-  const status = error.code === "42501" ? 403 : error.code === "23505" ? 409 : error.code === "P0002" ? 404 : 400;
+  const status = error.code === "42501" ? 403 : error.code === "23505" || error.code === "40001" ? 409 : error.code === "P0002" ? 404 : 400;
   return NextResponse.json({ ok: false, error: error.message, code: error.code ?? "DATABASE" }, { status });
 }
 

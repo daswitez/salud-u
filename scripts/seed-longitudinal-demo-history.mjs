@@ -90,6 +90,23 @@ function reviewHistory(index, hasReferral) {
   };
 }
 
+function backgroundFromReview(history) {
+  const status = (details) => {
+    const value = details.trim();
+    const entryStatus = /^(niega|sin |no usa|no refiere)/i.test(value) ? "NONE" : value ? "PRESENT" : "UNKNOWN";
+    return { status: entryStatus, items: entryStatus === "PRESENT" ? [value] : [] };
+  };
+  return {
+    schemaVersion: 1,
+    allergies: status(history.personalHistory.allergic),
+    personalConditions: status(history.personalHistory.pathological),
+    surgeries: status(history.personalHistory.surgical),
+    medications: status(history.personalHistory.regularMedications),
+    familyHistory: status(history.personalHistory.familyRelevant),
+    habits: history.habits,
+  };
+}
+
 function ophthalmologyHistory() {
   return {
     schemaVersion: 1, specialtyCode: "OPHTHALMOLOGY",
@@ -201,6 +218,11 @@ async function main() {
     const needsReferral = index < 4;
     const specialtyCode = index % 2 === 0 ? "OPHTHALMOLOGY" : "GYNECOLOGY";
     const encounterId = await call(reviewer, "rpc_open_encounter", { p_patient_id: item.patient.id, p_appointment_id: item.appointmentId, p_referral_id: null, p_chief_complaint: "Pendiente de entrevista clínica." }, `No se pudo abrir la atención de ${item.patient.carnet}`);
+    const history = reviewHistory(index, needsReferral);
+    const background = await call(reviewer, "rpc_get_clinical_background", { p_patient_id: item.patient.id, p_encounter_id: encounterId }, `No se pudieron consultar los antecedentes de ${item.patient.carnet}`);
+    if (!background?.current) {
+      await call(reviewer, "rpc_save_clinical_background", { p_patient_id: item.patient.id, p_data: backgroundFromReview(history), p_expected_version: 0, p_encounter_id: encounterId, p_change_reason: "Carga inicial de datos ficticios longitudinales" }, `No se pudieron crear los antecedentes de ${item.patient.carnet}`);
+    }
     const result = await call(reviewer, "rpc_finalize_initial_encounter", {
       p_encounter_id: encounterId,
       p_chief_complaint: `${MARKER} · control ${index + 1}`,
@@ -218,7 +240,7 @@ async function main() {
       p_referral_reason: needsReferral ? (specialtyCode === "OPHTHALMOLOGY" ? "Fatiga visual asociada a uso prolongado de pantallas." : "Dismenorrea leve de evolución crónica para valoración ginecológica.") : null,
       p_referral_comment: needsReferral ? "Paciente estable; se deriva para valoración no urgente y continuidad de manejo." : null,
       p_referral_priority: "ROUTINE",
-      p_review_history: reviewHistory(index, needsReferral),
+      p_review_history: history,
     }, `No se pudo finalizar la atención de ${item.patient.carnet}`);
     if (needsReferral && result?.referralId) referrals.push({ patient: item.patient, referralId: result.referralId, specialtyCode });
   }

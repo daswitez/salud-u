@@ -21,15 +21,12 @@ function currentAge(birthDate: string | null) {
 
 const inputClass = "mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary";
 const areaClass = `${inputClass} resize-y`;
-const historyFields: [keyof ReviewHistoryDraft["personalHistory"], string][] = [["pathological", "Patológicos"], ["surgical", "Quirúrgicos"], ["allergic", "Alérgicos"], ["regularMedications", "Medicamentos habituales"], ["familyRelevant", "Antecedentes familiares relevantes"]];
 const examFields: [keyof ReviewHistoryDraft["physicalExam"], string][] = [["generalState", "Estado general"], ["cardiopulmonary", "Cardiopulmonar"], ["abdomen", "Abdomen"], ["otherFindings", "Otros hallazgos"]];
 const laboratoryFields: [keyof ReviewHistoryDraft["laboratory"], string][] = [["hemogram", "Hemograma"], ["bloodGroup", "Grupo sanguíneo"], ["vdrl", "VDRL"], ["chagas", "Chagas"], ["coproparasitological", "Coproparasitológico"], ["other", "Otros"]];
 const conductFields: [keyof ReviewHistoryDraft["conduct"], string][] = [["healthEducation", "Orientación y educación en salud"], ["treatment", "Tratamiento"], ["complementaryStudies", "Solicitud de estudios complementarios"], ["referral", "Derivación a especialidad"], ["medicalFollowUp", "Control médico"], ["noObservations", "Sin observaciones"]];
 
 export function ReviewHistoryForm({ value, onChange, patientName, birthDate, scheduledFor }: Props) {
   const change = <K extends keyof ReviewHistoryDraft>(key: K, next: ReviewHistoryDraft[K]) => onChange({ ...value, [key]: next });
-  const history = (key: keyof ReviewHistoryDraft["personalHistory"], next: string) => change("personalHistory", { ...value.personalHistory, [key]: next });
-  const habit = (key: keyof ReviewHistoryDraft["habits"], next: ReviewHistoryDraft["habits"][typeof key]) => change("habits", { ...value.habits, [key]: next });
   const vital = (key: keyof ReviewHistoryDraft["vitals"], next: string) => change("vitals", { ...value.vitals, [key]: next });
   const exam = (key: keyof ReviewHistoryDraft["physicalExam"], next: string) => change("physicalExam", { ...value.physicalExam, [key]: next });
   const lab = (key: keyof ReviewHistoryDraft["laboratory"], next: string) => change("laboratory", { ...value.laboratory, [key]: next });
@@ -46,23 +43,6 @@ export function ReviewHistoryForm({ value, onChange, patientName, birthDate, sch
         <p><span className="block text-text-secondary">Fecha de atención</span><span className="font-semibold text-text-primary">{new Intl.DateTimeFormat("es-BO", { dateStyle: "long" }).format(new Date(scheduledFor))}</span></p>
         <p><span className="block text-text-secondary">Edad</span><span className="font-semibold text-text-primary">{currentAge(birthDate)}</span></p>
         <p><span className="block text-text-secondary">Sexo, carrera y semestre</span><span className="font-semibold text-text-primary">Datos administrativos del estudiante</span></p>
-      </div>
-    </section>
-
-    <section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6">
-      <p className="text-sm font-semibold tracking-wide text-primary">3. ANTECEDENTES PERSONALES</p>
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        {historyFields.map(([key, label]) => <label key={key}><span className="text-sm font-semibold text-text-primary">{label}</span><textarea value={value.personalHistory[key]} onChange={(event) => history(key, event.target.value)} rows={3} className={areaClass} /></label>)}
-      </div>
-    </section>
-
-    <section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6">
-      <p className="text-sm font-semibold tracking-wide text-primary">4. HÁBITOS Y ESTILO DE VIDA</p>
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        <Choice label="Alimentación" value={value.habits.diet} onChange={(next) => habit("diet", next as ReviewHistoryDraft["habits"]["diet"])} options={[["", "No registrado"], ["ADEQUATE", "Adecuada"], ["REGULAR", "Regular"], ["INADEQUATE", "Inadecuada"]]} />
-        <Choice label="Actividad física" value={value.habits.physicalActivity} onChange={(next) => habit("physicalActivity", next as ReviewHistoryDraft["habits"]["physicalActivity"])} options={[["", "No registrado"], ["YES", "Sí"], ["NO", "No"]]} />
-        <Choice label="Tabaco" value={value.habits.tobacco} onChange={(next) => habit("tobacco", next as ReviewHistoryDraft["habits"]["tobacco"])} options={[["", "No registrado"], ["YES", "Sí"], ["NO", "No"]]} />
-        <Choice label="Alcohol" value={value.habits.alcohol} onChange={(next) => habit("alcohol", next as ReviewHistoryDraft["habits"]["alcohol"])} options={[["", "No registrado"], ["YES", "Sí"], ["NO", "No"]]} />
       </div>
     </section>
 
@@ -102,10 +82,6 @@ export function ReviewHistoryForm({ value, onChange, patientName, birthDate, sch
       <label className="mt-5 block"><span className="text-sm font-semibold text-text-primary">Observaciones e indicaciones</span><textarea value={value.observations} onChange={(event) => change("observations", event.target.value)} rows={4} className={areaClass} /></label>
     </section>
   </div>;
-}
-
-function Choice({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: readonly (readonly [string, string])[] }) {
-  return <label><span className="text-sm font-semibold text-text-primary">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className={inputClass}>{options.map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select></label>;
 }
 
 function NumberField({ label, unit, value, onChange, step = "1" }: { label: string; unit: string; value: string; onChange: (value: string) => void; step?: string }) {

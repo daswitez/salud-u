@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { appointmentStatusClass, appointmentStatusLabel, formatAppointmentTime } from "@/components/medical-appointments";
+import { ClinicalBackgroundModal, ClinicalBackgroundSummary } from "@/components/clinical-background";
 import { MedicalDocumentUploader } from "@/components/medical-document-uploader";
 import { ReviewSnapshot, SpecialtySnapshot, type PatientRecord } from "@/components/medical-patient-record";
 import { ReviewHistoryForm } from "@/components/review-history-form";
 import { emptySpecialtyHistory, SpecialtyHistoryForm, type SpecialtyHistoryDraft } from "@/components/specialty-history-form";
 import { apiJson, type MedicalAppointment } from "@/lib/api/client";
+import { clinicalBackgroundToLegacy, type ClinicalBackgroundDraft, type ClinicalBackgroundVersion } from "@/lib/clinical-background";
 import { emptyReviewHistory, type ReviewHistoryDraft } from "@/lib/review-history";
 
 type Specialty = { id: string; name: string };
@@ -19,7 +21,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   const [appointment, setAppointment] = useState<MedicalAppointment | null>(null);
   const [record, setRecord] = useState<PatientRecord | null>(null);
   const [encounterId, setEncounterId] = useState<string | null>(null);
-  const [stage, setStage] = useState<"ready" | "active" | "form">("ready");
+  const [stage, setStage] = useState<"ready" | "form">("ready");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +40,9 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   const [referralComment, setReferralComment] = useState("");
   const [referralPriority, setReferralPriority] = useState("ROUTINE");
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [clinicalBackground, setClinicalBackground] = useState<ClinicalBackgroundVersion | null>(null);
+  const [backgroundOpen, setBackgroundOpen] = useState(false);
+  const [backgroundSaving, setBackgroundSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -50,13 +55,17 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
         if (!active) return;
         setAppointment(current);
         setRecord(patientRecord);
-        setSpecialtyHistory(emptySpecialtyHistory(current.specialtyCode ?? "GENERAL"));
+        if (current.appointmentType === "INITIAL") setSpecialties(await apiJson<Specialty[]>("/api/specialties"));
         const existing = patientRecord.encounters.find((item) => item.appointment_id === appointmentId);
+        const background = existing?.clinicalBackground ?? patientRecord.clinicalBackground;
+        setClinicalBackground(background);
+        applyClinicalBackground(background?.data ?? null, current.specialtyCode ?? "GENERAL", setReviewHistory, setSpecialtyHistory);
         if (existing?.status === "DRAFT") {
           setEncounterId(existing.id);
-          setStage("active");
+          setStage("form");
           setChiefComplaint(existing.chief_complaint === "Pendiente de entrevista clínica." ? "" : existing.chief_complaint);
           setHasBloodChemistry(patientRecord.documents.some((document) => document.encounter_id === existing.id && document.document_type_code === "BLOOD_CHEMISTRY"));
+          if (!background) setBackgroundOpen(true);
         }
       } catch (reason) {
         if (active) setError(reason instanceof Error ? reason.message : "No se pudo abrir la cita.");
@@ -70,6 +79,12 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   const isReview = appointment?.appointmentType === "INITIAL";
   const referralSelected = reviewHistory.conduct.referral;
 
+  async function loadSpecialties() {
+    if (!isReview || specialties.length) return;
+    try { setSpecialties(await apiJson<Specialty[]>("/api/specialties")); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "No se pudieron cargar especialidades."); }
+  }
+
   async function start() {
     setSaving(true);
     setError("");
@@ -78,7 +93,9 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
       setEncounterId(data.encounterId);
       setHasBloodChemistry(false);
       setBloodChemistryStatus("NOT_PRESENTED");
-      setStage("active");
+      setStage("form");
+      await loadSpecialties();
+      if (!clinicalBackground) setBackgroundOpen(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se pudo iniciar la cita.");
     } finally {
@@ -86,14 +103,17 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
     }
   }
 
-  async function showForm() {
-    setStage("form");
-    if (!isReview || specialties.length) return;
+  async function saveClinicalBackground(data: ClinicalBackgroundDraft, changeReason: string) {
+    if (!record || !encounterId) return;
+    setBackgroundSaving(true); setError("");
     try {
-      setSpecialties(await apiJson<Specialty[]>("/api/specialties"));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se pudieron cargar especialidades.");
-    }
+      const version = await apiJson<ClinicalBackgroundVersion>(`/api/medical/patients/${record.patient.id}/clinical-background`, { method: "PATCH", body: JSON.stringify({ data, changeReason, encounterId, expectedVersion: clinicalBackground?.versionNo ?? 0 }) });
+      setClinicalBackground(version);
+      setRecord({ ...record, clinicalBackground: version });
+      applyClinicalBackground(version.data, appointment?.specialtyCode ?? "GENERAL", setReviewHistory, setSpecialtyHistory);
+      setBackgroundOpen(false);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "No se pudieron guardar los antecedentes generales."); }
+    finally { setBackgroundSaving(false); }
   }
 
   async function finalize(event: React.FormEvent) {
@@ -156,10 +176,10 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
     </header>
     <ClinicalHistoryAccess record={record} open={historyOpen} onOpen={() => setHistoryOpen(true)} onClose={() => setHistoryOpen(false)} />
     {error && <p className="mt-5 rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
+    {stage === "form" && <div className="mt-7"><ClinicalBackgroundSummary version={clinicalBackground} onEdit={() => setBackgroundOpen(true)} /></div>}
     {closed ? <section className="mt-7 rounded-2xl bg-success-container p-6"><h2 className="font-bold text-success">Esta cita ya fue atendida</h2><p className="mt-2 text-sm text-text-secondary">La ficha se conserva como una versión inmutable asociada a esta fecha.</p></section>
       : stage === "ready" ? <section className="mt-7 rounded-2xl border border-primary-200 bg-primary-container p-6"><h2 className="text-xl font-bold text-text-primary">1. Iniciar cita</h2><p className="mt-2 max-w-2xl text-sm text-text-secondary">Se abrirá un borrador clínico para esta cita; aún no modificará ninguna ficha previa.</p><button onClick={start} disabled={saving} className="mt-5 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Iniciando…" : "Iniciar cita"}</button></section>
-        : stage === "active" ? <section className="mt-7 rounded-2xl border border-warning-container bg-warning-container p-6"><h2 className="text-xl font-bold text-text-primary">2. Cita en curso</h2><p className="mt-2 text-sm text-text-secondary">Completa la ficha de esta atención y adjunta sus exámenes o imágenes antes de cerrarla.</p><button onClick={showForm} className="mt-5 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary">Completar y cerrar cita</button></section>
-          : <form onSubmit={finalize} className="mt-7 space-y-6">
+        : <form onSubmit={finalize} className="mt-7 space-y-6">
             {isReview ? <>
               <section className="rounded-2xl border border-divider bg-surface p-5 sm:p-6"><p className="text-sm font-semibold tracking-wide text-primary">2. MOTIVO DE CONSULTA</p><label className="mt-4 block"><span className="text-sm font-semibold text-text-primary">Motivo de consulta *</span><textarea required value={chiefComplaint} onChange={(event) => setChiefComplaint(event.target.value)} rows={3} className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 outline-none focus:border-primary" /></label></section>
               <ReviewHistoryForm value={reviewHistory} onChange={setReviewHistory} patientName={record.patient.fullName} birthDate={record.patient.birthDate} scheduledFor={appointment.scheduledFor} />
@@ -169,7 +189,29 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
             </> : <SpecialtyDraft chiefComplaint={chiefComplaint} assessment={assessment} diagnosisText={diagnosisText} instructions={instructions} followUpText={followUpText} specialtyHistory={specialtyHistory} onChiefComplaint={setChiefComplaint} onAssessment={setAssessment} onDiagnosis={setDiagnosisText} onInstructions={setInstructions} onFollowUp={setFollowUpText} onHistory={setSpecialtyHistory} patientId={record.patient.id} encounterId={encounterId!} />}
             <div className="flex flex-wrap justify-end gap-3"><Link href={`/medico/pacientes/${record.patient.id}`} className="rounded-lg border border-divider px-5 py-3 text-sm font-semibold text-text-primary hover:bg-surface-secondary">Cancelar</Link><button disabled={saving} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Guardando…" : referralSelected ? "Cerrar atención y enviar derivación" : "Cerrar atención"}</button></div>
           </form>}
+    <ClinicalBackgroundModal key={`${backgroundOpen}-${clinicalBackground?.id ?? "new"}`} open={backgroundOpen} initial={clinicalBackground} saving={backgroundSaving} error={error} required={!clinicalBackground} onClose={() => setBackgroundOpen(false)} onSave={saveClinicalBackground} />
   </>;
+}
+
+function applyClinicalBackground(
+  background: ClinicalBackgroundDraft | null,
+  specialtyCode: string,
+  setReview: React.Dispatch<React.SetStateAction<ReviewHistoryDraft>>,
+  setSpecialty: React.Dispatch<React.SetStateAction<SpecialtyHistoryDraft>>,
+) {
+  const specialty = emptySpecialtyHistory(specialtyCode);
+  if (!background) { setSpecialty(specialty); return; }
+  const legacy = clinicalBackgroundToLegacy(background);
+  setReview((current) => ({ ...current, personalHistory: legacy.personalHistory, habits: legacy.habits }));
+  setSpecialty({
+    ...specialty,
+    personalHistory: {
+      pathological: legacy.personalHistory.pathological,
+      surgical: legacy.personalHistory.surgical,
+      allergic: legacy.personalHistory.allergic,
+      family: legacy.personalHistory.familyRelevant,
+    },
+  });
 }
 
 function ClinicalHistoryAccess({ record, open, onOpen, onClose }: { record: PatientRecord; open: boolean; onOpen: () => void; onClose: () => void }) {
@@ -188,14 +230,13 @@ function ClinicalHistoryAccess({ record, open, onOpen, onClose }: { record: Pati
       return JSON.stringify({ encounter, diagnoses }).toLocaleLowerCase("es-BO").includes(term);
     });
   }, [closedEncounters, from, record.diagnoses, search, to]);
-  const summary = record.intake;
   return <>
     <button type="button" onClick={onOpen} className="fixed bottom-5 right-5 z-40 rounded-full bg-primary px-5 py-3 text-sm font-bold text-on-primary shadow-lg transition hover:bg-primary-hover focus:outline-none focus:ring-4 focus:ring-primary-container" aria-haspopup="dialog" aria-expanded={open}>Historia clínica <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-xs">{closedEncounters.length}</span></button>
     {open && <div className="fixed inset-0 z-50 bg-black/40" role="presentation" onMouseDown={onClose}>
       <aside role="dialog" aria-modal="true" aria-labelledby="clinical-history-title" onMouseDown={(event) => event.stopPropagation()} className="ml-auto flex h-full w-full max-w-2xl flex-col bg-surface shadow-2xl">
         <header className="flex items-start justify-between gap-4 border-b border-divider p-5 sm:p-6"><div><p className="text-sm font-semibold tracking-wide text-primary">REFERENCIA CLÍNICA</p><h2 id="clinical-history-title" className="mt-1 text-2xl font-bold text-text-primary">Historia de {record.patient.fullName}</h2><p className="mt-1 text-sm text-text-secondary">Consulta esta información sin salir de la cita; el formulario actual conserva lo que ya escribiste.</p></div><button type="button" onClick={onClose} className="rounded-lg p-2 text-xl text-text-secondary hover:bg-surface-secondary" aria-label="Cerrar historia clínica">×</button></header>
-        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6"><section className="rounded-xl border border-divider bg-surface-secondary p-4"><h3 className="font-bold text-text-primary">Resumen de la última revisión</h3>{summary ? <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">{[["Alergias", summary.allergies], ["Antecedentes patológicos", summary.chronic_conditions], ["Medicamentos", summary.current_medications], ["Antecedentes familiares", summary.relevant_history]].map(([label, item]) => <div key={label}><dt className="text-text-secondary">{label}</dt><dd className="font-medium text-text-primary">{item || "No registrado"}</dd></div>)}</dl> : <p className="mt-2 text-sm text-text-secondary">El paciente aún no tiene una ficha de revisión cerrada.</p>}</section>
-          <section className="mt-6"><div className="flex items-baseline justify-between gap-4"><h3 className="text-lg font-bold text-text-primary">Atenciones previas</h3><span className="text-sm text-text-secondary">{visibleEncounters.length} de {closedEncounters.length}</span></div><div className="mt-3 rounded-xl border border-divider bg-surface-secondary p-4"><label><span className="text-sm font-semibold text-text-primary">Buscar en la historia</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Síntoma, diagnóstico, alergia, indicación…" className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label><div className="mt-3 grid gap-3 sm:grid-cols-2"><label><span className="text-sm font-semibold text-text-primary">Desde</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label><label><span className="text-sm font-semibold text-text-primary">Hasta</span><input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label></div>{(search || from || to) && <button type="button" onClick={() => { setSearch(""); setFrom(""); setTo(""); }} className="mt-3 text-sm font-semibold text-primary hover:underline">Limpiar filtros</button>}</div><div className="mt-3 space-y-3">{visibleEncounters.map((encounter, index) => { const diagnoses = record.diagnoses.filter((item) => item.encounter_id === encounter.id); const documents = record.documents.filter((item) => item.encounter_id === encounter.id); return <details key={encounter.id} open={index === 0} className="rounded-xl border border-divider bg-surface"><summary className="cursor-pointer list-none p-4 hover:bg-surface-secondary"><p className="font-bold text-text-primary">{encounter.encounter_type === "INITIAL" ? "Revisión médica" : encounter.specialty ?? "Especialidad"}</p><p className="mt-1 text-sm text-text-secondary">{formatAppointmentTime(encounter.occurred_at)} · {encounter.chief_complaint}</p></summary><div className="border-t border-divider p-4"><h4 className="font-semibold text-text-primary">Evaluación</h4><p className="mt-1 text-sm text-text-secondary">{encounter.assessment || "Sin observaciones."}</p>{diagnoses.length > 0 && <><h4 className="mt-4 font-semibold text-text-primary">Diagnósticos</h4><p className="mt-1 text-sm text-text-secondary">{diagnoses.map((item) => item.label).join(" · ")}</p></>}{encounter.instructions && <><h4 className="mt-4 font-semibold text-text-primary">Indicaciones</h4><p className="mt-1 text-sm text-text-secondary">{encounter.instructions}</p></>}{encounter.follow_up_text && <><h4 className="mt-4 font-semibold text-text-primary">Control médico</h4><p className="mt-1 text-sm text-text-secondary">{encounter.follow_up_text}</p></>}{encounter.encounter_type === "INITIAL" ? <ReviewSnapshot data={encounter.reviewHistory} /> : <SpecialtySnapshot data={encounter.specialtyHistory} />}{documents.length > 0 && <p className="mt-5 text-sm font-semibold text-primary">{documents.length} archivo(s) asociado(s) a esta atención</p>}</div></details>; })}{!visibleEncounters.length && <p className="rounded-xl border border-dashed border-divider p-6 text-center text-sm text-text-secondary">No hay atenciones que coincidan con estos filtros.</p>}</div></section>
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6"><ClinicalBackgroundSummary version={record.clinicalBackground} compact />
+          <section className="mt-6"><div className="flex items-baseline justify-between gap-4"><h3 className="text-lg font-bold text-text-primary">Atenciones previas</h3><span className="text-sm text-text-secondary">{visibleEncounters.length} de {closedEncounters.length}</span></div><div className="mt-3 rounded-xl border border-divider bg-surface-secondary p-4"><label><span className="text-sm font-semibold text-text-primary">Buscar en la historia</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Síntoma, diagnóstico, alergia, indicación…" className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label><div className="mt-3 grid gap-3 sm:grid-cols-2"><label><span className="text-sm font-semibold text-text-primary">Desde</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label><label><span className="text-sm font-semibold text-text-primary">Hasta</span><input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="mt-2 w-full rounded-lg border border-divider bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label></div>{(search || from || to) && <button type="button" onClick={() => { setSearch(""); setFrom(""); setTo(""); }} className="mt-3 text-sm font-semibold text-primary hover:underline">Limpiar filtros</button>}</div><div className="mt-3 space-y-3">{visibleEncounters.map((encounter, index) => { const diagnoses = record.diagnoses.filter((item) => item.encounter_id === encounter.id); const documents = record.documents.filter((item) => item.encounter_id === encounter.id); return <details key={encounter.id} open={index === 0} className="rounded-xl border border-divider bg-surface"><summary className="cursor-pointer list-none p-4 hover:bg-surface-secondary"><div className="flex flex-wrap items-center gap-2"><p className="font-bold text-text-primary">{encounter.encounter_type === "INITIAL" ? "Revisión médica" : encounter.specialty ?? "Especialidad"}</p>{encounter.accessReason === "REFERRAL_SOURCE" && <span className="rounded-full bg-primary-container px-2.5 py-1 text-xs font-semibold text-primary">Origen de la derivación</span>}</div><p className="mt-1 text-sm text-text-secondary">{formatAppointmentTime(encounter.occurred_at)} · {encounter.chief_complaint}</p></summary><div className="border-t border-divider p-4">{encounter.clinicalBackground && <ClinicalBackgroundSummary version={encounter.clinicalBackground} compact />}<h4 className="mt-4 font-semibold text-text-primary">Evaluación</h4><p className="mt-1 text-sm text-text-secondary">{encounter.assessment || "Sin observaciones."}</p>{diagnoses.length > 0 && <><h4 className="mt-4 font-semibold text-text-primary">Diagnósticos</h4><p className="mt-1 text-sm text-text-secondary">{diagnoses.map((item) => item.label).join(" · ")}</p></>}{encounter.instructions && <><h4 className="mt-4 font-semibold text-text-primary">Indicaciones</h4><p className="mt-1 text-sm text-text-secondary">{encounter.instructions}</p></>}{encounter.follow_up_text && <><h4 className="mt-4 font-semibold text-text-primary">Control médico</h4><p className="mt-1 text-sm text-text-secondary">{encounter.follow_up_text}</p></>}{encounter.encounter_type === "INITIAL" ? <ReviewSnapshot data={encounter.reviewHistory} hideGeneral={Boolean(encounter.clinicalBackground)} /> : <SpecialtySnapshot data={encounter.specialtyHistory} hideGeneral={Boolean(encounter.clinicalBackground)} />}{documents.length > 0 && <p className="mt-5 text-sm font-semibold text-primary">{documents.length} archivo(s) asociado(s) a esta atención</p>}</div></details>; })}{!visibleEncounters.length && <p className="rounded-xl border border-dashed border-divider p-6 text-center text-sm text-text-secondary">No hay atenciones que coincidan con estos filtros.</p>}</div></section>
         </div>
       </aside>
     </div>}
