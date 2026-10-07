@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 function filters(request: NextRequest) {
   const query = request.nextUrl.searchParams;
-  return { from: date(query.get("from")), to: date(query.get("to")), specialtyId: text(query.get("specialtyId"), 50) || null, encounterType: text(query.get("encounterType"), 20) || null, diagnosis: text(query.get("diagnosis"), 200) || null, allergy: text(query.get("allergy"), 200) || null, habit: text(query.get("habit"), 30) || null };
+  return { from: date(query.get("from")), to: date(query.get("to")), specialtyId: text(query.get("specialtyId"), 50) || null, encounterType: text(query.get("encounterType"), 20) || null, diagnosis: text(query.get("diagnosis"), 200) || null, allergy: text(query.get("allergy"), 200) || null, history: text(query.get("history"), 200) || null, habit: text(query.get("habit"), 30) || null, habitText: text(query.get("habitText"), 200) || null, search: text(query.get("search"), 200) || null };
 }
 
 export async function GET(request: NextRequest) {

@@ -4,200 +4,81 @@ import { useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx-js-style";
-
 import { apiJson } from "@/lib/api/client";
+import { addReportLogosToXlsx, loadReportBranding, reportBrand } from "@/lib/report-branding";
 
 type Specialty = { id: string; name: string };
-type Row = { encounter_id: string; closed_at: string; encounter_type: string; specialty_name: string | null; carnet: string; patient_name: string; chief_complaint: string; assessment: string | null; instructions: string | null; diagnoses: string; allergies: string };
-type Filters = { from: string; to: string; specialtyId: string; encounterType: string; diagnosis: string; allergy: string; habit: string };
-type PeriodPreset = "TODAY" | "SEVEN_DAYS" | "THIRTY_DAYS" | "MONTH" | "SEMESTER" | "YEAR";
-
+type Habits = { tobacco?: string; alcohol?: string; physicalActivity?: string; diet?: string; notes?: string };
+type Row = { encounter_id: string; closed_at: string; encounter_type: string; specialty_name: string | null; carnet: string; patient_name: string; chief_complaint: string; assessment: string | null; instructions: string | null; diagnoses: string; allergies: string; background_summary: string; habits: Habits };
+type Filters = { from: string; to: string; specialtyId: string; encounterType: string; diagnosis: string; allergy: string; history: string; habit: string; habitText: string; search: string };
+type Period = "TODAY" | "SEVEN_DAYS" | "THIRTY_DAYS" | "MONTH" | "SEMESTER" | "YEAR";
 const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date());
-const initial: Filters = { from: `${today.slice(0, 8)}01`, to: today, specialtyId: "", encounterType: "", diagnosis: "", allergy: "", habit: "" };
-const headers = ["Fecha", "Paciente", "Carnet", "Tipo", "Especialidad", "Diagnósticos", "Alergias", "Motivo", "Evaluación", "Indicaciones"];
-const periodLabels: Record<PeriodPreset, string> = { TODAY: "Hoy", SEVEN_DAYS: "Últimos 7 días", THIRTY_DAYS: "Últimos 30 días", MONTH: "Este mes", SEMESTER: "Semestre actual", YEAR: "Año actual" };
-
-function dateOffset(days: number) {
+const initial: Filters = { from: today.slice(0, 8) + "01", to: today, specialtyId: "", encounterType: "", diagnosis: "", allergy: "", history: "", habit: "", habitText: "", search: "" };
+const headers = ["Fecha", "Paciente", "Carnet", "Tipo", "Especialidad", "Diagnósticos", "Alergias", "Antecedentes", "Hábitos", "Motivo", "Evaluación", "Indicaciones"];
+const periods: Record<Period, string> = { TODAY: "Hoy", SEVEN_DAYS: "Últimos 7 días", THIRTY_DAYS: "Últimos 30 días", MONTH: "Este mes", SEMESTER: "Semestre actual", YEAR: "Año actual" };
+const formatDate = (value: string) => value ? new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(value + "T12:00:00")) : "sin fecha";
+const closedDate = (value: string) => new Intl.DateTimeFormat("es-BO", { timeZone: "America/La_Paz" }).format(new Date(value));
+function range(preset: Period) {
   const [year, month, day] = today.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
-}
-
-function periodRange(preset: PeriodPreset) {
-  const [year, month] = today.split("-").map(Number);
+  const offset = (days: number) => new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
   if (preset === "TODAY") return { from: today, to: today };
-  if (preset === "SEVEN_DAYS") return { from: dateOffset(-6), to: today };
-  if (preset === "THIRTY_DAYS") return { from: dateOffset(-29), to: today };
-  if (preset === "MONTH") return { from: `${today.slice(0, 8)}01`, to: today };
-  if (preset === "SEMESTER") return { from: `${year}-${month <= 6 ? "01" : "07"}-01`, to: today };
-  return { from: `${year}-01-01`, to: today };
+  if (preset === "SEVEN_DAYS") return { from: offset(-6), to: today };
+  if (preset === "THIRTY_DAYS") return { from: offset(-29), to: today };
+  if (preset === "MONTH") return { from: today.slice(0, 8) + "01", to: today };
+  if (preset === "SEMESTER") return { from: year + "-" + (month <= 6 ? "01" : "07") + "-01", to: today };
+  return { from: year + "-01-01", to: today };
 }
+function habitText(h: Habits) { return [h.tobacco === "YES" ? "Tabaco: sí" : h.tobacco === "NO" ? "Tabaco: no" : "", h.alcohol === "YES" ? "Alcohol: sí" : h.alcohol === "NO" ? "Alcohol: no" : "", h.physicalActivity === "YES" ? "Actividad física: sí" : h.physicalActivity === "NO" ? "Actividad física: no" : "", h.diet === "ADEQUATE" ? "Alimentación: adecuada" : h.diet === "REGULAR" ? "Alimentación: regular" : h.diet === "INADEQUATE" ? "Alimentación: inadecuada" : "", h.notes ?? ""].filter(Boolean).join(" · "); }
+function rowsToValues(rows: Row[]) { return rows.map((row) => [closedDate(row.closed_at), row.patient_name, row.carnet, row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad", row.specialty_name ?? "—", row.diagnoses, row.allergies, row.background_summary, habitText(row.habits), row.chief_complaint, row.assessment ?? "", row.instructions ?? ""]); }
+function filterSummary(f: Filters, specialties: Specialty[]) { const specialty = specialties.find((item) => item.id === f.specialtyId)?.name; return [f.encounterType === "INITIAL" ? "Revisión" : f.encounterType === "SPECIALTY" ? "Especialidad" : "Todos los tipos", specialty && "Especialidad: " + specialty, f.diagnosis && "Diagnóstico: " + f.diagnosis, f.allergy && "Alergia: " + f.allergy, f.history && "Antecedente: " + f.history, f.habit && "Hábito: " + f.habit, f.habitText && "Actividad: " + f.habitText, f.search && "Búsqueda: " + f.search].filter(Boolean).join(" · "); }
+function download(name: string, content: BlobPart, type: string) { const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url); }
 
-function formatDate(value: string) {
-  if (!value) return "sin fecha";
-  return new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(`${value}T12:00:00`));
+async function excel(rows: Row[], filters: Filters, specialties: Specialty[], purpose: string) {
+  const data = rowsToValues(rows); const book = XLSX.utils.book_new();
+  const sheet = XLSX.utils.aoa_to_sheet([["", "", "Reporte de atenciones clínicas"], ["", "", "Centro de Especialidades Médicas · FCSH-UAGRM"], ["", "", "Período: " + formatDate(filters.from) + " al " + formatDate(filters.to)], ["", "", rows.length + " atención(es) · Finalidad: " + purpose], ["", "", "Filtros: " + filterSummary(filters, specialties)], [], headers, ...data]);
+  const border = { style: "thin", color: { rgb: "D8E0ED" } };
+  const head = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: reportBrand.red } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: border, bottom: border, left: border, right: border } };
+  sheet["!merges"] = ["C1:J1", "C2:J2", "C3:J3", "C4:J4", "C5:J5"].map(XLSX.utils.decode_range);
+  sheet["!cols"] = [13, 27, 18, 16, 19, 29, 25, 42, 34, 35, 40, 38].map((wch) => ({ wch }));
+  sheet["!rows"] = [{ hpt: 30 }, { hpt: 22 }, { hpt: 20 }, { hpt: 20 }, { hpt: 32 }, { hpt: 8 }, { hpt: 34 }];
+  sheet["!autofilter"] = { ref: "A7:L" + Math.max(7, data.length + 7) };
+  sheet["!freeze"] = { xSplit: 0, ySplit: 7, topLeftCell: "A8", activePane: "bottomLeft", state: "frozen" };
+  for (let c = 0; c < headers.length; c += 1) sheet[XLSX.utils.encode_cell({ r: 6, c })].s = head;
+  [0, 1, 2, 3, 4].forEach((r) => { sheet[XLSX.utils.encode_cell({ r, c: 2 })].s = r === 0 ? { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: reportBrand.navy } }, alignment: { horizontal: "center", vertical: "center" } } : r === 1 ? { font: { bold: true, color: { rgb: reportBrand.red } }, alignment: { horizontal: "center", vertical: "center" } } : { font: { italic: true, color: { rgb: reportBrand.muted } }, fill: { fgColor: { rgb: reportBrand.pale } }, alignment: { horizontal: "center", vertical: "center", wrapText: true } }; });
+  data.forEach((_, r) => { for (let c = 0; c < headers.length; c += 1) sheet[XLSX.utils.encode_cell({ r: r + 7, c })].s = { alignment: { vertical: "top", wrapText: true }, border: { bottom: border }, ...(r % 2 === 0 ? { fill: { fgColor: { rgb: "F7F9FD" } } } : {}) }; });
+  XLSX.utils.book_append_sheet(book, sheet, "Atenciones");
+  const raw = XLSX.write(book, { bookType: "xlsx", type: "array", compression: false, cellStyles: true });
+  const logos = await loadReportBranding();
+  download("reporte-clinico.xlsx", addReportLogosToXlsx(raw, logos.facultyBytes, logos.centerBytes), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
-
-function formatClosedDate(value: string) {
-  return new Intl.DateTimeFormat("es-BO", { timeZone: "America/La_Paz" }).format(new Date(value));
-}
-
-function rowValues(rows: Row[]) {
-  return rows.map((row) => [formatClosedDate(row.closed_at), row.patient_name, row.carnet, row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad", row.specialty_name ?? "—", row.diagnoses, row.allergies, row.chief_complaint, row.assessment ?? "", row.instructions ?? ""]);
-}
-
-function excelDate(value: string) {
-  const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date(value));
-  const [year, month, day] = localDate.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day, 12));
-}
-
-function appliedFilterSummary(filters: Filters, specialties: Specialty[]) {
-  const specialty = specialties.find((item) => item.id === filters.specialtyId)?.name;
-  const values = [
-    filters.encounterType === "INITIAL" ? "Revisión" : filters.encounterType === "SPECIALTY" ? "Especialidad" : "Todos los tipos",
-    specialty && `Especialidad: ${specialty}`,
-    filters.diagnosis && `Diagnóstico: ${filters.diagnosis}`,
-    filters.allergy && `Alergia: ${filters.allergy}`,
-    filters.habit && `Hábito: ${{ tobacco: "Tabaco", alcohol: "Alcohol", physicalActivity: "Actividad física" }[filters.habit] ?? filters.habit}`,
-  ].filter(Boolean);
-  return values.join(" · ");
-}
-
-function exportExcel(rows: Row[], filters: Filters, specialties: Specialty[], purpose: string) {
-  const data = rows.map((row) => [excelDate(row.closed_at), row.patient_name, row.carnet, row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad", row.specialty_name ?? "—", row.diagnoses, row.allergies, row.chief_complaint, row.assessment ?? "", row.instructions ?? ""]);
-  const workbook = XLSX.utils.book_new();
-  const sheet = XLSX.utils.aoa_to_sheet([
-    ["Reporte de atenciones clínicas"],
-    [`Período: ${formatDate(filters.from)} al ${formatDate(filters.to)}`],
-    [`${rows.length} atención(es) · Finalidad: ${purpose}`],
-    [`Filtros: ${appliedFilterSummary(filters, specialties)}`],
-    [],
-    headers,
-    ...data,
-  ]);
-  const lastRow = Math.max(6, data.length + 6);
-  const border = { style: "thin", color: { rgb: "D9E2F3" } };
-  const titleStyle = { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "0B3D6E" } }, alignment: { horizontal: "left", vertical: "center" } };
-  const detailStyle = { font: { italic: true, color: { rgb: "425466" } }, fill: { fgColor: { rgb: "EAF2FB" } }, alignment: { vertical: "center" } };
-  const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1261A0" } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: border, bottom: border, left: border, right: border } };
-  const dataStyle = { alignment: { vertical: "top", wrapText: true }, border: { bottom: border } };
-
-  sheet["!merges"] = ["A1:J1", "A2:J2", "A3:J3", "A4:J4"].map((range) => XLSX.utils.decode_range(range));
-  sheet["!cols"] = [{ wch: 13 }, { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 19 }, { wch: 31 }, { wch: 25 }, { wch: 36 }, { wch: 42 }, { wch: 38 }];
-  sheet["!rows"] = [{ hpt: 26 }, { hpt: 19 }, { hpt: 19 }, { hpt: 32 }, { hpt: 7 }, { hpt: 32 }];
-  sheet["!autofilter"] = { ref: `A6:J${lastRow}` };
-  sheet["!freeze"] = { xSplit: 0, ySplit: 6, topLeftCell: "A7", activePane: "bottomLeft", state: "frozen" };
-  sheet["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
-
-  for (let column = 0; column < headers.length; column += 1) {
-    const header = XLSX.utils.encode_cell({ r: 5, c: column });
-    sheet[header].s = headerStyle;
-  }
-  [0, 1, 2, 3].forEach((row) => {
-    const cell = sheet[XLSX.utils.encode_cell({ r: row, c: 0 })];
-    cell.s = row === 0 ? titleStyle : detailStyle;
-  });
-  data.forEach((_, row) => {
-    const fill = row % 2 === 0 ? { fgColor: { rgb: "F6F9FC" } } : undefined;
-    for (let column = 0; column < headers.length; column += 1) {
-      const cell = sheet[XLSX.utils.encode_cell({ r: row + 6, c: column })];
-      cell.s = { ...dataStyle, ...(fill ? { fill } : {}) };
-      if (column === 0) cell.z = "dd/mm/yyyy";
-    }
-  });
-
-  XLSX.utils.book_append_sheet(workbook, sheet, "Atenciones");
-  XLSX.writeFile(workbook, "reporte-clinico.xlsx", { cellStyles: true });
-}
-
-function download(name: string, content: BlobPart, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
+async function pdf(rows: Row[], filters: Filters, specialties: Specialty[], purpose: string) {
+  const logos = await loadReportBranding(); const doc = new jsPDF({ orientation: "landscape", format: "a3" }); const width = doc.internal.pageSize.getWidth();
+  doc.addImage(logos.facultyDataUrl, "PNG", 14, 10, 27, 27); doc.addImage(logos.centerDataUrl, "PNG", width - 41, 10, 27, 27); doc.setFillColor("#" + reportBrand.navy); doc.roundedRect(47, 10, width - 94, 18, 2, 2, "F"); doc.setFillColor("#" + reportBrand.red); doc.rect(47, 28, width - 94, 2, "F"); doc.setFillColor("#" + reportBrand.gold); doc.rect(47, 30, width - 94, 1.2, "F");
+  doc.setTextColor("#FFFFFF"); doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("REPORTE DE ATENCIONES CLÍNICAS", width / 2, 21, { align: "center" }); doc.setTextColor("#" + reportBrand.ink); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.text("Centro de Especialidades Médicas · FCSH-UAGRM | " + formatDate(filters.from) + " al " + formatDate(filters.to) + " | " + rows.length + " atención(es)", width / 2, 39, { align: "center" }); doc.setTextColor("#" + reportBrand.muted); doc.text("Finalidad: " + purpose + " · " + filterSummary(filters, specialties), width / 2, 44, { align: "center", maxWidth: width - 32 });
+  autoTable(doc, { head: [headers], body: rowsToValues(rows), startY: 50, margin: { left: 14, right: 14, bottom: 16 }, styles: { fontSize: 5.7, cellPadding: 1.7, overflow: "linebreak", valign: "top", lineColor: [216, 224, 237], lineWidth: 0.15 }, headStyles: { fillColor: "#" + reportBrand.red, textColor: "#FFFFFF", fontStyle: "bold", halign: "center" }, alternateRowStyles: { fillColor: "#" + reportBrand.pale }, didDrawPage: (details) => { const bottom = doc.internal.pageSize.getHeight() - 10; doc.setDrawColor("#" + reportBrand.gold); doc.line(14, bottom, width - 14, bottom); doc.setFontSize(7); doc.setTextColor("#" + reportBrand.muted); doc.text("Documento generado por el sistema clínico", 14, bottom + 5); doc.text("Página " + details.pageNumber, width - 14, bottom + 5, { align: "right" }); } });
+  doc.save("reporte-clinico.pdf");
 }
 
 export function ClinicalReportBuilder({ scope }: { scope: "administrative" | "medical" }) {
-  const [filters, setFilters] = useState<Filters>(initial);
-  const [appliedFilters, setAppliedFilters] = useState<Filters>(initial);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [specialties, setSpecialties] = useState<Specialty[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [purpose, setPurpose] = useState("Gestión clínica");
-  const [refresh, setRefresh] = useState(0);
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodPreset | null>("MONTH");
-  const query = useMemo(() => new URLSearchParams(Object.entries(appliedFilters).filter(([, value]) => value)).toString(), [appliedFilters]);
-
-  useEffect(() => {
-    let active = true;
-    void apiJson<Row[]>(`/api/reports/clinical?${query}`)
-      .then((reportRows) => {
-        if (!active) return;
-        setRows(reportRows);
-        setError("");
-      })
-      .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : "No se pudo generar el reporte.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
-  }, [query, refresh]);
-
-  useEffect(() => {
-    let active = true;
-    void apiJson<Specialty[]>("/api/specialties")
-      .then((availableSpecialties) => { if (active) setSpecialties(availableSpecialties); })
-      .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No se pudieron cargar las especialidades."); });
-    return () => { active = false; };
-  }, []);
-
-  const change = <K extends keyof Filters>(key: K, value: Filters[K]) => { if (key === "from" || key === "to") setSelectedPeriod(null); setFilters((current) => ({ ...current, [key]: value })); };
-  const applyFilters = () => { setLoading(true); setAppliedFilters(filters); setRefresh((current) => current + 1); };
-  const setQuickPeriod = (preset: PeriodPreset) => {
-    const next = { ...filters, ...periodRange(preset) };
-    setSelectedPeriod(preset);
-    setFilters(next);
-    setAppliedFilters(next);
-    setLoading(true);
-    setRefresh((current) => current + 1);
-  };
-
-  const report = async (format: "CSV" | "XLSX" | "PDF") => {
-    try {
-      await apiJson("/api/reports/clinical", { method: "POST", body: JSON.stringify({ format, rowCount: rows.length, filters: appliedFilters, purpose }) });
-      const data = rowValues(rows);
-      if (format === "CSV") download("reporte-clinico.csv", [headers, ...data].map((line) => line.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n"), "text/csv;charset=utf-8");
-      if (format === "XLSX") {
-        exportExcel(rows, appliedFilters, specialties, purpose);
-      }
-      if (format === "PDF") {
-        const pdf = new jsPDF({ orientation: "landscape" });
-        pdf.setFontSize(14);
-        pdf.text("Reporte clínico", 14, 15);
-        autoTable(pdf, { head: [headers], body: data, startY: 21, styles: { fontSize: 6 } });
-        pdf.save("reporte-clinico.pdf");
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "No se pudo exportar el reporte.");
-    }
-  };
-
+  const [filters, setFilters] = useState<Filters>(initial), [applied, setApplied] = useState<Filters>(initial), [rows, setRows] = useState<Row[]>([]), [specialties, setSpecialties] = useState<Specialty[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState(""), [purpose, setPurpose] = useState("Gestión clínica"), [revision, setRevision] = useState(0), [period, setPeriod] = useState<Period | null>("MONTH");
+  const query = useMemo(() => new URLSearchParams(Object.entries(applied).filter(([, value]) => value)).toString(), [applied]);
+  useEffect(() => { let active = true; void apiJson<Row[]>("/api/reports/clinical?" + query).then((data) => { if (active) { setRows(data); setError(""); } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No se pudo generar el reporte."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [query, revision]);
+  useEffect(() => { let active = true; void apiJson<Specialty[]>("/api/specialties").then((data) => { if (active) setSpecialties(data); }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No se pudieron cargar las especialidades."); }); return () => { active = false; }; }, []);
+  const change = <K extends keyof Filters>(key: K, value: Filters[K]) => { if (key === "from" || key === "to") setPeriod(null); setFilters((current) => ({ ...current, [key]: value })); };
+  const apply = () => { setLoading(true); setApplied(filters); setRevision((value) => value + 1); };
+  const quick = (item: Period) => { const next = { ...filters, ...range(item) }; setPeriod(item); setFilters(next); setApplied(next); setLoading(true); setRevision((value) => value + 1); };
+  const report = async (format: "CSV" | "XLSX" | "PDF") => { try { await apiJson("/api/reports/clinical", { method: "POST", body: JSON.stringify({ format, rowCount: rows.length, filters: applied, purpose }) }); if (format === "CSV") download("reporte-clinico.csv", [headers, ...rowsToValues(rows)].map((line) => line.map((cell) => "\"" + String(cell).replaceAll("\"", "\"\"") + "\"").join(",")).join("\n"), "text/csv;charset=utf-8"); if (format === "XLSX") await excel(rows, applied, specialties, purpose); if (format === "PDF") await pdf(rows, applied, specialties, purpose); } catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo exportar el reporte."); } };
   return <div className="space-y-6">
-    <header className="border-b border-divider pb-5"><p className="text-sm font-semibold tracking-wide text-primary">REPORTES CLÍNICOS</p><h1 className="mt-1 text-3xl font-bold text-text-primary">{scope === "administrative" ? "Reporte institucional" : "Mis reportes de atención"}</h1><p className="mt-2 max-w-3xl text-text-secondary">Construye reportes de atenciones cerradas por período, especialidad, diagnóstico, alergias y hábitos. Las descargas quedan auditadas.</p></header>
-    <section className="rounded-2xl border border-divider bg-surface p-5">
-      <div><p className="text-sm font-semibold text-text-primary">Períodos rápidos</p><p className="mt-1 text-sm text-text-secondary">“Este mes” abarca el mes calendario. Usa semestre, año o los últimos 30 días para incluir atenciones anteriores.</p><div className="mt-3 flex flex-wrap gap-2">{(Object.keys(periodLabels) as PeriodPreset[]).map((preset) => <button key={preset} type="button" aria-pressed={selectedPeriod === preset} onClick={() => setQuickPeriod(preset)} className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${selectedPeriod === preset ? "border-primary bg-primary text-on-primary" : "border-divider bg-surface text-text-primary hover:border-primary"}`}>{periodLabels[preset]}</button>)}</div></div>
-      <div className="mt-5 grid gap-4 md:grid-cols-3"><Field label="Desde" type="date" value={filters.from} onChange={(value) => change("from", value)} /><Field label="Hasta" type="date" value={filters.to} onChange={(value) => change("to", value)} /><Select label="Tipo" value={filters.encounterType} onChange={(value) => change("encounterType", value)} options={[["", "Todos"], ["INITIAL", "Revisión"], ["SPECIALTY", "Especialidad"]]} /><Select label="Especialidad" value={filters.specialtyId} onChange={(value) => change("specialtyId", value)} options={[["", "Todas"], ...specialties.map((item) => [item.id, item.name])]} /><Field label="Diagnóstico" value={filters.diagnosis} onChange={(value) => change("diagnosis", value)} /><Field label="Alergia" value={filters.allergy} onChange={(value) => change("allergy", value)} /><Select label="Hábito" value={filters.habit} onChange={(value) => change("habit", value)} options={[["", "Cualquiera"], ["tobacco", "Tabaco"], ["alcohol", "Alcohol"], ["physicalActivity", "Actividad física"]]} /><Field label="Finalidad de exportación" value={purpose} onChange={setPurpose} /></div>
-      <div className="mt-5 flex flex-wrap items-center gap-3"><button type="button" onClick={applyFilters} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary">Aplicar filtros</button><button type="button" onClick={() => { setFilters(initial); setAppliedFilters(initial); setSelectedPeriod("MONTH"); setLoading(true); setRefresh((current) => current + 1); }} className="rounded-lg px-4 py-3 text-sm font-semibold text-primary hover:bg-primary-container">Restablecer</button></div>
+    <header className="border-b border-divider pb-5"><p className="text-sm font-semibold tracking-wide text-primary">REPORTES CLÍNICOS</p><h1 className="mt-1 text-3xl font-bold text-text-primary">{scope === "administrative" ? "Reporte institucional" : "Mis reportes de atención"}</h1><p className="mt-2 max-w-3xl text-text-secondary">Busca coincidencias parciales en diagnósticos, alergias, antecedentes, síntomas, hábitos y actividad. Las descargas quedan auditadas.</p></header>
+    <section className="rounded-2xl border border-divider bg-surface p-5"><p className="text-sm font-semibold text-text-primary">Períodos rápidos</p><p className="mt-1 text-sm text-text-secondary">Elige mes, semestre o año; los demás filtros se conservan.</p><div className="mt-3 flex flex-wrap gap-2">{(Object.keys(periods) as Period[]).map((item) => <button key={item} type="button" aria-pressed={period === item} onClick={() => quick(item)} className={"rounded-lg border px-3 py-2 text-sm font-semibold " + (period === item ? "border-primary bg-primary text-on-primary" : "border-divider bg-surface text-text-primary hover:border-primary")}>{periods[item]}</button>)}</div>
+      <div className="mt-5 grid gap-4 md:grid-cols-3"><Field label="Desde" type="date" value={filters.from} onChange={(value) => change("from", value)} /><Field label="Hasta" type="date" value={filters.to} onChange={(value) => change("to", value)} /><Select label="Tipo" value={filters.encounterType} onChange={(value) => change("encounterType", value)} options={[["", "Todos"], ["INITIAL", "Revisión"], ["SPECIALTY", "Especialidad"]]} /><Select label="Especialidad" value={filters.specialtyId} onChange={(value) => change("specialtyId", value)} options={[["", "Todas"], ...specialties.map((item) => [item.id, item.name])]} /><Field label="Diagnóstico" value={filters.diagnosis} onChange={(value) => change("diagnosis", value)} /><Field label="Alergia" value={filters.allergy} onChange={(value) => change("allergy", value)} /><Field label="Antecedente, cirugía o medicamento" value={filters.history} onChange={(value) => change("history", value)} /><Select label="Hábito afirmativo" value={filters.habit} onChange={(value) => change("habit", value)} options={[["", "Cualquiera"], ["tobacco", "Tabaco"], ["alcohol", "Alcohol"], ["physicalActivity", "Actividad física"]]} /><Field label="Hábito o actividad (texto)" value={filters.habitText} onChange={(value) => change("habitText", value)} /><Field label="Buscar en la atención" value={filters.search} onChange={(value) => change("search", value)} placeholder="Síntoma, tratamiento, antecedente…" /><Field label="Finalidad de exportación" value={purpose} onChange={setPurpose} /></div>
+      <div className="mt-5 flex gap-3"><button type="button" onClick={apply} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary">Aplicar filtros</button><button type="button" onClick={() => { setFilters(initial); setApplied(initial); setPeriod("MONTH"); setLoading(true); setRevision((value) => value + 1); }} className="rounded-lg px-4 py-3 text-sm font-semibold text-primary hover:bg-primary-container">Restablecer</button></div>
     </section>
     {error && <p className="rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
-    <section className="rounded-2xl border border-divider bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-semibold tracking-wide text-primary">RESULTADO APLICADO</p><p className="mt-1 text-xl font-bold text-text-primary">{loading ? "Actualizando reporte…" : `${rows.length} atención(es) encontradas`}</p><p className="mt-1 text-sm text-text-secondary">Del {formatDate(appliedFilters.from)} al {formatDate(appliedFilters.to)}</p></div><div className="flex gap-2"><button onClick={() => void report("CSV")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">CSV</button><button onClick={() => void report("XLSX")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">Excel</button><button onClick={() => void report("PDF")} disabled={!rows.length || loading} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50">PDF</button></div></div><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="border-b border-divider text-text-secondary"><tr>{headers.slice(0, 7).map((header) => <th key={header} className="px-3 py-3">{header}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.encounter_id} className="border-b border-divider"><td className="px-3 py-3">{formatClosedDate(row.closed_at)}</td><td className="px-3 py-3 font-semibold">{row.patient_name}</td><td className="px-3 py-3">{row.carnet}</td><td className="px-3 py-3">{row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad"}</td><td className="px-3 py-3">{row.specialty_name ?? "—"}</td><td className="px-3 py-3">{row.diagnoses || "—"}</td><td className="px-3 py-3">{row.allergies || "—"}</td></tr>)}{!loading && !rows.length && <tr><td colSpan={7} className="px-3 py-12 text-center text-text-secondary">No hay atenciones para estos filtros.</td></tr>}</tbody></table>{loading && <p className="py-8 text-center text-sm text-text-secondary">Actualizando atenciones…</p>}</div></section>
+    <section className="rounded-2xl border border-divider bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-semibold tracking-wide text-primary">RESULTADO APLICADO</p><p className="mt-1 text-xl font-bold text-text-primary">{loading ? "Actualizando reporte…" : rows.length + " atención(es) encontradas"}</p><p className="mt-1 text-sm text-text-secondary">Del {formatDate(applied.from)} al {formatDate(applied.to)}</p></div><div className="flex gap-2"><button onClick={() => void report("CSV")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">CSV</button><button onClick={() => void report("XLSX")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">Excel</button><button onClick={() => void report("PDF")} disabled={!rows.length || loading} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50">PDF</button></div></div>
+      <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[1200px] text-left text-sm"><thead className="border-b border-divider text-text-secondary"><tr>{headers.slice(0, 9).map((header) => <th key={header} className="px-3 py-3">{header}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.encounter_id} className="border-b border-divider"><td className="px-3 py-3">{closedDate(row.closed_at)}</td><td className="px-3 py-3 font-semibold">{row.patient_name}</td><td className="px-3 py-3">{row.carnet}</td><td className="px-3 py-3">{row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad"}</td><td className="px-3 py-3">{row.specialty_name ?? "—"}</td><td className="px-3 py-3">{row.diagnoses || "—"}</td><td className="px-3 py-3">{row.allergies || "—"}</td><td className="max-w-72 px-3 py-3">{row.background_summary || "—"}</td><td className="max-w-64 px-3 py-3">{habitText(row.habits) || "—"}</td></tr>)}{!loading && !rows.length && <tr><td colSpan={9} className="px-3 py-12 text-center text-text-secondary">No hay atenciones para estos filtros.</td></tr>}</tbody></table>{loading && <p className="py-8 text-center text-sm text-text-secondary">Actualizando atenciones…</p>}</div>
+    </section>
   </div>;
 }
-
-function Field({ label, type = "text", value, onChange }: { label: string; type?: string; value: string; onChange: (value: string) => void }) { return <label><span className="text-sm font-semibold">{label}</span><input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-divider px-3 py-2" /></label>; }
+function Field({ label, type = "text", value, onChange, placeholder }: { label: string; type?: string; value: string; onChange: (value: string) => void; placeholder?: string }) { return <label><span className="text-sm font-semibold">{label}</span><input type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-divider px-3 py-2" /></label>; }
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <label><span className="text-sm font-semibold">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-divider px-3 py-2">{options.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>; }
