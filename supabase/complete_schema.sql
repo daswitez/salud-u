@@ -2447,10 +2447,10 @@ language sql stable security definer set search_path='' as $$
     and (nullif(p_filters->>'encounterType','') is null or encounter_type::text=p_filters->>'encounterType')
     and (nullif(p_filters->>'specialtyId','') is null or specialty_id=(p_filters->>'specialtyId')::uuid)
     and (nullif(p_filters->>'diagnosis','') is null or diagnoses ilike concat('%',p_filters->>'diagnosis','%'))
-    and (nullif(p_filters->>'allergy','') is null or allergies ilike concat('%',p_filters->>'allergy','%'))
-    and (nullif(p_filters->>'history','') is null or background_summary ilike concat('%',p_filters->>'history','%'))
-    and (nullif(p_filters->>'habitText','') is null or private.clinical_habits_search_text(habits_for_search) ilike concat('%',p_filters->>'habitText','%'))
-    and (nullif(p_filters->>'habit','') is null or coalesce(habits_for_search->>(p_filters->>'habit'),'')='YES')
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'allergies')='array' then p_filters->'allergies' else '[]'::jsonb end) wanted(term) where allergies not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'histories')='array' then p_filters->'histories' else '[]'::jsonb end) wanted(term) where background_summary not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'habitTerms')='array' then p_filters->'habitTerms' else '[]'::jsonb end) wanted(term) where private.clinical_habits_search_text(habits_for_search) not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'positiveHabits')='array' then p_filters->'positiveHabits' else '[]'::jsonb end) wanted(key) where coalesce(habits_for_search->>wanted.key,'')<>'YES')
     and (nullif(p_filters->>'search','') is null or concat_ws(' ',chief_complaint,assessment,instructions,follow_up_text,diagnoses,allergies,background_summary,private.clinical_habits_search_text(habits_for_search),coalesce(specialty_history::text,'')) ilike concat('%',p_filters->>'search','%'))
   order by closed_at desc;
 $$;
@@ -2768,10 +2768,10 @@ language sql stable security definer set search_path='' as $$
     and (nullif(p_filters->>'encounterType','') is null or encounter_type::text=p_filters->>'encounterType')
     and (nullif(p_filters->>'specialtyId','') is null or specialty_id=(p_filters->>'specialtyId')::uuid)
     and (nullif(p_filters->>'diagnosis','') is null or diagnoses ilike concat('%',p_filters->>'diagnosis','%'))
-    and (nullif(p_filters->>'allergy','') is null or allergies ilike concat('%',p_filters->>'allergy','%'))
-    and (nullif(p_filters->>'history','') is null or background_summary ilike concat('%',p_filters->>'history','%'))
-    and (nullif(p_filters->>'habitText','') is null or private.clinical_habits_search_text(habits_for_search) ilike concat('%',p_filters->>'habitText','%'))
-    and (nullif(p_filters->>'habit','') is null or coalesce(habits_for_search->>(p_filters->>'habit'),'')='YES')
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'allergies')='array' then p_filters->'allergies' else '[]'::jsonb end) wanted(term) where allergies not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'histories')='array' then p_filters->'histories' else '[]'::jsonb end) wanted(term) where background_summary not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'habitTerms')='array' then p_filters->'habitTerms' else '[]'::jsonb end) wanted(term) where private.clinical_habits_search_text(habits_for_search) not ilike concat('%',wanted.term,'%'))
+    and not exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_filters->'positiveHabits')='array' then p_filters->'positiveHabits' else '[]'::jsonb end) wanted(key) where coalesce(habits_for_search->>wanted.key,'')<>'YES')
     and (nullif(p_filters->>'search','') is null or concat_ws(' ',chief_complaint,assessment,instructions,follow_up_text,diagnoses,allergies,background_summary,private.clinical_habits_search_text(habits_for_search),coalesce(specialty_history::text,'')) ilike concat('%',p_filters->>'search','%'))
   order by closed_at desc;
 $$;
