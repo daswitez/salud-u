@@ -30,16 +30,32 @@
   --color-info: #12316f;
   --color-info-container: #e9effa;
   --color-focus-ring: #d5a91c;
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: "Segoe UI Variable", "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
 :root {
   color: var(--color-text-primary);
   background: var(--color-background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 * { box-sizing: border-box; }
 
-body { margin: 0; min-height: 100vh; background: var(--color-background); }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle at 92% 4%, rgba(196, 210, 238, 0.42), transparent 26rem),
+    linear-gradient(180deg, #fbfcff 0%, var(--color-background) 24rem);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { color: var(--color-text-primary); background: var(--color-brand-gold-container); }
+
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 :focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
