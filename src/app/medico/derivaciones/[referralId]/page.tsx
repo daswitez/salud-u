@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function MedicalReferralContextPage({ params }: { params: Promise<{ referralId: string }> }) {
   await params;

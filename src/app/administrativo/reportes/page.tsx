@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ClinicalReportBuilder } from "@/components/clinical-report-builder";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function AdminReportsPage() {
   const session = await requireClinicalRole("ADMINISTRATIVE");

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function NewPatientEncounterPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;

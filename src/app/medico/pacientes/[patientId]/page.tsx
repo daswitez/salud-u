@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MedicalPatientRecord } from "@/components/medical-patient-record";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function PatientClinicalRecordPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;

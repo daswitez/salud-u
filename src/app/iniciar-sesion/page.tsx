@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { signIn } from "@/app/actions/session";
 import { CopyDemoPassword } from "@/components/copy-demo-password";
+import { SignInForm } from "@/components/sign-in-form";
 
 type SignInPageProps = { searchParams: Promise<{ error?: string; success?: string; email?: string }> };
 
@@ -58,26 +58,12 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             {errorMessage && <p role="alert" className="mt-6 rounded-xl border border-error/20 bg-error-container px-4 py-3 text-sm font-semibold text-error">{errorMessage}</p>}
             {params.success === "logout" && <p role="status" className="mt-6 rounded-xl border border-success/20 bg-success-container px-4 py-3 text-sm font-semibold text-success">Cerraste sesión correctamente.</p>}
 
-            <form action={signIn} className="mt-7 space-y-5">
-              <label className="block text-sm font-bold text-text-secondary">
-                Correo electrónico
-                <input required name="email" type="email" autoComplete="username" defaultValue={params.email} placeholder="nombre@correo.com" className="mt-2 min-h-12 w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-text-primary outline-none transition placeholder:text-text-tertiary focus:border-primary focus:ring-2 focus:ring-primary-100" />
-              </label>
-              <label className="block text-sm font-bold text-text-secondary">
-                Contraseña
-                <input required name="password" type="password" autoComplete="current-password" minLength={8} placeholder="Ingresa tu contraseña" className="mt-2 min-h-12 w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-text-primary outline-none transition placeholder:text-text-tertiary focus:border-primary focus:ring-2 focus:ring-primary-100" />
-              </label>
-              <div className="flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 text-sm text-text-secondary"><input name="remember" type="checkbox" className="size-4 rounded accent-primary" />Recordarme</label>
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-success"><span className="size-1.5 rounded-full bg-success" />Acceso protegido</span>
-              </div>
-              <button type="submit" className="min-h-12 w-full rounded-xl bg-primary px-5 py-3.5 text-sm font-bold text-on-primary shadow-sm transition hover:-translate-y-0.5 hover:bg-primary-hover">Ingresar a mi espacio</button>
-            </form>
+            <SignInForm initialEmail={params.email} />
 
             <section className="mt-7 rounded-2xl border border-primary-200 bg-primary-container/55 p-4" aria-labelledby="demo-access-title">
               <div className="flex items-start gap-3">
                 <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-black text-on-primary">i</span>
-                <div><h3 id="demo-access-title" className="text-sm font-bold text-text-primary">Acceso de pruebas</h3><p className="mt-1 text-xs leading-5 text-text-secondary">Usa una cuenta de prueba y copia la contraseña inicial.</p></div>
+                <div><h3 id="demo-access-title" className="text-sm font-bold text-text-primary">Acceso de pruebas local</h3><p className="mt-1 text-xs leading-5 text-text-secondary">Revisión: <code>revision.ana.demo@salud-universitaria.test</code>. Copia la contraseña inicial.</p></div>
               </div>
               <CopyDemoPassword />
             </section>

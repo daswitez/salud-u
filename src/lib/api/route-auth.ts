@@ -2,10 +2,10 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import { getSession, type DemoSession } from "@/lib/demo-session";
+import { getSession, type AppSession } from "@/lib/session";
 import type { ClinicalRole } from "@/lib/ui-contracts";
 
-export async function requireApiRole(...roles: ClinicalRole[]): Promise<DemoSession | NextResponse> {
+export async function requireApiRole(...roles: ClinicalRole[]): Promise<AppSession | NextResponse> {
   const session = await getSession();
 
   if (!session) {

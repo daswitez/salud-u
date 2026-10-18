@@ -2,11 +2,11 @@
 
 Fuente principal: `Proyecto Daniel Mercado v2 db.md`, cuadros 3.16 (RF-01–RF-34), 3.17 (RNF-01–RNF-12), 3.18 (RN-01–RN-32), 3.36 (UC-01–UC-27) y especificaciones críticas de UC-07/12/13/15/17/22. Referencia de implementación: 24 rutas `src/app/api`, Server Actions, consultas directas y SQL de `supabase/migrations`/`complete_schema.sql`.
 
-Estado: pendiente. Se inspeccionó código/documento; todavía no se capturaron respuestas reales ni se ejecutaron pruebas de paridad. Las referencias SQL sin ruta no se presentan como endpoints HTTP existentes. El contrato final debe caracterizar la última definición de cada RPC y sus políticas, no solo la migración inicial.
+Estado: planificado, sin historias integradas todavía. La secuencia técnica obligatoria está en [plan-integracion-spring.md](plan-integracion-spring.md). Se inspeccionó código/documento; todavía no se capturaron respuestas reales ni se ejecutaron pruebas de paridad. Las referencias SQL sin ruta no se presentan como endpoints HTTP existentes. El contrato final debe caracterizar la última definición de cada RPC y sus políticas, no solo la migración inicial.
 
 ## Condición para comenzar
 
-Este backlog se ejecuta después de desarrollar y probar el backend del alcance correspondiente. No incluye implementar dominio/SQL en Next.js. Cada historia frontend está bloqueada hasta que su historia backend tenga contrato y pruebas aceptados. La secuencia principal es backend → validación API → integración frontend; una entrega incremental exige el mismo cierre previo del backend de ese incremento.
+Este backlog se ejecuta después de desarrollar y probar el backend del alcance correspondiente. No incluye implementar dominio/SQL en Next.js. Cada historia frontend está bloqueada hasta que su historia backend tenga contrato y pruebas aceptados. La secuencia principal es backend → validación API → integración frontend; una entrega incremental exige el mismo cierre previo del backend de ese incremento. H-CORTE aún no está aceptado para un corte productivo: se puede integrar contra datos sintéticos, pero no retirar Supabase ni declarar paridad institucional hasta completar sus evidencias.
 
 Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git branch --show-current` antes de editar. Backend en proyecto separado sin inicializar Git; `codigo` tampoco será repositorio. Leer las guías locales de Next.js antes de cambios de código.
 
@@ -16,10 +16,10 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 - **Actor:** Desarrollador frontend.
 - **Historia:** Como desarrollador, quiero conectar navegador y componentes de servidor a Spring, para consumir la API ya probada.
-- **Comportamiento esperado:** configurar acceso de mismo origen o CORS explícito, reenviar sesión/Set-Cookie, enviar CSRF y convertir errores sin alterar contratos.
+- **Comportamiento esperado:** configurar acceso de mismo origen o CORS explícito, reenviar sesión/Set-Cookie, enviar CSRF y normalizar los dos contratos de error sin alterar contratos: texto para `/api/**`, objeto detallado para `/api/v1/**`.
 - **Dependencias:** T-04, BE-01; contrato backend aceptado.
 - **Prioridad:** P0.
-- **Aceptación:** credenciales de servidor no aparecen en bundle; cookie llega en navegación y fetch; /api/me usa user, reportes filters; SSR y cliente resuelven mismo actor; caducidad redirige sin perder borrador; error/red recuperable; /api/health/supabase se reemplaza en sus consumidores explícitamente.
+- **Aceptación:** credenciales de servidor no aparecen en bundle; cookie llega en navegación y fetch; /api/me usa user, reportes filters; SSR y cliente resuelven mismo actor; caducidad redirige sin perder borrador; error/red recuperable; `GET /api/health` devuelve `service=backend`; `/api/health/supabase` se elimina sin fallback; ninguna regla de routeo captura rutas serverless que aún no fueron migradas.
 - **Prueba:** navegador con sesión real Spring, inspección de solicitudes/cookies y compilación/typecheck/lint del frontend.
 
 ## Épica F1 — Identidad, sesión y organización
@@ -38,6 +38,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-01 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado y comprobado por HTTP con Spring local: login `200`, identidad/recarga `200`, logout `204`, sesión posterior `401` y credenciales inválidas `401`. Pendiente únicamente la regresión visual automatizada del corte integral FE-CORTE.
 
 ### FE-CAT · Administrar catálogos y organización
 

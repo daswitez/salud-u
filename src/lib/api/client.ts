@@ -35,13 +35,130 @@ export type MedicalAppointment = {
   } | null;
 };
 
-export async function apiJson<T>(url: string, options?: RequestInit, retryAuthentication = true): Promise<T> {
-  const response = await fetch(url, { ...options, credentials: "same-origin", cache: "no-store", headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) } });
-  const payload = await response.json().catch(() => ({ ok: false, error: "Respuesta inválida del servidor." }));
-  if (response.status === 401 && payload.error === "unauthenticated" && retryAuthentication) {
-    await new Promise((resolve) => window.setTimeout(resolve, 250));
-    return apiJson<T>(url, options, false);
+type VersionedError = { code?: string; message?: string; requestId?: string };
+type ApiPayload = { ok?: boolean; data?: unknown; error?: unknown };
+
+type CsrfToken = { token: string; headerName: string };
+
+export type BackendHealth = {
+  ok: boolean;
+  service: "backend";
+  status: string;
+  error: "backend_unavailable" | null;
+};
+
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly requestId?: string,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
   }
-  if (!response.ok || !payload.ok) throw new Error(payload.error ?? "No se pudo completar la operación.");
+}
+
+let csrfToken: CsrfToken | null = null;
+let csrfRequest: Promise<CsrfToken> | null = null;
+
+function isMutation(method: string) {
+  return ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+}
+
+function isFormData(body: BodyInit | null | undefined) {
+  return typeof FormData !== "undefined" && body instanceof FormData;
+}
+
+function errorFromPayload(status: number, payload: ApiPayload): ApiRequestError {
+  if (typeof payload.error === "string") {
+    return new ApiRequestError(payload.error, status);
+  }
+  if (payload.error && typeof payload.error === "object") {
+    const error = payload.error as VersionedError;
+    return new ApiRequestError(error.message ?? "No se pudo completar la operación.", status, error.code, error.requestId);
+  }
+  return new ApiRequestError("Respuesta inválida del servidor.", status);
+}
+
+async function jsonPayload(response: Response): Promise<ApiPayload> {
+  return response.json().catch(() => ({ ok: false, error: "Respuesta inválida del servidor." }));
+}
+
+async function getCsrfToken(refresh = false): Promise<CsrfToken> {
+  if (!refresh && csrfToken) return csrfToken;
+  if (!refresh && csrfRequest) return csrfRequest;
+
+  const request = fetch("/api/v1/security/csrf", {
+    credentials: "same-origin",
+    cache: "no-store",
+  }).then(async (response) => {
+    const payload = await jsonPayload(response);
+    if (!response.ok || !payload.ok || !payload.data || typeof payload.data !== "object") {
+      throw errorFromPayload(response.status, payload);
+    }
+    const data = payload.data as Partial<CsrfToken>;
+    if (!data.token || !data.headerName) {
+      throw new ApiRequestError("El servidor no devolvió un token CSRF válido.", response.status);
+    }
+    csrfToken = { token: data.token, headerName: data.headerName };
+    return csrfToken;
+  });
+
+  csrfRequest = request;
+  try {
+    return await request;
+  } finally {
+    if (csrfRequest === request) csrfRequest = null;
+  }
+}
+
+async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = true): Promise<T> {
+  const method = (options?.method ?? "GET").toUpperCase();
+  const headers = new Headers(options?.headers);
+  if (options?.body && !isFormData(options.body) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (isMutation(method)) {
+    const csrf = await getCsrfToken();
+    headers.set(csrf.headerName, csrf.token);
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    method,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers,
+  });
+  const payload = await jsonPayload(response);
+  if (response.status === 403 && retryCsrf && errorFromPayload(response.status, payload).code === "CSRF_INVALID") {
+    csrfToken = null;
+    await getCsrfToken(true);
+    return requestJson<T>(url, options, false);
+  }
+  if (!response.ok || !payload.ok) throw errorFromPayload(response.status, payload);
   return payload.data as T;
+}
+
+/** Client-side JSON request with same-origin cookies, CSRF and both error contracts. */
+export function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
+  return requestJson<T>(url, options);
+}
+
+/** Health is intentionally not an ApiEnvelope: it is the public Spring probe. */
+export async function backendHealth(): Promise<BackendHealth> {
+  const response = await fetch("/api/health", { credentials: "same-origin", cache: "no-store" });
+  const payload = await response.json().catch(() => null);
+  if (!payload || typeof payload !== "object") {
+    throw new ApiRequestError("Respuesta inválida del servidor.", response.status);
+  }
+  const health = payload as Partial<BackendHealth>;
+  if (health.service !== "backend" || typeof health.ok !== "boolean" || typeof health.status !== "string") {
+    throw new ApiRequestError("Respuesta inválida del servidor.", response.status);
+  }
+  if (!response.ok || !health.ok) {
+    throw new ApiRequestError(health.error ?? "El backend no está disponible.", response.status);
+  }
+  return health as BackendHealth;
 }

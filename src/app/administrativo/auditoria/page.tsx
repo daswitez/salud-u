@@ -1,6 +1,6 @@
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 import { AuditoriaClient } from "./auditoria-client";
 
 export default async function AuditoriaPage() {

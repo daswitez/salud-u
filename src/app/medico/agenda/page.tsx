@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MedicalAgenda } from "@/components/medical-agenda";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function DoctorAgendaPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
   const session = await requireClinicalRole("REVIEW_DOCTOR", "SPECIALIST");

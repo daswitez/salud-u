@@ -2,7 +2,7 @@ import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MedicalDashboard } from "@/components/medical-dashboard";
 import { PageIntro } from "@/components/ux-primitives";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function DoctorHomePage() {
   const session = await requireClinicalRole("REVIEW_DOCTOR", "SPECIALIST");

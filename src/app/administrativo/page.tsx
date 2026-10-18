@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GuidanceCard, MetricCard, PageIntro, SectionHeading } from "@/components/ux-primitives";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type ActivityRow = { total_closed: number };

@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MedicalPatientList } from "@/components/medical-patient-list";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function MedicalPatientsPage() {
   const session = await requireClinicalRole("REVIEW_DOCTOR", "SPECIALIST");

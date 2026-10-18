@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AdministrativeReferralInbox } from "@/components/administrative-referral-inbox";
-import { requireClinicalRole } from "@/lib/demo-session";
+import { requireClinicalRole } from "@/lib/session";
 
 export default async function AdministrativeReferralsPage() {
   const session = await requireClinicalRole("ADMINISTRATIVE");
