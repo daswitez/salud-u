@@ -213,6 +213,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-11 · UC-11
 
+**Estado local (2026-10-25):** cerrada localmente. Carga/clasificación, lista, vista previa PDF/imagen y descarga privadas mediante Spring, con rewrites exactos y sin handlers Supabase. Chromium aprobó seis grupos de escenarios: permisos, metadatos/recarga, 15 MiB, sesión/CSRF/red, respuesta perdida, cierre y caducidad real de 60 s. V49 completa listado y serialización carga/cierre; pasan 114 pruebas Java, regresión FE-10, typecheck, lint y build. [Evidencia y comandos](evidencia-fe11.md).
+
 - **Actor:** Médico autorizado.
 - **Historia:** Como Médico autorizado, quiero adjuntar, clasificar, previsualizar y descargar documentos privados de la atención desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-11 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
@@ -227,6 +229,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
 
 ### FE-12 · UC-12
+
+**Estado local (2026-10-25):** cerrada localmente. Cierre Spring con confirmación CLOSED/ATTENDED, versión y ficha; protección contra doble envío, consulta inmutable y navegación por agenda. Chromium aprobó seis grupos: campos obligatorios, ATTACHED, recarga, dos pestañas concurrentes, rollback tardío, confirmación inconsistente, sesión y permisos. PostgreSQL verificó una versión/evento/auditoría por cierre y cero datos parciales en el rechazo. Pasan 114 pruebas Java, regresión FE-10, typecheck, lint y build. [Evidencia y comandos](evidencia-fe12.md).
 
 - **Actor:** Médico de revisión.
 - **Historia:** Como Médico de revisión, quiero cerrar revisión conservando ficha inmutable y cita atendida desde la interfaz, para completar el caso de uso con el backend nuevo.
@@ -245,6 +249,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-13 · UC-13
 
+**Estado local (2026-10-25):** cerrada localmente. Emisión atómica con prioridad, contexto y elementos compartidos; listado/detalle propios conectados a Spring, recuperación al recargar y errores sin perder el borrador. V50 completa lectura, evento y auditoría de emisión. Chromium aprobó seis grupos y la regresión FE-12; pasan 118 pruebas Java, typecheck, lint y build. [Evidencia, alcance de compartición y comandos](evidencia-fe13.md).
+
 - **Actor:** Médico de revisión.
 - **Historia:** Como Médico de revisión, quiero emitir derivación con contexto de revisión, prioridad y elementos compartidos desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-13 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
@@ -259,6 +265,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
 
 ### FE-14 · UC-14
+
+**Estado local (2026-10-25):** implementada y comprobada con Spring/PostgreSQL y Chromium. Bandeja/historial y opciones consumen Spring sin Supabase; creación/asignación REFERRAL conserva contratos y origen clínico. Recuperación de red/sesión/respuestas perdidas, cupo incompatible/ocupado y carrera entre pestañas comprobados. Cinco grupos de aceptación y regresión FE-08 aprobados; 124 pruebas Java y controles frontend pasan. [Evidencia y comandos](evidencia-fe14.md). El recorrido integral permanece en FE-CORTE.
 
 - **Actor:** Administrativo.
 - **Historia:** Como Administrativo, quiero programar una derivación activa sin cambiar su contenido clínico desde la interfaz, para completar el caso de uso con el backend nuevo.

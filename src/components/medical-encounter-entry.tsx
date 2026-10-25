@@ -74,6 +74,7 @@ export function MedicalEncounterEntry({ appointmentId }: { appointmentId: string
           <p className="mt-1 text-sm text-text-secondary">La atención permanece vinculada a esta cita.</p>
         </div>}
         <div className="mt-6 flex flex-wrap gap-3">
+          {encounter && <Link href={`/medico/citas/${appointmentId}/documentos`} prefetch={false} className="rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary">Documentos de la atención</Link>}
           {appointment.patient && <Link href={`/medico/pacientes/${appointment.patient.id}/antecedentes${encounter ? `?encounterId=${encounter.id}` : ""}`} prefetch={false} className="rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary">Antecedentes generales</Link>}
           {canStart && !opened && <button type="button" onClick={() => void start()} disabled={saving || sessionExpired} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Abriendo…" : encounter ? "Recuperar borrador" : "Iniciar cita"}</button>}
           {opened?.status === "DRAFT" && <Link href={`/medico/citas/${appointmentId}?ficha=1`} prefetch={false} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary">Completar ficha</Link>}

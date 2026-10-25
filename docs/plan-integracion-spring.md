@@ -115,6 +115,22 @@ Antes del siguiente incremento se completó la traducción transversal del JSON 
 
 La ficha de revisión consume el contexto propio y la finalización en Spring mediante rewrites exactos; se eliminó el handler Supabase compartido. Conserva antecedentes precargados, campos estructurados, diagnóstico, mediciones e indicaciones, y recupera la ficha cerrada sin usar la historia longitudinal heredada. Java normaliza el contrato y Flyway V46 corrige la numeración de versiones, la talla en cm y el IMC para nuevos cierres. Chromium aprobó cinco grupos de escenarios, incluidos red, sesión, permisos, respuesta perdida y aviso al abandonar el formulario. PostgreSQL confirmó atomicidad y ausencia de duplicados; pasan 106 pruebas Java y los controles frontend. Documentos y escenarios adicionales de cierre/derivación continúan en FE-11/12/13. [Informe, alcance y comandos](evidencia-fe10.md).
 
+## Evidencia FE-11 (2026-10-25)
+
+Documentos consumen Spring por rutas exactas de colección, firma y contenido; se retiraron los handlers Supabase. El panel ofrece carga/clasificación, consulta y vista previa/descarga privadas desde revisión y desde la página propia de documentos para ambos roles clínicos. V49 aporta metadatos autorizados y serializa carga/cierre. Se ajustó el búfer Next a 16 MiB y se corrigió el reintento CSRF identificado por cabecera, preservando los dos contratos de error. Chromium aprobó seis grupos y la caducidad real de 60 s; pasan 114 pruebas Java, regresión FE-10 y controles frontend. [Informe y comandos](evidencia-fe11.md).
+
+## Evidencia FE-12 (2026-10-25)
+
+El cierre confirma en Spring la ficha CLOSED y la cita ATTENDED antes de mostrar éxito. La consulta muestra estado, versión y datos inmutables, con acceso desde atenciones realizadas. Se bloquean envíos simultáneos del mismo formulario y se conserva el borrador ante errores o confirmación inconsistente. Chromium aprobó seis grupos, incluida carrera entre dos pestañas y rollback tardío; PostgreSQL confirmó versiones 1–4 con un evento/auditoría por cierre y ningún dato parcial en el rechazo. Pasan 114 pruebas Java, regresión FE-10 y controles frontend. [Informe y comandos](evidencia-fe12.md).
+
+## Evidencia FE-13 (2026-10-25)
+
+La ficha emite derivación con el cierre y muestra contexto, prioridad y elementos compartidos de su origen. La lista y el detalle del emisor consumen GET propios en Spring mediante rewrites exactos. V50 añade la lectura autorizada y el evento/auditoría de creación en la misma transacción; mantiene la compartición automática de referencia. Chromium aprobó seis grupos, incluida recuperación de catálogo/sesión/red, tres prioridades y concurrencia; pasan 118 pruebas Java, regresión FE-12 y controles frontend. [Informe y comandos](evidencia-fe13.md).
+
+## Evidencia FE-14 (2026-10-25)
+
+La bandeja administrativa y las opciones por paciente consumen Spring mediante rewrites exactos; se retiraron sus handlers Supabase. V51 restaura historial/orden de referencia, valida paciente al crear REFERRAL y registra evento/auditoría al programar atómicamente. La agenda conserva selección ante conflictos, red y caducidad, recupera respuestas perdidas consultando el estado y funciona desde paciente o agenda general. Chromium aprobó cinco grupos con concurrencia y origen clínico intacto; PostgreSQL confirmó un evento/cita/reserva por asignación. Pasan 124 pruebas Java, seis grupos de regresión FE-08 y controles frontend. [Informe y comandos](evidencia-fe14.md).
+
 ## Contratos de frontera a implementar en FE-CON
 
 ### Health

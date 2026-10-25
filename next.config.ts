@@ -11,6 +11,7 @@ if (backendOrigin) {
 }
 
 const nextConfig: NextConfig = {
+  experimental: { proxyClientMaxBodySize: "16mb" },
   async rewrites() {
     if (!backendOrigin) return [];
 
@@ -25,6 +26,8 @@ const nextConfig: NextConfig = {
         { source: "/api/specialties", destination: `${backendOrigin}/api/specialties` },
         { source: "/api/patients", destination: `${backendOrigin}/api/patients` },
         { source: "/api/patients/:patientId", destination: `${backendOrigin}/api/patients/:patientId` },
+        { source: "/api/patients/:patientId/referrals", destination: `${backendOrigin}/api/patients/:patientId/referrals` },
+        { source: "/api/administrative/referrals", destination: `${backendOrigin}/api/administrative/referrals` },
         { source: "/api/availability-slots", destination: `${backendOrigin}/api/availability-slots` },
         { source: "/api/appointment-requests", destination: `${backendOrigin}/api/appointment-requests` },
         { source: "/api/appointment-requests/:requestId", destination: `${backendOrigin}/api/appointment-requests/:requestId` },
@@ -36,6 +39,11 @@ const nextConfig: NextConfig = {
         { source: "/api/medical/patients/:patientId/clinical-background", destination: `${backendOrigin}/api/medical/patients/:patientId/clinical-background` },
         { source: "/api/medical/encounters/:encounterId", destination: `${backendOrigin}/api/medical/encounters/:encounterId` },
         { source: "/api/medical/encounters/:encounterId/finalize", destination: `${backendOrigin}/api/medical/encounters/:encounterId/finalize` },
+        { source: "/api/medical/documents", destination: `${backendOrigin}/api/medical/documents` },
+        { source: "/api/medical/documents/:documentId/download", destination: `${backendOrigin}/api/medical/documents/:documentId/download` },
+        { source: "/api/medical/documents/:documentId/content", destination: `${backendOrigin}/api/medical/documents/:documentId/content` },
+        { source: "/api/medical/referrals", destination: `${backendOrigin}/api/medical/referrals` },
+        { source: "/api/medical/referrals/:referralId", destination: `${backendOrigin}/api/medical/referrals/:referralId` },
       ],
     };
   },

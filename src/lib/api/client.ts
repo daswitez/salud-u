@@ -135,7 +135,7 @@ async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = tr
     headers,
   });
   const payload = await jsonPayload(response);
-  if (response.status === 403 && retryCsrf && errorFromPayload(response.status, payload).code === "CSRF_INVALID") {
+  if (response.status === 403 && retryCsrf && (response.headers.get("X-Error-Code") === "CSRF_INVALID" || errorFromPayload(response.status, payload).code === "CSRF_INVALID")) {
     csrfToken = null;
     await getCsrfToken(true);
     return requestJson<T>(url, options, false);
