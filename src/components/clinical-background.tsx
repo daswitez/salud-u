@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { backgroundEntryText, emptyClinicalBackground, type ClinicalBackgroundDraft, type ClinicalBackgroundEntry, type ClinicalBackgroundVersion } from "@/lib/clinical-background";
 
@@ -33,21 +33,45 @@ export function ClinicalBackgroundSummary({ version, onEdit, compact = false }: 
   </section>;
 }
 
-export function ClinicalBackgroundModal({ open, initial, saving, error, required, onClose, onSave }: { open: boolean; initial: ClinicalBackgroundVersion | null; saving: boolean; error: string; required: boolean; onClose: () => void; onSave: (draft: ClinicalBackgroundDraft, reason: string) => Promise<void> | void }) {
+export function ClinicalBackgroundModal({ open, initial, saving, error, required, onClose, onSave, conflict = false, latest, onCompare, onUseLatest }: { open: boolean; initial: ClinicalBackgroundVersion | null; saving: boolean; error: string; required: boolean; onClose: () => void; onSave: (draft: ClinicalBackgroundDraft, reason: string) => Promise<void> | void; conflict?: boolean; latest?: ClinicalBackgroundVersion | null; onCompare?: () => void; onUseLatest?: () => void }) {
   const [draft, setDraft] = useState<ClinicalBackgroundDraft>(initial?.data ?? emptyClinicalBackground());
   const [reason, setReason] = useState(initial ? "Actualización durante la atención" : "Registro inicial de antecedentes generales");
+  const dialog = useRef<HTMLElement>(null);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.current?.focus();
+    return () => { previous?.focus(); };
+  }, [open]);
+  useEffect(() => { if (open && error) errorMessage.current?.focus(); }, [open, error]);
   if (!open) return null;
   const updateEntry = (key: keyof typeof labels, next: ClinicalBackgroundEntry) => setDraft({ ...draft, [key]: next });
-  return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-3" role="presentation" onMouseDown={() => { if (!required) onClose(); }}>
-    <section role="dialog" aria-modal="true" aria-labelledby="background-modal-title" onMouseDown={(event) => event.stopPropagation()} className="max-h-[94vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-surface p-5 shadow-2xl sm:p-7">
+  return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-3" role="presentation">
+    <section ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="background-modal-title" onKeyDown={(event) => {
+      if (event.key === "Escape" && !required && !saving) { event.preventDefault(); onClose(); }
+      if (event.key !== "Tab") return;
+      const controls = dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]');
+      if (!controls?.length) { event.preventDefault(); return; }
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }} className="max-h-[94vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-surface p-5 shadow-2xl sm:p-7">
       <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold tracking-wide text-primary">PERFIL CLÍNICO GENERAL</p><h2 id="background-modal-title" className="mt-1 text-2xl font-bold text-text-primary">{initial ? "Revisar antecedentes generales" : "Registrar antecedentes generales"}</h2><p className="mt-2 max-w-2xl text-sm text-text-secondary">Estos datos se comparten entre Revisión y todas las especialidades. Cada modificación crea una versión nueva y las consultas cerradas conservan la versión que utilizaron.</p></div>{!required && <button type="button" onClick={onClose} className="rounded-lg p-2 text-xl text-text-secondary hover:bg-surface-secondary" aria-label="Cerrar">×</button>}</div>
       {initial?.verificationStatus === "NEEDS_REVIEW" && <p className="mt-5 rounded-xl bg-warning-container p-4 text-sm text-warning">Estos datos se recuperaron de una ficha anterior. Revísalos y guárdalos para confirmarlos.</p>}
-      {error && <p className="mt-5 rounded-xl bg-error-container p-4 text-sm text-error">{error}</p>}
+      {error && <p ref={errorMessage} tabIndex={-1} role="alert" className="mt-5 rounded-xl bg-error-container p-4 text-sm text-error">{error}</p>}
+      {conflict && <section className="mt-4 space-y-3 rounded-xl border border-warning-container p-4">
+        <p className="text-sm">Conservamos lo que escribiste. Consulta los cambios del otro profesional antes de volver a guardar.</p>
+        <button type="button" disabled={saving} onClick={onCompare} className="rounded-lg border border-primary px-4 py-2 text-primary">Consultar versión vigente</button>
+        {latest && <><p className="font-semibold">Versión vigente: {latest.versionNo}</p><ClinicalBackgroundSummary version={latest} compact /><button type="button" disabled={saving} onClick={onUseLatest} className="rounded-lg border border-primary px-4 py-2 text-primary">Usar versión vigente como base</button></>}
+      </section>}
       <form onSubmit={(event) => { event.preventDefault(); void onSave(draft, reason); }} className="mt-6 space-y-6">
+        <fieldset disabled={saving} className="contents">
         <div className="grid gap-5 sm:grid-cols-2">{(Object.entries(labels) as [keyof typeof labels, string][]).map(([key, label]) => <BackgroundField key={key} label={label} itemLabel={itemLabels[key]} value={draft[key]} onChange={(next) => updateEntry(key, next)} />)}</div>
         <fieldset className="rounded-xl border border-divider p-4"><legend className="px-2 font-bold text-text-primary">Hábitos y estilo de vida</legend><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Choice label="Alimentación" value={draft.habits.diet} options={[['','No registrado'],['ADEQUATE','Adecuada'],['REGULAR','Regular'],['INADEQUATE','Inadecuada']]} onChange={(value) => setDraft({ ...draft, habits: { ...draft.habits, diet: value as ClinicalBackgroundDraft['habits']['diet'] } })} /><Choice label="Actividad física" value={draft.habits.physicalActivity} options={[['','No registrado'],['YES','Sí'],['NO','No']]} onChange={(value) => setDraft({ ...draft, habits: { ...draft.habits, physicalActivity: value as ClinicalBackgroundDraft['habits']['physicalActivity'] } })} /><Choice label="Tabaco" value={draft.habits.tobacco} options={[['','No registrado'],['YES','Sí'],['NO','No']]} onChange={(value) => setDraft({ ...draft, habits: { ...draft.habits, tobacco: value as ClinicalBackgroundDraft['habits']['tobacco'] } })} /><Choice label="Alcohol" value={draft.habits.alcohol} options={[['','No registrado'],['YES','Sí'],['NO','No']]} onChange={(value) => setDraft({ ...draft, habits: { ...draft.habits, alcohol: value as ClinicalBackgroundDraft['habits']['alcohol'] } })} /></div></fieldset>
         <label className="block"><span className="text-sm font-semibold text-text-primary">Motivo de actualización</span><input required value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} className={input} /></label>
         <div className="flex flex-wrap justify-end gap-3">{!required && <button type="button" onClick={onClose} className="rounded-lg border border-divider px-5 py-3 text-sm font-semibold text-text-primary">Cancelar</button>}<button disabled={saving} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Guardando…" : initial?.verificationStatus === "NEEDS_REVIEW" ? "Confirmar y continuar" : "Guardar datos generales"}</button></div>
+        </fieldset>
       </form>
     </section>
   </div>;

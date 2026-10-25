@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { appointmentStatusClass, appointmentStatusLabel, formatAppointmentTime } from "@/components/medical-appointments";
-import { ClinicalBackgroundModal, ClinicalBackgroundSummary } from "@/components/clinical-background";
+import { ClinicalBackgroundSummary } from "@/components/clinical-background";
+import { ClinicalBackgroundPanel } from "@/components/clinical-background-panel";
 import { MedicalDocumentUploader } from "@/components/medical-document-uploader";
 import { ReviewSnapshot, SpecialtySnapshot, type PatientRecord } from "@/components/medical-patient-record";
 import { ReviewHistoryForm } from "@/components/review-history-form";
 import { emptySpecialtyHistory, SpecialtyHistoryForm, type SpecialtyHistoryDraft } from "@/components/specialty-history-form";
 import { apiJson, type MedicalAppointment } from "@/lib/api/client";
-import { clinicalBackgroundToLegacy, type ClinicalBackgroundDraft, type ClinicalBackgroundVersion } from "@/lib/clinical-background";
+import { clinicalBackgroundToLegacy, type ClinicalBackgroundDraft } from "@/lib/clinical-background";
 import { emptyReviewHistory, type ReviewHistoryDraft } from "@/lib/review-history";
 
 type Specialty = { id: string; name: string };
@@ -40,9 +41,6 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
   const [referralComment, setReferralComment] = useState("");
   const [referralPriority, setReferralPriority] = useState("ROUTINE");
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [clinicalBackground, setClinicalBackground] = useState<ClinicalBackgroundVersion | null>(null);
-  const [backgroundOpen, setBackgroundOpen] = useState(false);
-  const [backgroundSaving, setBackgroundSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -58,14 +56,12 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
         if (current.appointmentType === "INITIAL") setSpecialties(await apiJson<Specialty[]>("/api/specialties"));
         const existing = patientRecord.encounters.find((item) => item.appointment_id === appointmentId);
         const background = existing?.clinicalBackground ?? patientRecord.clinicalBackground;
-        setClinicalBackground(background);
         applyClinicalBackground(background?.data ?? null, current.specialtyCode ?? "GENERAL", setReviewHistory, setSpecialtyHistory);
         if (existing?.status === "DRAFT") {
           setEncounterId(existing.id);
           setStage("form");
           setChiefComplaint(existing.chief_complaint === "Pendiente de entrevista clínica." ? "" : existing.chief_complaint);
           setHasBloodChemistry(patientRecord.documents.some((document) => document.encounter_id === existing.id && document.document_type_code === "BLOOD_CHEMISTRY"));
-          if (!background) setBackgroundOpen(true);
         }
       } catch (reason) {
         if (active) setError(reason instanceof Error ? reason.message : "No se pudo abrir la cita.");
@@ -95,25 +91,11 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
       setBloodChemistryStatus("NOT_PRESENTED");
       setStage("form");
       await loadSpecialties();
-      if (!clinicalBackground) setBackgroundOpen(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se pudo iniciar la cita.");
     } finally {
       setSaving(false);
     }
-  }
-
-  async function saveClinicalBackground(data: ClinicalBackgroundDraft, changeReason: string) {
-    if (!record || !encounterId) return;
-    setBackgroundSaving(true); setError("");
-    try {
-      const version = await apiJson<ClinicalBackgroundVersion>(`/api/medical/patients/${record.patient.id}/clinical-background`, { method: "PATCH", body: JSON.stringify({ data, changeReason, encounterId, expectedVersion: clinicalBackground?.versionNo ?? 0 }) });
-      setClinicalBackground(version);
-      setRecord({ ...record, clinicalBackground: version });
-      applyClinicalBackground(version.data, appointment?.specialtyCode ?? "GENERAL", setReviewHistory, setSpecialtyHistory);
-      setBackgroundOpen(false);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "No se pudieron guardar los antecedentes generales."); }
-    finally { setBackgroundSaving(false); }
   }
 
   async function finalize(event: React.FormEvent) {
@@ -188,7 +170,7 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
     </header>
     <ClinicalHistoryAccess record={record} open={historyOpen} onOpen={() => setHistoryOpen(true)} onClose={() => setHistoryOpen(false)} />
     {error && <p className="mt-5 rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
-    {stage === "form" && <div className="mt-7"><ClinicalBackgroundSummary version={clinicalBackground} onEdit={() => setBackgroundOpen(true)} /></div>}
+    {stage === "form" && <div className="mt-7"><ClinicalBackgroundPanel embedded patientId={record.patient.id} encounterId={encounterId ?? undefined} onSaved={(version) => { setRecord({ ...record, clinicalBackground: version }); applyClinicalBackground(version.data, appointment.specialtyCode ?? "GENERAL", setReviewHistory, setSpecialtyHistory); }} /></div>}
     {closed ? <section className="mt-7 overflow-hidden rounded-2xl border border-success/25 bg-surface"><header className="border-b border-success/20 bg-success-container px-5 py-5 sm:px-6"><p className="text-xs font-bold uppercase tracking-[0.16em] text-success">Atención cerrada</p><div className="mt-2 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-text-primary">Ficha de la atención realizada</h2><p className="mt-1 text-sm text-text-secondary">Consulta de solo lectura. El registro conserva la información asociada a esta cita.</p></div><Link href="/medico/agenda?vista=atendidas" className="text-sm font-bold text-success hover:underline">Volver a atenciones realizadas</Link></div></header>{closedEncounter ? <div className="p-5 sm:p-6"><dl className="grid gap-4 rounded-xl bg-surface-secondary p-4 text-sm sm:grid-cols-3"><div><dt className="text-text-tertiary">Fecha de atención</dt><dd className="mt-1 font-bold text-text-primary">{formatAppointmentTime(closedEncounter.occurred_at)}</dd></div><div><dt className="text-text-tertiary">Tipo</dt><dd className="mt-1 font-bold text-text-primary">{closedEncounter.encounter_type === "INITIAL" ? "Revisión médica" : closedEncounter.specialty ?? "Especialidad"}</dd></div><div><dt className="text-text-tertiary">Estado</dt><dd className="mt-1 font-bold text-success">Cerrada</dd></div></dl>{closedEncounter.clinicalBackground && <div className="mt-5"><ClinicalBackgroundSummary version={closedEncounter.clinicalBackground} compact /></div>}<div className="mt-6 grid gap-5 lg:grid-cols-2"><section className="rounded-xl border border-divider p-5"><h3 className="font-bold text-text-primary">Motivo y evaluación</h3><dl className="mt-4 space-y-4 text-sm"><div><dt className="text-text-tertiary">Motivo de consulta</dt><dd className="mt-1 leading-6 text-text-primary">{closedEncounter.chief_complaint}</dd></div><div><dt className="text-text-tertiary">Evaluación clínica</dt><dd className="mt-1 leading-6 text-text-primary">{closedEncounter.assessment || "Sin observaciones registradas."}</dd></div>{closedDiagnoses.length > 0 && <div><dt className="text-text-tertiary">Diagnósticos</dt><dd className="mt-2 flex flex-wrap gap-2">{closedDiagnoses.map((diagnosis) => <span key={diagnosis.id} className="rounded-full bg-primary-container px-3 py-1 text-xs font-bold text-primary">{diagnosis.label}</span>)}</dd></div>}</dl></section><section className="rounded-xl border border-divider p-5"><h3 className="font-bold text-text-primary">Indicaciones y seguimiento</h3><dl className="mt-4 space-y-4 text-sm"><div><dt className="text-text-tertiary">Indicaciones</dt><dd className="mt-1 leading-6 text-text-primary">{closedEncounter.instructions || "Sin indicaciones registradas."}</dd></div><div><dt className="text-text-tertiary">Control médico</dt><dd className="mt-1 leading-6 text-text-primary">{closedEncounter.follow_up_text || "Sin control posterior indicado."}</dd></div></dl></section></div><section className="mt-6 rounded-xl border border-divider p-5"><h3 className="text-lg font-bold text-text-primary">Ficha clínica estructurada</h3><p className="mt-1 text-sm text-text-secondary">Datos conservados al momento de cerrar esta atención.</p>{closedEncounter.encounter_type === "INITIAL" ? <ReviewSnapshot data={closedEncounter.reviewHistory} hideGeneral={Boolean(closedEncounter.clinicalBackground)} /> : <SpecialtySnapshot data={closedEncounter.specialtyHistory} hideGeneral={Boolean(closedEncounter.clinicalBackground)} />}</section><section className="mt-6 rounded-xl border border-divider p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><h3 className="font-bold text-text-primary">Archivos asociados</h3><p className="mt-1 text-sm text-text-secondary">Documentos vinculados únicamente a esta atención.</p></div><span className="rounded-full bg-surface-secondary px-3 py-1 text-xs font-bold text-text-secondary">{closedDocuments.length} archivo{closedDocuments.length === 1 ? "" : "s"}</span></div>{closedDocuments.length ? <div className="mt-4 grid gap-2 sm:grid-cols-2">{closedDocuments.map((document) => <button type="button" key={document.id} onClick={() => void openDocument(document.id)} className="rounded-xl border border-divider bg-surface-secondary p-3 text-left text-sm font-bold text-primary transition hover:border-primary-200 hover:bg-primary-container">{document.original_filename}<span className="mt-1 block text-xs font-normal text-text-secondary">Abrir archivo →</span></button>)}</div> : <p className="mt-4 rounded-lg bg-surface-secondary p-4 text-sm text-text-secondary">Esta atención no tiene archivos adjuntos.</p>}</section></div> : <div className="p-6"><p className="font-semibold text-text-primary">La cita figura como atendida, pero no se encontró la ficha clínica cerrada.</p><p className="mt-2 text-sm text-text-secondary">Puedes consultar el historial del paciente para localizar la atención registrada.</p><Link href={`/medico/pacientes/${record.patient.id}`} className="mt-4 inline-flex text-sm font-bold text-primary hover:underline">Abrir historial del paciente →</Link></div>}</section>
       : stage === "ready" ? <section className="mt-7 rounded-2xl border border-primary-200 bg-primary-container p-6"><h2 className="text-xl font-bold text-text-primary">1. Iniciar cita</h2><p className="mt-2 max-w-2xl text-sm text-text-secondary">Se abrirá un borrador clínico para esta cita; aún no modificará ninguna ficha previa.</p><button onClick={start} disabled={saving} className="mt-5 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Iniciando…" : "Iniciar cita"}</button></section>
         : <form onSubmit={finalize} className="mt-7 space-y-6">
@@ -201,7 +183,6 @@ export function MedicalReviewWorkflow({ appointmentId }: { appointmentId: string
             </> : <SpecialtyDraft chiefComplaint={chiefComplaint} assessment={assessment} diagnosisText={diagnosisText} instructions={instructions} followUpText={followUpText} specialtyHistory={specialtyHistory} onChiefComplaint={setChiefComplaint} onAssessment={setAssessment} onDiagnosis={setDiagnosisText} onInstructions={setInstructions} onFollowUp={setFollowUpText} onHistory={setSpecialtyHistory} patientId={record.patient.id} encounterId={encounterId!} />}
             <div className="flex flex-wrap justify-end gap-3"><Link href={`/medico/pacientes/${record.patient.id}`} className="rounded-lg border border-divider px-5 py-3 text-sm font-semibold text-text-primary hover:bg-surface-secondary">Cancelar</Link><button disabled={saving} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-50">{saving ? "Guardando…" : referralSelected ? "Cerrar atención y enviar derivación" : "Cerrar atención"}</button></div>
           </form>}
-    <ClinicalBackgroundModal key={`${backgroundOpen}-${clinicalBackground?.id ?? "new"}`} open={backgroundOpen} initial={clinicalBackground} saving={backgroundSaving} error={error} required={!clinicalBackground} onClose={() => setBackgroundOpen(false)} onSave={saveClinicalBackground} />
   </>;
 }
 

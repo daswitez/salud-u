@@ -46,3 +46,19 @@ export const emptyReviewHistory: ReviewHistoryDraft = {
   conduct: { healthEducation: false, treatment: false, complementaryStudies: false, referral: false, medicalFollowUp: false, noObservations: false },
   observations: "",
 };
+
+/** Presentation mapping: server numbers/nulls become controlled form strings. */
+export function reviewHistoryToDraft(value: Record<string, unknown> | null): ReviewHistoryDraft {
+  const result = structuredClone(emptyReviewHistory);
+  if (!value) return result;
+  result.sex = typeof value.sex === "string" ? value.sex : "";
+  result.observations = typeof value.observations === "string" ? value.observations : "";
+  for (const section of ["personalHistory", "habits", "vitals", "physicalExam", "laboratory"] as const) {
+    const source = value[section] && typeof value[section] === "object" ? value[section] as Record<string, unknown> : {};
+    const target = result[section] as Record<string, string>;
+    for (const key of Object.keys(target)) target[key] = typeof source[key] === "string" || typeof source[key] === "number" ? String(source[key]) : "";
+  }
+  const conduct = value.conduct && typeof value.conduct === "object" ? value.conduct as Record<string, unknown> : {};
+  for (const key of Object.keys(result.conduct) as (keyof ReviewHistoryDraft["conduct"])[]) result.conduct[key] = conduct[key] === true;
+  return result;
+}

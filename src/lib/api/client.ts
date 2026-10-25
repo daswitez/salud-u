@@ -1,3 +1,5 @@
+import { clinicalPayload } from "@/lib/clinical-json";
+
 export type CareerOption = { id: string; code: string; name: string };
 
 export type AdministrativePatient = {
@@ -24,6 +26,7 @@ export type MedicalAppointment = {
   endsAt: string | null;
   specialty: string;
   specialtyCode: string | null;
+  encounter?: { id: string; status: "DRAFT" | "CLOSED" | "VOIDED" } | null;
   patient: {
     id: string;
     carnet: string;
@@ -143,7 +146,14 @@ async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = tr
 
 /** Client-side JSON request with same-origin cookies, CSRF and both error contracts. */
 export function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
-  return requestJson<T>(url, options);
+  const background = /\/api\/medical\/patients\/[^/]+\/clinical-background(?:\?|$)/.test(url);
+  const finalize = /\/api\/medical\/encounters\/[^/]+\/finalize(?:\?|$)/.test(url);
+  let request = options;
+  if ((background || finalize) && typeof options?.body === "string") {
+    request = { ...options, body: JSON.stringify(clinicalPayload(JSON.parse(options.body), true, background)) };
+  }
+  return requestJson<unknown>(url, request).then(data =>
+    (url.startsWith("/api/medical/") || url.startsWith("/api/reports/clinical") ? clinicalPayload(data, false, background) : data) as T);
 }
 
 /** Health is intentionally not an ApiEnvelope: it is the public Spring probe. */

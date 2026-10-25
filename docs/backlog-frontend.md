@@ -47,6 +47,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prioridad:** P1. **Dependencia:** BE-CAT probado, FE-CON.
 - **Aceptación:** operación válida refleja datos tras recarga; inválida muestra error conservando formulario; permisos y estados de BE-CAT observables; ninguna llamada Supabase en este flujo.
 - **Prueba:** navegación, edición y error de permiso/validación.
+- **Defecto corregido (2026-10-24):** se corrigió el mapeo `rols AS roles` de `GET /api/v1/admin/principals`, V44 representa cuentas sin roles como `[]` y los fallos internos de persistencia devuelven `500` sanitizado. Chromium comprobó listado `200`, recarga/identidad `200`, estudiante `403` y ausencia de sesión `401`. Pasan 94 pruebas Java. [Evidencia de la corrección](evidencia-fecat-cuentas.md). El cierre completo de las operaciones FE-CAT conserva sus criterios anteriores.
 
 ### FE-PER · Perfil y contraseña
 
@@ -55,6 +56,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prioridad:** P1. **Dependencia:** BE-PER probado, FE-CON.
 - **Aceptación:** operación válida refleja datos tras recarga; inválida muestra error conservando formulario; permisos y estados de BE-PER observables; ninguna llamada Supabase en este flujo.
 - **Prueba:** navegación, edición y error de permiso/validación.
+- **Estado local (2026-10-18):** implementado contra Spring local. Se eliminaron las escrituras Supabase de perfil; actualización y contraseña usan CSRF y contratos `/api/v1/profile`. Se verificaron éxito, contraseña actual inválida, revocación de sesión y reautenticación con datos demo restaurados. Pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ## Épica F2 — Admisión y pacientes
 
@@ -72,6 +74,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-02 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado contra Spring local. `/api/careers`, `GET/POST /api/patients` y `GET/PATCH /api/patients/{id}` se reenvían al backend; los Route Handlers Supabase de pacientes fueron eliminados. Se validaron listado, creación, detalle, edición, error `400` y rechazo `403` a estudiante. Pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ## Épica F3 — Disponibilidad, solicitudes y citas
 
@@ -89,6 +92,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-04 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado contra Spring local. `GET/POST/DELETE /api/availability-slots` se reenvía al backend y el Route Handler Supabase fue eliminado. Se validaron gestión, jornada, cupos, creación/eliminación de bloqueo y rechazo `403` a Administración. Pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ### FE-05 · UC-05
 
@@ -104,6 +108,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-05 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado contra Spring local. `GET/POST /api/appointment-requests` y `PATCH /api/appointment-requests/{id}` se reenvían al backend; se eliminaron los Route Handlers Supabase de listado/alta/cancelación y se preservó `/assign` para FE-07. Spring ahora entrega motivo de cancelación y, cuando existe, datos de la cita asignada. A través de Next, con cuenta estudiantil y paciente de prueba vinculados, se validó `200` listado, `201` creación, recarga `200`, cancelación `200` y la persistencia del motivo; médico ajeno recibe `403`. TypeScript y ESLint focalizados pasan. Pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ### FE-06 · UC-06
 
@@ -119,6 +124,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-06 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado contra Spring local desde la pantalla administrativa de programación. `POST /api/appointment-requests` acepta ahora `appointmentType: "SPECIALTY"` con paciente y especialidad; el listado devuelve `specialty_id` para conservar la selección tras recargar. `/api/specialties` se reenvía a Spring y su Route Handler Supabase fue eliminado. A través de Next se validaron catálogo `200`, error sin especialidad `400`, creación `201`, recarga `200` con especialidad persistida, cancelación de limpieza `200` y rechazo `403` a estudiante. TypeScript y ESLint focalizados pasan. Pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ### FE-07 · UC-07
 
@@ -134,6 +140,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-07 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-18):** implementado contra Spring local. La ruta exacta `POST /api/appointment-requests/{id}/assign` se reenvía a Spring y se eliminó su Route Handler Supabase; la pantalla administrativa existente conserva estado de carga, mensaje recuperable y recarga de la bandeja. El recorrido vía Next comprobó alta de solicitud `201`, asignación `200` con `data.appointmentId`, recarga `ASSIGNED/SCHEDULED` y cupo reservado (`bookedCount: 1`); cupo vacío devuelve `400`, una repetición devuelve `409` sin nueva reserva y un estudiante recibe `403`. Spring traduce ahora los conflictos SQL de asignación a mensajes del contrato legado. `mvn clean test` (81 pruebas), TypeScript y ESLint focalizados pasan. La cita sintética creada queda como semilla local; pendiente únicamente la regresión visual automatizada de FE-CORTE.
 
 ### FE-08 · UC-08
 
@@ -149,6 +156,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-08 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-24):** cerrada localmente. Recorrido Chromium aprobado contra Spring: llegada, ausencia, cancelación pendiente/asignada, persistencia tras recarga, teclado, error de red conservando motivo, conflicto `409`, permiso `403`, solicitud ajena `404` y ausencia de llamadas Supabase del navegador. Se retiraron los handlers de llegada/ausencia; Flyway V42 completa la paridad de fechas, motivos y cancelación atómica. Pasan 87 pruebas Java (incluida concurrencia PostgreSQL), typecheck, lint focalizado y build de producción. Evidencia y comandos en [evidencia-fe08.md](evidencia-fe08.md). El corte integral de los demás módulos continúa en FE-CORTE.
 
 ## Épica F4 — Revisión clínica, antecedentes y documentos
 
@@ -166,6 +174,7 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-09 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-24):** cerrada localmente. Agenda y apertura/recuperación consumen Spring por rewrites exactos; handlers Supabase retirados. V43 completa identidad/null de agenda y documenta `encounter` como extensión de lectura. Chromium aprobó revisión/especialidad, `201/200` con UUID estable, teclado, recarga, respuesta perdida después de commit, permisos, cita ajena, conflicto y sesión caducada. Pasan 91 pruebas Java (incluida apertura concurrente), typecheck, lint focalizado y build. La etapa de apertura enlaza a la ficha existente; sus operaciones siguen en FE-03/10/11/12/15 y la historia en FE-17. [Evidencia y comandos](evidencia-fe09.md).
 
 ### FE-03 · UC-03
 
@@ -181,8 +190,13 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
   - Las restricciones y escenarios de BE-03 se comprueban también desde pantalla; no se reproducen reglas de negocio en API Next ni se mantiene acceso Supabase de este caso.
   - Listas vacías, carga, null y orden se representan correctamente; teclado, foco y etiquetas permiten completar el caso.
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
+- **Estado local (2026-10-24):** cerrada localmente. GET/PATCH de antecedentes consumen Spring por rewrite exacto y el handler Supabase fue retirado. El panel común ofrece consulta/edición, motivo, autor/fecha/versiones y comparación explícita ante `409` conservando el formulario. V45 completa el contrato `current/encounter`, normalización de listas y snapshot inmutable. Chromium aprobó éxito/recarga, teclado, red, concurrencia, permisos, especialista y atención cerrada; pasan 100 pruebas Java, typecheck, lint y build. [Evidencia y comandos](evidencia-fe03.md).
 
 ### FE-10 · UC-10
+
+**Cambio transversal posterior:** JSON clínico en español en almacenamiento, respuestas y solicitudes, con migración y regresión de antecedentes/revisión/especialidad. [Contrato y evidencia](json-clinico-espanol.md).
+
+**Estado local (2026-10-24):** cerrada localmente. Formulario de revisión conectado a Spring, antecedentes precargados, diagnóstico, mediciones e indicaciones; recarga de ficha cerrada y recuperación de respuestas perdidas. Se retiró el handler Supabase de finalización; Java normaliza el contrato y V46 corrige versiones longitudinales, talla e IMC. Chromium aprobó cinco grupos de escenarios, permisos, sesión/red y preservación del formulario; pasan 106 pruebas Java, typecheck, lint y build. [Evidencia y comandos](evidencia-fe10.md).
 
 - **Actor:** Médico de revisión.
 - **Historia:** Como Médico de revisión, quiero completar ficha estructurada, diagnósticos, mediciones e indicaciones de revisión desde la interfaz, para completar el caso de uso con el backend nuevo.

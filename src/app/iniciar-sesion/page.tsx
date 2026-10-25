@@ -57,6 +57,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
             {errorMessage && <p role="alert" className="mt-6 rounded-xl border border-error/20 bg-error-container px-4 py-3 text-sm font-semibold text-error">{errorMessage}</p>}
             {params.success === "logout" && <p role="status" className="mt-6 rounded-xl border border-success/20 bg-success-container px-4 py-3 text-sm font-semibold text-success">Cerraste sesión correctamente.</p>}
+            {params.success === "profile-updated" && <p role="status" className="mt-6 rounded-xl border border-success/20 bg-success-container px-4 py-3 text-sm font-semibold text-success">Los cambios se guardaron. Inicia sesión nuevamente para continuar.</p>}
 
             <SignInForm initialEmail={params.email} />
 

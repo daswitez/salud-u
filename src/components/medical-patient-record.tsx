@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { formatAppointmentTime } from "@/components/medical-appointments";
-import { ClinicalBackgroundModal, ClinicalBackgroundSummary } from "@/components/clinical-background";
+import { ClinicalBackgroundSummary } from "@/components/clinical-background";
+import { ClinicalBackgroundPanel } from "@/components/clinical-background-panel";
 import { apiJson } from "@/lib/api/client";
-import type { ClinicalBackgroundDraft, ClinicalBackgroundVersion } from "@/lib/clinical-background";
+import type { ClinicalBackgroundVersion } from "@/lib/clinical-background";
 import { downloadClinicalRecordWord } from "@/lib/clinical-word-export";
 
 export type PatientRecord = {
@@ -47,8 +48,6 @@ export function MedicalPatientRecord({ patientId, clinicalRole }: { patientId: s
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PatientRecord["encounters"][number] | null>(null);
   const [error, setError] = useState("");
-  const [backgroundOpen, setBackgroundOpen] = useState(false);
-  const [backgroundSaving, setBackgroundSaving] = useState(false);
   const [wordExporting, setWordExporting] = useState(false);
 
   useEffect(() => {
@@ -84,15 +83,6 @@ export function MedicalPatientRecord({ patientId, clinicalRole }: { patientId: s
     try { window.open((await apiJson<{ url: string }>(`/api/medical/documents/${id}/download`)).url, "_blank", "noopener"); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo abrir el archivo."); }
   };
-  const saveBackground = async (data: ClinicalBackgroundDraft, changeReason: string) => {
-    setBackgroundSaving(true); setError("");
-    try {
-      const version = await apiJson<ClinicalBackgroundVersion>(`/api/medical/patients/${patientId}/clinical-background`, { method: "PATCH", body: JSON.stringify({ data, changeReason, expectedVersion: record.clinicalBackground?.versionNo ?? 0 }) });
-      setRecord({ ...record, clinicalBackground: version });
-      setBackgroundOpen(false);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudieron guardar los antecedentes generales."); }
-    finally { setBackgroundSaving(false); }
-  };
   const exportWord = async () => {
     if (!selected) return;
     setWordExporting(true); setError("");
@@ -110,13 +100,12 @@ export function MedicalPatientRecord({ patientId, clinicalRole }: { patientId: s
       <label className="mt-6 block"><span className="sr-only">Buscar en el historial visible</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={clinicalRole === "REVIEW_DOCTOR" ? "Buscar en fichas de revisión…" : "Buscar en fichas de esta especialidad…"} className="w-full rounded-lg border border-divider bg-surface px-4 py-3" /></label>
     </header>
     {error && <p className="mt-5 rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
-    <div className="mt-6"><ClinicalBackgroundSummary version={record.clinicalBackground} onEdit={() => setBackgroundOpen(true)} /></div>
+    <div className="mt-6"><ClinicalBackgroundPanel embedded patientId={patientId} onSaved={(version) => setRecord({ ...record, clinicalBackground: version })} /></div>
     <section className="mt-6 rounded-2xl border border-divider bg-surface p-6">
       <h2 className="text-xl font-bold">{clinicalRole === "REVIEW_DOCTOR" ? "Historial de revisiones" : "Historial de la especialidad"}</h2>
       <p className="mt-1 text-sm text-text-secondary">Cada tarjeta corresponde a una cita cerrada y conserva sus datos generales y específicos originales.</p>
       <div className="mt-4 space-y-3">{encounters.filter((item) => item.status === "CLOSED").map((item) => <button key={item.id} onClick={() => setSelected(item)} className="w-full rounded-xl border border-divider p-4 text-left hover:border-primary"><b>{clinicalRole === "REVIEW_DOCTOR" ? "Revisión médica" : item.specialty ?? "Especialidad"}</b><p className="mt-1 text-sm">{formatAppointmentTime(item.occurred_at)} · {item.chief_complaint}</p><span className="mt-2 inline-block text-sm font-semibold text-primary">Abrir ficha y archivos →</span></button>)}{!encounters.filter((item) => item.status === "CLOSED").length && <p className="py-8 text-center text-sm text-text-secondary">No hay atenciones cerradas en este historial.</p>}</div>
     </section>
     {selected && <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><section className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl bg-surface p-6"><button onClick={() => setSelected(null)} className="float-right text-xl" aria-label="Cerrar">×</button><div className="mr-8 flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold text-primary">{formatAppointmentTime(selected.occurred_at)}</p><h2 className="mt-2 text-xl font-bold">{selected.chief_complaint}</h2></div><button type="button" onClick={() => void exportWord()} disabled={wordExporting} className="rounded-lg border border-primary px-3 py-2 text-sm font-bold text-primary disabled:opacity-50">{wordExporting ? "Generando Word…" : "Descargar ficha Word"}</button></div>{selected.clinicalBackground && <div className="mt-5"><ClinicalBackgroundSummary version={selected.clinicalBackground} compact /></div>}<h3 className="mt-5 font-bold">Evaluación</h3><p>{selected.assessment || "Sin observaciones."}</p>{selectedDiagnoses.length > 0 && <><h3 className="mt-5 font-bold">Diagnósticos</h3><p>{selectedDiagnoses.map((item) => item.label).join(" · ")}</p></>}{selected.instructions && <><h3 className="mt-5 font-bold">Indicaciones</h3><p>{selected.instructions}</p></>}{selected.follow_up_text && <><h3 className="mt-5 font-bold">Control médico</h3><p>{selected.follow_up_text}</p></>}{selected.encounter_type === "INITIAL" ? <ReviewSnapshot data={selected.reviewHistory} hideGeneral={Boolean(selected.clinicalBackground)} /> : <SpecialtySnapshot data={selected.specialtyHistory} hideGeneral={Boolean(selected.clinicalBackground)} />}<h3 className="mt-5 font-bold">Archivos de esta cita</h3>{documents.length ? <div className="mt-3 space-y-2">{documents.map((document) => <button key={document.id} onClick={() => void open(document.id)} className="block text-left text-sm font-semibold text-primary hover:underline">{document.original_filename}</button>)}</div> : <p className="mt-2 text-sm text-text-secondary">Esta cita no tiene archivos adjuntos.</p>}</section></div>}
-    <ClinicalBackgroundModal key={`${backgroundOpen}-${record.clinicalBackground?.id ?? "new"}`} open={backgroundOpen} initial={record.clinicalBackground} saving={backgroundSaving} error={error} required={false} onClose={() => setBackgroundOpen(false)} onSave={saveBackground} />
   </>;
 }

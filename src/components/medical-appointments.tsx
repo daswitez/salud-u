@@ -45,17 +45,19 @@ export function useMedicalAppointments() {
   const [appointments, setAppointments] = useState<MedicalAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let active = true;
     apiJson<MedicalAppointment[]>("/api/medical/appointments")
-      .then((data) => { if (active) setAppointments(data); })
+      .then((data) => { if (active) { setAppointments(data); setError(null); } })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "No se pudieron cargar las citas."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [revision]);
 
-  return { appointments, loading, error };
+  function reload() { setLoading(true); setError(null); setRevision(value => value + 1); }
+  return { appointments, loading, error, reload };
 }
 
 export function useTodayAppointments(appointments: MedicalAppointment[]) {

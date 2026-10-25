@@ -48,7 +48,72 @@ Antes de elegir una alternativa se debe documentar origen, TLS, cookies `Secure`
 - El navegador obtiene CSRF desde `/api/v1/security/csrf`, usa `POST /api/v1/auth/login`, consulta `/api/me` desde SSR y cierra por `/api/v1/session/logout`.
 - Se separó `SALUD_U_CSRF` de la cookie opaca `SALUD_U_SESSION`; ambas son requeridas para mutaciones autenticadas y no comparten nombre.
 - Recorrido HTTP local aprobado con cuenta sintética: login `200`, `/api/me` `200`, recarga SSR de `/perfil` `200`, logout `204`, `/api/me` posterior `401` y credenciales inválidas `401`.
-- Validación de archivos modificados: TypeScript y ESLint sin errores. Las acciones de perfil siguen explícitamente en FE-PER y no forman parte del cierre de FE-01.
+- Validación de archivos modificados: TypeScript y ESLint sin errores. La migración de perfil se trata como FE-PER y no formó parte del cierre de FE-01.
+
+## Evidencia local de FE-PER (2026-10-18)
+
+- La pantalla `/perfil` usa `PATCH /api/v1/profile` y `POST /api/v1/profile/password` desde el cliente HTTP común; la acción de servidor que escribía mediante Supabase fue eliminada.
+- Ambos formularios conservan sus valores ante una respuesta de validación, permiso o red, y presentan el mensaje normalizado de Spring. El cambio de nombre/correo también solicita la contraseña actual, porque forma parte del contrato de BE-PER.
+- Spring revoca todas las sesiones después de un cambio válido. La interfaz informa ese efecto y dirige a inicio de sesión; al reautenticar, la recarga obtiene la identidad actual desde `/api/me`.
+- Recorrido HTTP local aprobado con cuenta sintética: login `200`, contraseña actual incorrecta al editar perfil `401`, edición de perfil `204`, cambio de contraseña `204`, login con la clave nueva `200`, restauración de clave `204`, login original `200` y restauración de nombre `204`.
+- TypeScript y ESLint focalizados sin errores; la renderización SSR de `/perfil` y el aviso de reautenticación fueron comprobados localmente.
+
+## Evidencia local de FE-02 (2026-10-18)
+
+- Next reenvía únicamente `/api/careers`, `/api/patients` y `/api/patients/{id}` a Spring. Se retiraron los dos Route Handlers de pacientes que consultaban Supabase; las rutas más profundas, como derivaciones, permanecen fuera de este incremento hasta su propia migración.
+- La interfaz existente de listado, alta y detalle/edición conserva sus estados de carga, vacío, filtros, error y los valores del formulario tras un fallo. Las mutaciones siguen el cliente común con cookie y CSRF.
+- Se corrigió el mapeo Java del contrato SQL de pacientes (`carrera_*` e `inscripcion_*`) y se añadió una prueba PostgreSQL que lee tanto lista como detalle después del registro, para evitar que un fallo de lectura quede cubierto por el despacho de error de Spring.
+- Recorrido HTTP local aprobado a través de Next: login administrativo `200`, lista `200`, alta inválida `400`, creación `201`, detalle `200`, actualización `200` y recarga con datos persistidos. Un estudiante autenticado recibe `403` al consultar pacientes administrativos.
+- Se creó exclusivamente una carrera y pacientes de integración identificados como FE-02 en la base local de pruebas. TypeScript y ESLint focalizados pasan.
+
+## Evidencia local de FE-04 (2026-10-18)
+
+- Next reenvía únicamente `/api/availability-slots` a Spring y se retiró el Route Handler que invocaba RPCs Supabase. El gestor de horarios mantiene el contrato de agenda (`schedules`, `recurringBlocks`, `dateBlocks`, `slots` y `appointments`) y las reglas camelCase se normalizan en Spring antes de persistirse.
+- Recorrido local aprobado con médico de revisión: login `200`, consulta de gestión `200`, reemplazo de jornada `200`, recarga con contrato válido `200`, creación de bloqueo por fecha `201` y eliminación `200`.
+- Administración puede consultar según su contrato, pero no puede alterar jornadas: intento de escritura `403`. La ficha de personal activa necesaria para la cuenta médica demo se creó a través del API administrativo real.
+- TypeScript y ESLint focalizados pasan. La jornada sintética quedó como semilla local; el bloqueo puntual creado durante la prueba fue eliminado.
+
+## Evidencia local de FE-05 (2026-10-18)
+
+- Next reenvía exclusivamente `/api/appointment-requests` y `/api/appointment-requests/{id}` a Spring. Se eliminaron los Route Handlers Supabase de listado/alta/cancelación; `/api/appointment-requests/{id}/assign` no coincide con esos patrones y queda a cargo de su incremento posterior.
+- La interfaz existente conserva carga, lista vacía, error, detalle y cancelación mediante el cliente HTTP común con sesión y CSRF. No replica reglas de solicitud ni cancela el borrador ante un fallo.
+- Se amplió el contrato de lectura de Spring: lista `cancelled_at`, `cancellation_reason` y, para solicitudes asignadas, `appointment` con profesional, horario y fin. La migración Flyway V40 mantiene el orden descendente y el filtro por estudiante/administración de la función SQL.
+- Recorrido HTTP local aprobado tanto directo como a través de Next: login `200`, listado `200`, creación `201`, recarga `200`, cancelación `200` y recarga final `200` con estado `CANCELLED` y motivo persistido. Un médico de revisión recibe `403` al listar solicitudes.
+- `mvn clean test` completó 81 pruebas sin errores; TypeScript y ESLint focalizados de FE-05 pasan. La regresión visual automatizada completa permanece centralizada en FE-CORTE.
+
+## Evidencia local de FE-06 (2026-10-18)
+
+- La pantalla administrativa de programación ya tenía el selector de solicitud directa; se conectó al contrato Spring sin reproducir reglas clínicas en Next. El `POST /api/appointment-requests` acepta `appointmentType: SPECIALTY`, `patientId` y `specialtyId` exclusivamente para Administración.
+- Se incorporó la migración V41 para que el listado devuelva `specialty_id` e `referral_id`; así, después de crear o recargar, la solicitud directa conserva su especialidad y se filtran cupos compatibles. La operación crea auditoría `SPECIALTY_APPOINTMENT_REQUEST_CREATED`.
+- `/api/specialties` se reenvía a Spring y se retiró su Route Handler Supabase, porque alimenta directamente el selector de esta historia. Las rutas de derivación y asignación siguen reservadas a sus incrementos.
+- Recorrido HTTP a través de Next aprobado: catálogo de prueba `200`, falta de especialidad `400`, creación directa `201`, listado `200` con `SPECIALTY` y `specialty_id`, cancelación de limpieza `200` y rechazo a estudiante `403`.
+- `mvn clean test` completó 81 pruebas sin errores; TypeScript y ESLint focalizados de FE-06 pasan. La regresión visual automatizada completa permanece centralizada en FE-CORTE.
+
+### Evidencia local FE-07 — asignación de solicitud (2026-10-18)
+
+- `POST /api/appointment-requests/{id}/assign` es ahora un rewrite exacto hacia Spring; se eliminó el Route Handler que invocaba `rpc_assign_appointment_request` en Supabase. La pantalla de programación administrativa ya consumía ese contrato mediante `apiJson`, por lo que conserva espera, foco, error y recarga sin duplicar reglas clínicas.
+- Recorrido HTTP mediante `localhost:3000`: solicitud inicial `201`; asignación compatible `200` con `data.appointmentId`; recarga `ASSIGNED/SCHEDULED` y `bookedCount: 1`. La falta de cupo devuelve `400`, la repetición `409` y el estudiante `403`; ninguna alternativa creó una segunda cita ni incrementó el cupo.
+- Se tradujeron los errores SQL controlados de `asignar_solicitud_cita` en `AppointmentAssignmentController`, para que una solicitud que ya no está pendiente no termine en el flujo de autenticación como `401`. `mvn clean test` pasó con 81 pruebas; TypeScript y ESLint focalizados pasan. La asignación de esta evidencia es una semilla sintética local.
+
+## Evidencia FE-08 (2026-10-24)
+
+Llegada y ausencia se reenvían a Spring por rutas exactas; sus handlers Supabase se retiraron. La cancelación ya migrada ahora conserva la semántica SQL de la solicitud asignada todavía `SCHEDULED`. Flyway V42 persiste fechas/actores/motivos y evita doble liberación; Spring devuelve errores de negocio recuperables y éxito con `data:null`. El recorrido Chromium aprobó éxito, recarga, teclado, fallos de red, conflictos, permisos y registro ajeno. [Informe, artefactos locales y comandos reproducibles](evidencia-fe08.md).
+
+## Evidencia FE-09 (2026-10-24)
+
+La agenda y la apertura/recuperación se reenvían a Spring por rutas exactas y sus dos handlers Supabase fueron eliminados. La etapa de apertura usa únicamente la agenda autorizada y el POST de inicio; V43 completa sus campos y agrega la referencia nullable al encuentro, documentada en OpenAPI. Chromium verificó revisión/especialidad, permisos, recarga y recuperación de una respuesta perdida tras el commit. Pasan 91 pruebas Java y los controles del frontend. [Informe, alcance de la continuación de ficha y comandos](evidencia-fe09.md).
+
+El defecto de FE-CAT detectado durante este ensayo fue corregido después: listado de cuentas `200`, roles válidos, recarga sin perder sesión y rechazo de actores ajenos. La corrección y sus 94 pruebas Java están documentadas en [evidencia-fecat-cuentas.md](evidencia-fecat-cuentas.md).
+
+## Evidencia FE-03 (2026-10-24)
+
+Los antecedentes globales se consultan y guardan en Spring por el rewrite exacto `GET/PATCH /api/medical/patients/{id}/clinical-background`. Se retiró su handler Supabase y se unificó la edición en un panel que conserva el formulario ante errores y conflictos. V45 preserva el contrato `current/encounter`, la normalización de listas, los actores y la versión vinculada a una atención cerrada. Pasan 100 pruebas Java y el recorrido Chromium de revisión/especialista, comparación de versiones, recarga, red y permisos. [Informe y comandos](evidencia-fe03.md).
+
+## Evidencia FE-10 (2026-10-24)
+
+Antes del siguiente incremento se completó la traducción transversal del JSON clínico a español en Spring, PostgreSQL y solicitudes Next. Incluye migración reversible de registros existentes, adaptación de lectores y regresión FE-03/10. [Contrato y evidencia](json-clinico-espanol.md).
+
+La ficha de revisión consume el contexto propio y la finalización en Spring mediante rewrites exactos; se eliminó el handler Supabase compartido. Conserva antecedentes precargados, campos estructurados, diagnóstico, mediciones e indicaciones, y recupera la ficha cerrada sin usar la historia longitudinal heredada. Java normaliza el contrato y Flyway V46 corrige la numeración de versiones, la talla en cm y el IMC para nuevos cierres. Chromium aprobó cinco grupos de escenarios, incluidos red, sesión, permisos, respuesta perdida y aviso al abandonar el formulario. PostgreSQL confirmó atomicidad y ausencia de duplicados; pasan 106 pruebas Java y los controles frontend. Documentos y escenarios adicionales de cierre/derivación continúan en FE-11/12/13. [Informe, alcance y comandos](evidencia-fe10.md).
 
 ## Contratos de frontera a implementar en FE-CON
 
