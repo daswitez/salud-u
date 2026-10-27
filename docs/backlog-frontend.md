@@ -2,11 +2,11 @@
 
 Fuente principal: `Proyecto Daniel Mercado v2 db.md`, cuadros 3.16 (RF-01–RF-34), 3.17 (RNF-01–RNF-12), 3.18 (RN-01–RN-32), 3.36 (UC-01–UC-27) y especificaciones críticas de UC-07/12/13/15/17/22. Referencia de implementación: 24 rutas `src/app/api`, Server Actions, consultas directas y SQL de `supabase/migrations`/`complete_schema.sql`.
 
-Estado: planificado, sin historias integradas todavía. La secuencia técnica obligatoria está en [plan-integracion-spring.md](plan-integracion-spring.md). Se inspeccionó código/documento; todavía no se capturaron respuestas reales ni se ejecutaron pruebas de paridad. Las referencias SQL sin ruta no se presentan como endpoints HTTP existentes. El contrato final debe caracterizar la última definición de cada RPC y sus políticas, no solo la migración inicial.
+Estado (2026-10-26): historias FE-CON…FE-INV integradas y FE-CORTE aceptada localmente con datos sintéticos; corte productivo pendiente de validación con el personal del centro y de las condiciones 4–5 de BE-CORTE. La secuencia técnica obligatoria está en [plan-integracion-spring.md](plan-integracion-spring.md). Las referencias SQL sin ruta no se presentan como endpoints HTTP existentes. El contrato final debe caracterizar la última definición de cada RPC y sus políticas, no solo la migración inicial.
 
 ## Condición para comenzar
 
-Este backlog se ejecuta después de desarrollar y probar el backend del alcance correspondiente. No incluye implementar dominio/SQL en Next.js. Cada historia frontend está bloqueada hasta que su historia backend tenga contrato y pruebas aceptados. La secuencia principal es backend → validación API → integración frontend; una entrega incremental exige el mismo cierre previo del backend de ese incremento. H-CORTE aún no está aceptado para un corte productivo: se puede integrar contra datos sintéticos, pero no retirar Supabase ni declarar paridad institucional hasta completar sus evidencias.
+Este backlog se ejecuta después de desarrollar y probar el backend del alcance correspondiente. No incluye implementar dominio/SQL en Next.js. Cada historia frontend está bloqueada hasta que su historia backend tenga contrato y pruebas aceptados. La secuencia principal es backend → validación API → integración frontend; una entrega incremental exige el mismo cierre previo del backend de ese incremento. Supabase ya fue retirado del frontend (FE-CORTE); H-CORTE sigue sin aceptarse para un corte productivo y no se declara paridad institucional hasta completar el ensayo de migración, la estrategia de cuentas y la validación con el centro.
 
 Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git branch --show-current` antes de editar. Backend en proyecto separado sin inicializar Git; `codigo` tampoco será repositorio. Leer las guías locales de Next.js antes de cambios de código.
 
@@ -79,6 +79,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 ## Épica F3 — Disponibilidad, solicitudes y citas
 
 ### FE-04 · UC-04
+
+**Corrección verificada (2026-10-26):** `/api/my-specialties` se reenvía exactamente a Spring, con afiliaciones propias activas y permisos; retirado el handler Supabase. Se corrigió además la adaptación de los nombres internos de jornadas/bloqueos/cupos al contrato de gestión. Jornada de especialista guardada desde pantalla y recuperada tras recarga. [Ensayo FE-24](evidencia-fe24.md).
 
 - **Actor:** Médico de revisión / especialista.
 - **Historia:** Como Médico de revisión / especialista, quiero configurar jornadas, bloqueos y cupos publicados para mi disponibilidad desde la interfaz, para completar el caso de uso con el backend nuevo.
@@ -283,6 +285,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-15 · UC-15
 
+**Estado local (2026-10-25):** implementada y comprobada con la compilación de producción de Next, sesiones Spring y PostgreSQL. Inicio/recuperación, atención directa/derivada, contexto y documentos compartidos, campos de especialidad, plantilla histórica y cierre inmutable funcionan sin Supabase. Seis grupos Chromium, regresión FE-14, 126 pruebas Java y controles frontend aprobados. V52/V53 completan persistencia/consulta y corrigen el inicio derivado. [Evidencia y comandos](evidencia-fe15.md). La aceptación integral permanece en FE-CORTE.
+
 - **Actor:** Especialista asignado.
 - **Historia:** Como Especialista asignado, quiero completar y cerrar ficha del área usando plantilla versionada desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-15 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
@@ -297,6 +301,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
 
 ### FE-16 · UC-16
+
+**Estado local (2026-10-25):** implementada y comprobada con Next en producción y sesiones Spring/PostgreSQL. Bandeja propia del especialista, resolución/devolución y seguimiento persistido consumen Spring sin Supabase. Validación, sesión/red, respuesta perdida, carrera entre acciones y permisos comprobados. Pasan cinco grupos Chromium, seis de regresión FE-15, 130 pruebas Java y controles frontend. [Evidencia y comandos](evidencia-fe16.md). La aceptación integral permanece en FE-CORTE.
 
 - **Actor:** Especialista asignado.
 - **Historia:** Como Especialista asignado, quiero resolver o devolver una derivación dejando motivo y seguimiento desde la interfaz, para completar el caso de uso con el backend nuevo.
@@ -315,6 +321,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-17 · UC-17
 
+**Estado local (2026-10-25):** implementada y comprobada con Next en producción y Spring/PostgreSQL. Historia, origen remitido, citas, versiones y archivos consumen Spring sin Supabase; autorización por relación/área aplicada en PostgreSQL y retirada del filtrado de permisos del cliente. Cuatro grupos Chromium, regresión FE-16, 133 pruebas Java, build, typecheck y lint aprobados. V55–V57 completan paridad, autorización y campos secundarios del contrato. [Evidencia y comandos](evidencia-fe17.md). La aceptación integral permanece en FE-CORTE.
+
 - **Actor:** Médico con relación clínica.
 - **Historia:** Como Médico con relación clínica, quiero consultar la historia longitudinal permitida por mi área desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-17 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
@@ -329,6 +337,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
 
 ### FE-18 · UC-18
+
+**Estado local (2026-10-25):** implementada y comprobada con Next en producción y Spring/PostgreSQL. Búsqueda por texto normalizado y fechas inclusivas de Bolivia, con filtros persistidos en URL, recuperación de errores y ámbito autorizado de FE-17. Pasan cuatro grupos Chromium, regresión FE-17, 136 pruebas Java y controles frontend. Se midieron historiales sintéticos de 1.001 atenciones y ráfagas con concurrencia 10; el perfil institucional aún no tiene volumen numérico definido. [Evidencia y comandos](evidencia-fe18.md). La carga conjunta con reportes mensuales queda en FE-CORTE.
 
 - **Actor:** Médico con relación clínica.
 - **Historia:** Como Médico con relación clínica, quiero buscar por fechas y contenido dentro de la historia autorizada desde la interfaz, para completar el caso de uso con el backend nuevo.
@@ -345,6 +355,8 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-19 · UC-19
 
+**Estado local (2026-10-25):** implementada y comprobada con Next en producción y Spring/PostgreSQL. Correcciones en revisión, especialidad e historia; escritura del autor y lectura autorizada por área/origen. V60 agrega auditoría atómica, inmutabilidad y reintento por clave sin duplicados. Pasan cinco grupos Chromium, regresión FE-18, 140 pruebas Java, build, typecheck y lint. Hash original intacto; borrador conservado ante errores/cierre y respuesta perdida. [Evidencia y comandos](evidencia-fe19.md). La aceptación integral permanece en FE-CORTE.
+
 - **Actor:** Médico autorizado.
 - **Historia:** Como Médico autorizado, quiero añadir una corrección auditable sin reescribir la atención cerrada desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-19 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
@@ -360,12 +372,16 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-20 · UC-20
 
+**Estado local (2026-10-26):** implementada y comprobada con Next en producción, Spring/PostgreSQL y LibreOffice. El botón consume el DOCX privado de Spring con finalidad; V61 completa ficha/versiones/antecedentes vinculados/diagnósticos/mediciones/documentos y adendas separadas con motivo, autor y fecha. Se conservan finalidad y borrador ante errores y sesión perdida; no hay Supabase ni generación clínica en Next. Pasan cuatro grupos Chromium, regresión FE-19 completa, 147 pruebas Java, build, typecheck y lint. Siete archivos DOCX abren en LibreOffice; clínica/adendas originales sin cambios. [Evidencia y comandos](evidencia-fe20.md). La aceptación integral permanece en FE-CORTE.
+
+**Nota de integración FE-19 resuelta:** el Word incluye las adendas autorizadas separadas del registro original, con motivo, contenido, autor y fecha; la exportación conserva la ficha cerrada intacta.
+
 - **Actor:** Médico autorizado.
 - **Historia:** Como Médico autorizado, quiero exportar una ficha individual a Word desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-20 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-20; RF-21.
 - **Prioridad:** P2. **Dependencias:** FE-CON, BE-20 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** src/lib/clinical-word-export.ts y generación docx actual; descarga backend a definir.
+- **Consumo integrado:** `GET /api/medical/encounters/{id}/export.docx?purpose=...`; `src/lib/clinical-word-export.ts` descarga el binario de Spring y deja de generarlo en el navegador.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-20, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -377,12 +393,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-21 · UC-21
 
+**Estado local (2026-10-26):** implementada y comprobada con Next en producción y Spring/PostgreSQL. Reporte por filtros/listas AND normalizados, columnas y hasta dos agrupaciones calculadas en servidor; URL conserva selección y errores mantienen el borrador sin mostrar filas obsoletas. V62 restaura antecedentes/ficha/17 campos de referencia y habilita REPORTING_OFFICER sin personal, sin ampliar permisos de administración. Pasan cuatro grupos Chromium, regresión FE-20, 155 pruebas Java, build, typecheck y lint. [Evidencia, diferencias contractuales y comandos](evidencia-fe21.md). Los archivos de exportación se integran en FE-22; el rendimiento institucional/carga mixta permanece en FE-CORTE.
+
 - **Actor:** Médico / responsable de Reportes.
 - **Historia:** Como Médico / responsable de Reportes, quiero construir reporte por período, múltiples filtros, columnas y agrupaciones desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-21 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-21; RF-22, RF-23, RF-33.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-21 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** GET /api/reports/clinical; rpc_clinical_report; clinical-report-builder.ts.
+- **Consumo integrado:** `GET /api/reports/clinical` en Spring; `clinical-report-builder.tsx` conserva `ok/data/filters` y solicita `presentation` para columnas/grupos. Sin Route Handler ni RPC Supabase del caso.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-21, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -392,12 +410,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-22 · UC-22
 
+**Estado local (2026-10-26):** implementada y comprobada con Next en producción y Spring/PostgreSQL. CSV/XLSX/PDF generados en backend, con finalidad, filas recalculadas y columnas/grupos aplicados; cliente verifica SHA-256 antes de descargar. V63 conserva procedencia privada COMPLETED/FAILED y auditoría atómica; constancia/finalidad recuperadas tras recargar. Sin generación local ni Supabase del caso. Pasan cuatro grupos Chromium, regresión FE-21, 167 pruebas Java, build, typecheck y lint. [Evidencia, contratos, límites tipográficos y comandos](evidencia-fe22.md). La aceptación integral permanece en FE-CORTE.
+
 - **Actor:** Usuario autorizado para exportar.
 - **Historia:** Como Usuario autorizado para exportar, quiero exportar el conjunto permitido en CSV/XLSX/PDF con finalidad desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-22 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-22; RF-24.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-22 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** POST /api/reports/clinical; rpc_log_clinical_report_export; xlsx/jspdf frontend; rpc_request_report_export SQL.
+- **Consumo integrado:** `POST /api/reports/clinical/export` y `GET /api/reports/clinical/exports/{id}`; `POST /api/reports/clinical` conserva 201/data.id para compatibilidad de registro. Se retiró la generación xlsx/jsPDF de este flujo.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-22, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -407,12 +427,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-23 · UC-23
 
+**Estado local (2026-10-26):** implementada y comprobada con Next en producción y Spring/PostgreSQL. Cumplimiento y actividad por endpoints Spring, filtros persistidos, acceso Administrativo/Reportes y panorama administrativo sin Supabase ni contenido clínico. V64 unifica fechas Bolivia y conteos; carga/error no generan falsos ceros y sesión/red conservan criterios. Pasan cuatro grupos Chromium, regresión FE-22, 169 pruebas Java, build, typecheck y lint. [Evidencia, regla vigente y comandos](evidencia-fe23.md). Validación institucional de regla/volumen y aceptación integral pendientes en FE-CORTE.
+
 - **Actor:** Administrativo / Reportes.
 - **Historia:** Como Administrativo / Reportes, quiero consultar cumplimiento institucional de atención obligatoria desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-23 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-23; RF-25.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-23 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** rpc_compliance_report, rpc_daily_activity; src/app/administrativo/page.tsx y reportes/cumplimiento/page.tsx.
+- **Consumo integrado:** GET `/api/reports/compliance`, `/api/reports/daily-activity` y `/api/reports/administrative-summary`; páginas de cumplimiento e inicio administrativo sin consultas Supabase.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-23, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -422,12 +444,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-24 · UC-24
 
+**Estado local (2026-10-26):** implementado y verificado con Spring/PostgreSQL y Chromium en producción. Consulta persistida exclusiva para Auditor, filtros servidor, paginación estable, recarga y recuperación de errores/sesión. Cinco grupos de aceptación aprobados, regresión FE-23 completa y 174 pruebas Java sin fallos. [Evidencia y comandos](evidencia-fe24.md).
+
 - **Actor:** Auditor.
 - **Historia:** Como Auditor, quiero consultar eventos de accesos, cambios y exportaciones sin modificar evidencia desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-24 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-24; RF-26, RF-27.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-24 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** evento auditoría en SQL; demo-audit-store.ts requiere distinguir demo de persistencia; ruta real por confirmar.
+- **Consumo/referencia a sustituir:** GET /api/audit-events de Spring, documentado en OpenAPI; demo-audit-store.ts retirado. No hay handler Next ni Supabase en este recorrido.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-24, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -439,12 +463,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-25 · UC-25
 
+**Estado local (2026-10-26):** implementado y verificado con Spring/PostgreSQL y Chromium en producción. Pantalla nueva `/administrativo/vacunas` (sin equivalente previo ni Supabase) con rewrites exactos a `/api/vaccines`. Crear, editar con versión esperada, desactivar/reactivar sin borrar dosis ni versiones; duplicado, versión desactualizada e intervalos inválidos rechazados por Spring conservando el borrador. Seis grupos Chromium, regresiones FE-23/FE-24 y 176 pruebas Java aprobadas. [Evidencia y comandos](evidencia-fe25.md).
+
 - **Actor:** Administrativo.
 - **Historia:** Como Administrativo, quiero gestionar vacunas activas y sus dosis/intervalos desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-25 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-25; RF-29.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-25 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** Documento incremento 6; endpoint/RPC productivos no confirmados.
+- **Consumo integrado:** GET/POST `/api/vaccines` y PUT `/api/vaccines/{id}` de Spring con `expectedSchemaVersion`; no existía consumo Supabase previo.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-25, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -454,12 +480,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-26 · UC-26
 
+**Estado local (2026-10-26):** implementado y verificado con Spring/PostgreSQL y Chromium en producción. Sección "Vacunación" en la ficha administrativa del estudiante y en la ficha del médico de revisión, con rewrites exactos a `/api/vaccinations` y `/api/vaccinations/context`. Lote, fecha, aplicador y registrador persistidos; duplicado, orden, fechas e intervalo decididos en Spring (422 pide justificación); el médico solo registra para pacientes de su atención. Siete grupos Chromium, regresión FE-25 y 179 pruebas Java aprobadas. [Evidencia y comandos](evidencia-fe26.md).
+
 - **Actor:** Administrativo; médico de revisión como aplicador.
 - **Historia:** Como Administrativo; médico de revisión como aplicador, quiero registrar dosis aplicada conservando lote, fecha y responsables desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-26 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-26; RF-30.
 - **Prioridad:** P1. **Dependencias:** FE-CON, BE-26 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** Documento incremento 6; endpoint/RPC productivos no confirmados.
+- **Consumo integrado:** GET `/api/vaccinations/context` y POST `/api/vaccinations` de Spring; no existía consumo Supabase previo.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-26, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -469,12 +497,14 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-27 · UC-27
 
+**Estado local (2026-10-26):** implementado y verificado con Spring/PostgreSQL y Chromium en producción. Carnet propio en `/estudiante/vacunas`, carnet imprimible desde la ficha administrativa y cobertura en `/administrativo/reportes/vacunacion` (Administrativo/Reportes), con rewrites exactos y sin Supabase. Estado y porcentajes calculados en PostgreSQL; V68 añade lote/aplicador, día de Bolivia, conteo sin duplicados y auditoría de lecturas. Seis grupos Chromium, regresiones FE-23…FE-26 y 180 pruebas Java aprobadas. [Evidencia y comandos](evidencia-fe27.md).
+
 - **Actor:** Administrativo / Estudiante / Reportes.
 - **Historia:** Como Administrativo / Estudiante / Reportes, quiero consultar carnet, estado de esquema y cobertura institucional desde la interfaz, para completar el caso de uso con el backend nuevo.
 - **Comportamiento esperado:** conectar vistas/formularios del caso UC-27 a Spring; conservar navegación y datos observables actuales y presentar funciones documentales nuevas donde no haya pantalla equivalente.
 - **Trazabilidad:** BE-27; RF-31, RF-32.
 - **Prioridad:** P2. **Dependencias:** FE-CON, BE-27 terminado y probado; casos anteriores del flujo cuando apliquen.
-- **Consumo/referencia a sustituir:** Documento incremento 6; endpoint/RPC productivos no confirmados.
+- **Consumo integrado:** GET `/api/vaccination-card` (Estudiante propio / Administración con `patientId`) y GET `/api/reports/vaccination-coverage` de Spring; no existía consumo Supabase previo.
 - **Criterios de aceptación por caso:**
   - Dado el actor autorizado, cuando ejecuta UC-27, la pantalla envía parámetros/cuerpo compatibles, muestra los datos devueltos y refleja el estado persistido después de recargar.
   - Dado un error de validación, permiso, sesión o red, la interfaz muestra el mensaje correspondiente, permite recuperar el flujo y no anuncia éxito ni descarta silenciosamente el borrador.
@@ -483,6 +513,9 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 - **Prueba:** recorrido de navegador éxito y alternativa/error con semillas backend; comprobación de requests/respuestas y ausencia de llamadas Supabase del caso.
 
 ### FE-INV · H-INV — Investigación
+
+**Estado local (2026-10-26):** implementado y verificado con Spring/PostgreSQL y Chromium en producción. `/administrativo/reportes/investigacion` (Administración/Reportes) muestra el modo seudonimizado `MONTHLY-V1` sin aprobación previa, envía finalidad/filtros/formato, descarga sólo archivos íntegros (SHA-256, ZIP/XLSX con datos y diccionario) y confirma la finalidad con la constancia de Spring; filtros, formato y constancia sobreviven a la recarga. V69 aplica día de Bolivia, filtros cerrados, checksum/mes en la procedencia, constancia propia y lectura del catálogo de vacunas para Reportes. Cinco grupos Chromium, regresiones FE-21…FE-27 y 183 pruebas Java aprobadas. [Evidencia y comandos](evidencia-feinv.md).
+- **Consumo integrado:** POST `/api/research/exports` y GET `/api/research/exports/{id}` de Spring, más `/api/careers`, `/api/specialties` y `/api/vaccines?includeInactive=true` para filtros; no existía consumo Supabase previo.
 
 - **Actor:** Reportes / investigador autorizado.
 - **Historia:** Como usuario autorizado, quiero seleccionar finalidad y descargar datos seudonimizados con diccionario.
@@ -495,12 +528,16 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 
 ### FE-CORTE · H-CORTE — Integración completa
 
+**Perfil operativo indicado (2026-10-25):** centro pequeño con días de alta demanda y reportes de varias áreas a fin de mes; volumen institucional numérico aún sin definir. Incluir ensayo de búsquedas y reportes mensuales simultáneos, con actores/áreas distintos, sobre el hardware de despliegue. Tomar las mediciones sintéticas de FE-18 como referencia inicial y acordar el volumen antes de acreditar tiempos institucionales.
+
 - **Actor:** Desarrollador / QA / usuarios de validación.
 - **Historia:** Como equipo, quiero completar el flujo usando exclusivamente el backend probado.
 - **Comportamiento esperado:** reemplazar también Server Actions, proxy de sesión, consultas SSR de dashboard/cumplimiento, exportación frontend y stores demo con comportamiento productivo cuando corresponda.
 - **Prioridad:** P0. **Dependencias:** BE-CORTE y todas las FE del alcance aceptadas.
 - **Aceptación:** recorrido completo estudiante/administración/revisión/especialista/reportes/auditor; no imports/consultas de Supabase ni claves necesarias en ejecución; no API de negocio serverless restante, solo reenvío si la integración acordada lo necesita; rama backend; regresión de pantallas/datos, accesibilidad y navegadores esenciales; pruebas de corte y recuperación; datos y archivos conciliados, sin escrituras divididas.
 - **Prueba:** inventario de src/dependencias/configuración, build/typecheck/lint y recorrido automatizado/manual completo con registros de red. Probar RNF-07–10 y validar con personal del centro.
+
+**Estado local (2026-10-26):** aceptada localmente con Next en producción, Spring/PostgreSQL y datos sintéticos. Inventario sin Supabase, Route Handlers ni Server Actions (49 rewrites exactos); stores demo y exportación frontend retirados. Recorrido integral de seis perfiles con registro de red (8 grupos), corte de Spring/PostgreSQL/Next con borrador conservado y escrituras únicas, conciliación de documentos por SHA-256 y carga mixta de fin de mes (3.000 pacientes, concurrencia 20, p95 695 ms). RNF-08 con historia clínica en diálogo dentro de la atención; RNF-09/10 con axe WCAG 2.1 A/AA y teclado en 24 pantallas, Chromium y Firefox a tres resoluciones. V70 corrige la agenda médica con más de 200 citas y V71 el límite de 100 cupos publicados; Spring responde 503 (no 401) ante caída de PostgreSQL. Regresión FE-03…FE-INV y 186 pruebas Java aprobadas. Pendientes: validación con el personal del centro, volumen y hardware institucional, WebKit, ensayo de migración y estrategia de cuentas (BE-CORTE 4–5) y respaldo del volumen de documentos. [Evidencia y comandos](evidencia-fecorte.md).
 
 ## Definición de terminado del frontend
 

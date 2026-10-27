@@ -1,22 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { EncounterAmendments } from "@/components/encounter-amendments";
+import { referralPriorityLabel, referralStatusLabel } from "@/lib/referrals";
+import { MedicalDocuments } from "@/components/medical-documents";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { formatAppointmentTime } from "@/components/medical-appointments";
+import { appointmentStatusLabel, formatAppointmentTime } from "@/components/medical-appointments";
 import { ClinicalBackgroundSummary } from "@/components/clinical-background";
 import { ClinicalBackgroundPanel } from "@/components/clinical-background-panel";
-import { apiJson } from "@/lib/api/client";
+import { ApiRequestError, apiJson } from "@/lib/api/client";
 import type { ClinicalBackgroundVersion } from "@/lib/clinical-background";
-import { downloadClinicalRecordWord } from "@/lib/clinical-word-export";
+import { ClinicalWordDownload } from "@/components/clinical-word-download";
+import { replaceUrl } from "@/lib/url-state";
 
 export type PatientRecord = {
   patient: { id: string; carnet: string; registrationCode: string; fullName: string; birthDate: string | null; phone: string | null; email: string | null };
   intake: { allergies: string | null; chronic_conditions: string | null; current_medications: string | null; relevant_history: string | null; emergency_contact_note: string | null; recorded_at: string } | null;
   clinicalBackground: ClinicalBackgroundVersion | null;
-  encounters: { id: string; appointment_id: string | null; status: "DRAFT" | "CLOSED" | "VOIDED"; encounter_type: "INITIAL" | "SPECIALTY"; occurred_at: string; chief_complaint: string; assessment: string | null; instructions?: string | null; follow_up_text?: string | null; specialty: string | null; accessReason?: "AREA" | "REFERRAL_SOURCE"; reviewHistory?: Record<string, unknown> | null; specialtyHistory?: Record<string, unknown> | null; clinicalBackground?: ClinicalBackgroundVersion | null }[];
+  encounters: { id: string; appointment_id: string | null; status: "DRAFT" | "CLOSED" | "VOIDED"; encounter_type: "INITIAL" | "SPECIALTY"; occurred_at: string; chief_complaint: string | null; assessment: string | null; instructions?: string | null; follow_up_text?: string | null; specialty: string | null; accessReason?: "AREA" | "REFERRAL_SOURCE"; reviewHistoryVersion?: number | null; specialtyHistoryVersion?: number | null; template?: { id: string; version: number } | null; reviewHistory?: Record<string, unknown> | null; specialtyHistory?: Record<string, unknown> | null; clinicalBackground?: ClinicalBackgroundVersion | null }[];
   diagnoses: { id: string; encounter_id: string; label: string }[];
-  referrals: { id: string; status: string; priority: string; reason: string; specialty: string }[];
+  referrals: { id: string; status: keyof typeof referralStatusLabel; priority: keyof typeof referralPriorityLabel; reason: string; specialty: string }[];
   appointments: { id: string; status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED" | "NO_SHOW" | "ATTENDED"; appointment_type: "INITIAL" | "REFERRAL" | "SPECIALTY"; scheduled_for: string; specialty: string | null; isAssignedToMe: boolean }[];
   documents: { id: string; encounter_id: string | null; document_type_code: string; original_filename: string; mime_type: string; size_bytes: number | null; study_date: string | null; description: string | null; uploaded_at: string }[];
 };
@@ -43,69 +47,96 @@ export function SpecialtySnapshot({ data, hideGeneral = false }: { data: Record<
   return <>{common}<p className="mt-5 text-sm text-text-secondary">La especialidad no tiene campos estructurados adicionales en esta versión.</p></>;
 }
 
-export function MedicalPatientRecord({ patientId, clinicalRole }: { patientId: string; clinicalRole: "REVIEW_DOCTOR" | "SPECIALIST" }) {
-  const [record, setRecord] = useState<PatientRecord | null>(null);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<PatientRecord["encounters"][number] | null>(null);
-  const [error, setError] = useState("");
-  const [wordExporting, setWordExporting] = useState(false);
+export type HistoryFilters = { q: string; from: string; to: string };
+type SearchResult = { id: string; occurredAt: string; encounterType: string; status: string; chiefComplaint: string | null; assessment: string | null; specialty: string | null };
+const emptyFilters: HistoryFilters = { q: "", from: "", to: "" };
 
-  useEffect(() => {
-    let active = true;
-    const load = async (retry = true) => {
-      try {
-        const data = await apiJson<PatientRecord>(`/api/medical/patients/${patientId}`);
-        if (active) { setRecord(data); setError(""); }
-      } catch (cause) {
-        const message = cause instanceof Error ? cause.message : "No se pudo cargar la ficha.";
-        if (retry && message === "unauthenticated") { window.setTimeout(() => void load(false), 350); return; }
-        if (active) setError(message);
-      }
-    };
-    void load();
-    return () => { active = false; };
+export function MedicalPatientRecord({ patientId, clinicalRole, initialFilters = emptyFilters }: { patientId: string; clinicalRole: "REVIEW_DOCTOR" | "SPECIALIST"; initialFilters?: HistoryFilters }) {
+  const [record, setRecord] = useState<PatientRecord | null>(null), [selected, setSelected] = useState<PatientRecord["encounters"][number] | null>(null);
+  const [filters, setFilters] = useState<HistoryFilters>(initialFilters), [applied, setApplied] = useState<HistoryFilters | null>(null);
+  const [matchingIds, setMatchingIds] = useState<string[] | null>(null), [resultsError, setResultsError] = useState(false);
+  const [error, setError] = useState(""), [expired, setExpired] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const feedback = useRef<HTMLDivElement>(null), dialog = useRef<HTMLDialogElement>(null);
+  const requestGeneration = useRef(0);
+  const amendmentDirty = useRef(false);
+  const canCloseRecord = () => !amendmentDirty.current || window.confirm("Hay una adenda sin guardar. ¿Quieres cerrar y descartar lo escrito?");
+  const activeFilters = useRef<HistoryFilters | null>(Object.values(initialFilters).some(Boolean) ? initialFilters : null);
+  const read = useCallback(async (requested: HistoryFilters | null) => {
+    const generation = ++requestGeneration.current; setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (requested) for (const key of ["q","from","to"] as const) if (requested[key]) params.set(key, requested[key]);
+      const [data, found] = await Promise.all([
+        apiJson<PatientRecord>(`/api/medical/patients/${patientId}`),
+        requested ? apiJson<SearchResult[]>(`/api/medical/patients/${patientId}/search?${params}`) : Promise.resolve(null),
+      ]);
+      if (generation !== requestGeneration.current) return false;
+      if (found?.some(item => !data.encounters.some(e => e.id === item.id && e.status === "CLOSED"))) throw new Error("Historia actualizada durante la búsqueda");
+      setRecord(data); setMatchingIds(found?.map(item => item.id) ?? null); setApplied(requested); setResultsError(false);
+      activeFilters.current = requested;
+      setSelected(previous => previous ? data.encounters.find(e => e.id === previous.id) ?? null : null); setError(""); setExpired(false);
+      return true;
+    } catch (cause) {
+      if (generation !== requestGeneration.current) return false;
+      setError(cause instanceof ApiRequestError ? cause.message : "No pudimos actualizar la búsqueda. Se conservan los filtros; vuelve a buscar.");
+      setExpired(cause instanceof ApiRequestError && cause.status === 401); setResultsError(true); setMatchingIds([]);
+      if (cause instanceof ApiRequestError && [401,403,404].includes(cause.status)) { setRecord(null); setSelected(null); }
+      return false;
+    } finally { if (generation === requestGeneration.current) setLoading(false); }
   }, [patientId]);
-
-  const scope = useMemo(() => {
-    if (!record) return [];
-    if (clinicalRole === "REVIEW_DOCTOR") return record.encounters.filter((item) => item.encounter_type === "INITIAL");
-    const ownSpecialties = new Set(record.appointments.filter((item) => item.isAssignedToMe && item.appointment_type !== "INITIAL").map((item) => item.specialty).filter((item): item is string => Boolean(item)));
-    return record.encounters.filter((item) => item.encounter_type === "SPECIALTY" && ownSpecialties.has(item.specialty ?? ""));
-  }, [record, clinicalRole]);
-
-  if (!record) return <p className="py-16 text-center text-sm text-text-secondary">{error || "Cargando historial clínico…"}</p>;
-  const matches = (item: PatientRecord["encounters"][number]) => `${item.chief_complaint} ${item.assessment ?? ""} ${item.specialty ?? ""}`.toLowerCase().includes(query.trim().toLowerCase());
-  const encounters = scope.filter(matches);
-  const active = record.appointments.find((item) => item.isAssignedToMe && (item.status === "SCHEDULED" || item.status === "CHECKED_IN"));
-  const documents = selected ? record.documents.filter((item) => item.encounter_id === selected.id) : [];
-  const selectedDiagnoses = selected ? record.diagnoses.filter((item) => item.encounter_id === selected.id) : [];
-  const open = async (id: string) => {
-    try { window.open((await apiJson<{ url: string }>(`/api/medical/documents/${id}/download`)).url, "_blank", "noopener"); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo abrir el archivo."); }
-  };
-  const exportWord = async () => {
-    if (!selected) return;
-    setWordExporting(true); setError("");
-    try { await downloadClinicalRecordWord({ patient: record.patient, encounter: selected, diagnoses: selectedDiagnoses.map((item) => item.label) }); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo generar el documento Word."); }
-    finally { setWordExporting(false); }
-  };
-
-  return <>
-    <header className="rounded-2xl border border-divider bg-surface p-6">
-      <Link href="/medico/pacientes" className="text-sm font-semibold text-primary">← Mis pacientes</Link>
-      <h1 className="mt-3 text-3xl font-bold text-text-primary">{record.patient.fullName}</h1>
-      <p className="mt-1 text-text-secondary">CI {record.patient.carnet} · Registro {record.patient.registrationCode}</p>
-      {active && <Link href={`/medico/citas/${active.id}`} className="mt-4 inline-block rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-on-primary">Abrir cita pendiente →</Link>}
-      <label className="mt-6 block"><span className="sr-only">Buscar en el historial visible</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={clinicalRole === "REVIEW_DOCTOR" ? "Buscar en fichas de revisión…" : "Buscar en fichas de esta especialidad…"} className="w-full rounded-lg border border-divider bg-surface px-4 py-3" /></label>
-    </header>
-    {error && <p className="mt-5 rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
-    <div className="mt-6"><ClinicalBackgroundPanel embedded patientId={patientId} onSaved={(version) => setRecord({ ...record, clinicalBackground: version })} /></div>
-    <section className="mt-6 rounded-2xl border border-divider bg-surface p-6">
-      <h2 className="text-xl font-bold">{clinicalRole === "REVIEW_DOCTOR" ? "Historial de revisiones" : "Historial de la especialidad"}</h2>
-      <p className="mt-1 text-sm text-text-secondary">Cada tarjeta corresponde a una cita cerrada y conserva sus datos generales y específicos originales.</p>
-      <div className="mt-4 space-y-3">{encounters.filter((item) => item.status === "CLOSED").map((item) => <button key={item.id} onClick={() => setSelected(item)} className="w-full rounded-xl border border-divider p-4 text-left hover:border-primary"><b>{clinicalRole === "REVIEW_DOCTOR" ? "Revisión médica" : item.specialty ?? "Especialidad"}</b><p className="mt-1 text-sm">{formatAppointmentTime(item.occurred_at)} · {item.chief_complaint}</p><span className="mt-2 inline-block text-sm font-semibold text-primary">Abrir ficha y archivos →</span></button>)}{!encounters.filter((item) => item.status === "CLOSED").length && <p className="py-8 text-center text-sm text-text-secondary">No hay atenciones cerradas en este historial.</p>}</div>
-    </section>
-    {selected && <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><section className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl bg-surface p-6"><button onClick={() => setSelected(null)} className="float-right text-xl" aria-label="Cerrar">×</button><div className="mr-8 flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold text-primary">{formatAppointmentTime(selected.occurred_at)}</p><h2 className="mt-2 text-xl font-bold">{selected.chief_complaint}</h2></div><button type="button" onClick={() => void exportWord()} disabled={wordExporting} className="rounded-lg border border-primary px-3 py-2 text-sm font-bold text-primary disabled:opacity-50">{wordExporting ? "Generando Word…" : "Descargar ficha Word"}</button></div>{selected.clinicalBackground && <div className="mt-5"><ClinicalBackgroundSummary version={selected.clinicalBackground} compact /></div>}<h3 className="mt-5 font-bold">Evaluación</h3><p>{selected.assessment || "Sin observaciones."}</p>{selectedDiagnoses.length > 0 && <><h3 className="mt-5 font-bold">Diagnósticos</h3><p>{selectedDiagnoses.map((item) => item.label).join(" · ")}</p></>}{selected.instructions && <><h3 className="mt-5 font-bold">Indicaciones</h3><p>{selected.instructions}</p></>}{selected.follow_up_text && <><h3 className="mt-5 font-bold">Control médico</h3><p>{selected.follow_up_text}</p></>}{selected.encounter_type === "INITIAL" ? <ReviewSnapshot data={selected.reviewHistory} hideGeneral={Boolean(selected.clinicalBackground)} /> : <SpecialtySnapshot data={selected.specialtyHistory} hideGeneral={Boolean(selected.clinicalBackground)} />}<h3 className="mt-5 font-bold">Archivos de esta cita</h3>{documents.length ? <div className="mt-3 space-y-2">{documents.map((document) => <button key={document.id} onClick={() => void open(document.id)} className="block text-left text-sm font-semibold text-primary hover:underline">{document.original_filename}</button>)}</div> : <p className="mt-2 text-sm text-text-secondary">Esta cita no tiene archivos adjuntos.</p>}</section></div>}
-  </>;
+  const load = useCallback(() => read(activeFilters.current), [read]);
+  const invalidateSearch = useCallback(() => { requestGeneration.current++; }, []);
+  async function search(event?: React.FormEvent, next = filters) {
+    event?.preventDefault();
+    if (!await read(next)) return;
+    const url = new URL(window.location.href);
+    for (const key of ["q","from","to"] as const) { if (next[key]) url.searchParams.set(key,next[key]); else url.searchParams.delete(key); }
+    replaceUrl(url);
+  }
+  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => { window.clearTimeout(timer); invalidateSearch(); }; }, [load, invalidateSearch]);
+  useEffect(() => { if (error) feedback.current?.focus(); }, [error]);
+  useEffect(() => { if (selected) dialog.current?.showModal(); }, [selected]);
+  // Search and authorization are decided by Spring. Only hydrate server result IDs from the fresh authorized history.
+  const encounters = matchingIds === null ? record?.encounters.filter(e => e.status === "CLOSED") ?? [] : matchingIds.flatMap(id => record?.encounters.find(e => e.id === id) ?? []);
+  const active = record?.appointments.find(a => a.isAssignedToMe && ["SCHEDULED","CHECKED_IN"].includes(a.status));
+  const diagnoses = selected ? record?.diagnoses.filter(d => d.encounter_id === selected.id) ?? [] : [];
+  return <section className="space-y-5" aria-busy={loading}>
+    <Link href="/medico/pacientes" className="font-semibold text-primary">← Mis pacientes</Link>
+    <div ref={feedback} tabIndex={-1}>{error && <p role="alert" className="rounded-xl bg-error-container p-4 text-error">{error}</p>}</div>
+    {expired && <Link target="_blank" rel="noopener" href="/iniciar-sesion?error=session" className="block font-semibold text-primary">Iniciar sesión en otra pestaña y volver a la historia</Link>}
+    <button type="button" disabled={loading} onClick={() => void load()} className="rounded-lg border border-primary px-4 py-2 font-semibold text-primary">Actualizar historia</button>
+    {loading && <p role="status">Cargando historial clínico…</p>}
+    <form onSubmit={event => void search(event)} className="space-y-4 rounded-xl border border-divider bg-surface p-5" aria-label="Buscar en historia autorizada"><fieldset disabled={loading} className="space-y-4">
+      <label className="block">Buscar en el historial visible<input maxLength={200} value={filters.q} onChange={e => setFilters({ ...filters,q:e.target.value })} className="mt-2 block w-full rounded-lg border border-divider bg-surface p-3" /></label>
+      <div className="grid gap-4 sm:grid-cols-2"><label>Desde<input type="date" value={filters.from} onChange={e => setFilters({ ...filters,from:e.target.value })} className="mt-2 block w-full rounded-lg border border-divider bg-surface p-3" /></label><label>Hasta<input type="date" value={filters.to} onChange={e => setFilters({ ...filters,to:e.target.value })} className="mt-2 block w-full rounded-lg border border-divider bg-surface p-3" /></label></div>
+      <p className="text-sm text-text-secondary">Busca coincidencias parciales en las atenciones cerradas autorizadas. Las fechas incluyen ambos días y usan la hora de Bolivia. Aplica los filtros con Buscar.</p>
+      <div className="flex gap-3"><button type="submit" className="rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary">Buscar en historia</button><button type="button" onClick={() => { setFilters(emptyFilters); void search(undefined,emptyFilters); }} className="rounded-lg border border-primary px-4 py-2 font-semibold text-primary">Limpiar filtros</button></div>
+    </fieldset></form>
+    {record && <>
+      <header className="rounded-2xl border border-divider bg-surface p-6"><h1 className="text-3xl font-bold">{record.patient.fullName}</h1><p>CI {record.patient.carnet} · Registro {record.patient.registrationCode ?? "—"}</p>
+        {active && <Link href={`/medico/citas/${active.id}`} className="mt-4 block font-semibold text-primary">Abrir cita pendiente →</Link>}
+      </header>
+      <ClinicalBackgroundPanel embedded patientId={patientId} onSaved={version => setRecord(previous => previous ? { ...previous, clinicalBackground: version } : previous)} />
+      <section className="rounded-xl border border-divider bg-surface p-6"><h2 className="text-xl font-bold">{clinicalRole === "REVIEW_DOCTOR" ? "Historial de revisiones" : "Historial del área y orígenes remitidos"}</h2><p>Atenciones cerradas autorizadas, con los datos y versiones que quedaron guardados.</p>
+        {applied && !resultsError && <p role="status">Resultados: {encounters.length} · Texto: {applied.q || "Todos"} · Desde: {applied.from || "Sin límite"} · Hasta: {applied.to || "Sin límite"}</p>}
+        <div className="mt-4 space-y-3">{encounters.map(e => <button key={e.id} data-history-encounter-id={e.id} onClick={() => setSelected(e)} className="block w-full rounded-xl border border-divider p-4 text-left hover:border-primary"><strong>{e.accessReason === "REFERRAL_SOURCE" ? "Origen de derivación autorizado" : e.encounter_type === "INITIAL" ? "Revisión médica" : e.specialty ?? "Especialidad"}</strong><p>{formatAppointmentTime(e.occurred_at)} · {e.chief_complaint ?? "Motivo no registrado"}</p><p>Versión de ficha: {e.encounter_type === "INITIAL" ? e.reviewHistoryVersion ?? "—" : e.specialtyHistoryVersion ?? "—"}</p><span className="font-semibold text-primary">Abrir ficha y archivos →</span></button>)}{!encounters.length && !resultsError && <p>{applied && Object.values(applied).some(Boolean) ? "No hay atenciones que coincidan con la búsqueda." : "No hay atenciones cerradas en este historial."}</p>}</div>
+      </section>
+      <section className="rounded-xl border border-divider bg-surface p-6"><h2 className="text-xl font-bold">Mis citas con este paciente</h2>{record.appointments.length ? <ul className="mt-3 space-y-3">{record.appointments.map(a => <li key={a.id}><Link href={`/medico/citas/${a.id}`} className="font-semibold text-primary">{formatAppointmentTime(a.scheduled_for)} · {a.specialty ?? "Revisión médica"}</Link><p>{appointmentStatusLabel(a.status)}</p></li>)}</ul> : <p>No hay citas propias registradas.</p>}</section>
+      <section className="rounded-xl border border-divider bg-surface p-6"><h2 className="text-xl font-bold">Derivaciones autorizadas</h2>{record.referrals.length ? <ul className="mt-3 space-y-3">{record.referrals.map(r => <li key={r.id}><p>{r.specialty} · {referralStatusLabel[r.status]} · {referralPriorityLabel[r.priority]}</p><p>{r.reason}</p></li>)}</ul> : <p>No hay derivaciones autorizadas en esta historia.</p>}</section>
+      {selected && <dialog ref={dialog} aria-label="Ficha clínica autorizada" onCancel={event => { if (event.target === event.currentTarget && !canCloseRecord()) event.preventDefault(); }} onClose={event => { if(event.target === event.currentTarget) setSelected(null); }} className="fixed inset-0 m-auto max-h-[90vh] w-[95vw] max-w-3xl overflow-auto rounded-2xl bg-surface p-6 backdrop:bg-black/40">
+        <button type="button" autoFocus onClick={() => { if (canCloseRecord()) dialog.current?.close(); }} className="float-right rounded-lg border border-primary px-3 py-2 font-semibold text-primary">Cerrar ficha</button>
+        <h2 className="mr-28 text-xl font-bold">{selected.chief_complaint ?? "Motivo no registrado"}</h2><p>{formatAppointmentTime(selected.occurred_at)}</p>
+        {selected.accessReason === "REFERRAL_SOURCE" && <p className="font-semibold text-primary">Origen de derivación autorizado</p>}
+        <p>Versión de ficha: {selected.encounter_type === "INITIAL" ? selected.reviewHistoryVersion ?? "—" : selected.specialtyHistoryVersion ?? "—"}</p>{selected.template && <p>Plantilla: versión {selected.template.version}</p>}
+        <ClinicalWordDownload key={selected.id} encounterId={selected.id} />
+        {selected.clinicalBackground ? <ClinicalBackgroundSummary version={selected.clinicalBackground} compact /> : <p className="mt-4">Sin antecedentes generales vinculados a esta atención.</p>}
+        <h3 className="mt-5 font-bold">Evaluación</h3><p>{selected.assessment ?? "Sin evaluación registrada."}</p><h3 className="mt-4 font-bold">Diagnósticos</h3><p>{diagnoses.map(d => d.label).join(" · ") || "Sin diagnósticos registrados."}</p>
+        <h3 className="mt-4 font-bold">Indicaciones</h3><p>{selected.instructions ?? "Sin indicaciones registradas."}</p><h3 className="mt-4 font-bold">Seguimiento</h3><p>{selected.follow_up_text ?? "Sin seguimiento registrado."}</p>
+        {selected.encounter_type === "INITIAL" ? <ReviewSnapshot data={selected.reviewHistory} hideGeneral={Boolean(selected.clinicalBackground)} /> : <SpecialtySnapshot data={selected.specialtyHistory} />}
+        <EncounterAmendments key={selected.id} encounterId={selected.id} onDirtyChange={dirty => { amendmentDirty.current=dirty; }} />
+        <div className="mt-5"><MedicalDocuments patientId={patientId} encounterId={selected.id} editable={false} /></div>
+      </dialog>}
+    </>}
+  </section>;
 }

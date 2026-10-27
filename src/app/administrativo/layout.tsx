@@ -1,6 +1,10 @@
-import { requireClinicalRole } from "@/lib/session";
+import { getSession, hasClinicalAuthority } from "@/lib/session";
+import { redirect } from "next/navigation";
+import { SessionNameProvider } from "@/components/session-name";
 
 export default async function AdministrativeLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  await requireClinicalRole("ADMINISTRATIVE", "REPORTING_OFFICER", "AUDITOR");
-  return children;
+  const session = await getSession();
+  if (!session) redirect("/iniciar-sesion?error=session");
+  if (!["ADMINISTRATIVE", "REPORTING_OFFICER", "AUDITOR"].includes(session.clinicalRole) && !await hasClinicalAuthority("AUDITOR")) redirect(`/${session.role}`);
+  return <SessionNameProvider name={session.name}>{children}</SessionNameProvider>;
 }

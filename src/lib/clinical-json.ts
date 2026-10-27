@@ -31,7 +31,7 @@ export function clinicalPayload(value: unknown, spanish: boolean, background = f
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(Object.entries(value).map(([key, item]) => {
     const structured = item && typeof item === "object" && "versionEsquema" in item;
-    const isClinical = key === "reviewHistory" || key === "specialtyHistory" || key === "habits" ||
+    const isClinical = key === "reviewHistory" || key === "specialtyHistory" || key === "specialty_history" || key === "habits" ||
       (key === "data" && (background || structured));
     return [key, isClinical && item ? clinicalJson(item, spanish) : clinicalPayload(item, spanish, background)];
   }));

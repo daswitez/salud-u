@@ -13,6 +13,8 @@ const experiencePoints = [
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
+  // Ayuda de cuentas sintéticas: sólo con SALUD_U_TEST_ACCESS_PASSWORD definido en el servidor (nunca en producción).
+  const testAccessPassword = process.env.SALUD_U_TEST_ACCESS_PASSWORD;
   const errorMessage = params.error === "credentials" ? "El correo o la contraseña son incorrectos." : params.error === "unauthorized" ? "Tu cuenta no tiene un rol activo en la plataforma." : params.error === "session" ? "Tu sesión venció. Vuelve a iniciar sesión." : undefined;
 
   return (
@@ -61,13 +63,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
             <SignInForm initialEmail={params.email} />
 
-            <section className="mt-7 rounded-2xl border border-primary-200 bg-primary-container/55 p-4" aria-labelledby="demo-access-title">
+            {testAccessPassword && <section className="mt-7 rounded-2xl border border-primary-200 bg-primary-container/55 p-4" aria-labelledby="demo-access-title">
               <div className="flex items-start gap-3">
                 <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-black text-on-primary">i</span>
                 <div><h3 id="demo-access-title" className="text-sm font-bold text-text-primary">Acceso de pruebas local</h3><p className="mt-1 text-xs leading-5 text-text-secondary">Revisión: <code>revision.ana.demo@salud-universitaria.test</code>. Copia la contraseña inicial.</p></div>
               </div>
-              <CopyDemoPassword />
-            </section>
+              <CopyDemoPassword password={testAccessPassword} />
+            </section>}
           </div>
 
           <p className="mt-5 text-center text-xs leading-5 text-text-tertiary">Al ingresar aceptas el uso responsable de la información según las políticas institucionales.</p>

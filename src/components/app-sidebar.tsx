@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ClinicalRole } from "@/lib/ui-contracts";
 
 export type AppRole = "estudiante" | "medico" | "administrativo";
-type NavIcon = "home" | "search" | "calendar" | "bell" | "user" | "users" | "chart" | "document" | "folder" | "referral" | "tele";
+type NavIcon = "home" | "search" | "calendar" | "bell" | "user" | "users" | "chart" | "document" | "folder" | "referral" | "tele" | "vaccine";
 type NavItem = { label: string; mobileLabel?: string; icon: NavIcon; href?: string; key: string; comingSoon?: boolean; mobileHidden?: boolean };
 
 function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
@@ -21,10 +21,22 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
 }
 
 function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
+  if(clinicalRole === "AUDITOR") return [
+    {key:"audit",href:"/administrativo/auditoria",label:"Auditoría",icon:"chart"},
+    {key:"profile",href:"/perfil?rol=administrativo",label:"Perfil y preferencias",icon:"user"},
+  ];
+  if (clinicalRole === "REPORTING_OFFICER") return [
+    { key: "compliance", href: "/administrativo/reportes/cumplimiento", label: "Cumplimiento", icon: "chart" },
+    { key: "coverage", href: "/administrativo/reportes/vacunacion", label: "Cobertura de vacunas", mobileLabel: "Vacunas", icon: "vaccine" },
+    { key: "research", href: "/administrativo/reportes/investigacion", label: "Exportación para investigación", mobileLabel: "Investigación", icon: "document" },
+    { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
+    { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil y preferencias", icon: "user" },
+  ];
   if (role === "estudiante") return [
     { key: "home", href: "/estudiante", label: "Inicio", icon: "home" },
     { key: "request", href: "/estudiante/buscar", label: "Solicitar cita", mobileLabel: "Solicitar", icon: "search" },
     { key: "appointments", href: "/estudiante/citas", label: "Mis citas", mobileLabel: "Citas", icon: "calendar" },
+    { key: "vaccines", href: "/estudiante/vacunas", label: "Mi carnet de vacunación", mobileLabel: "Vacunas", icon: "vaccine" },
     { key: "profile", href: "/perfil?rol=estudiante", label: "Mi información", mobileLabel: "Perfil", icon: "user" },
   ];
   if (role === "administrativo") return [
@@ -33,6 +45,7 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "admission", href: "/administrativo/check-in", label: "Citas y asistencia", mobileLabel: "Citas", icon: "calendar" },
     { key: "referrals", href: "/administrativo/derivaciones", label: "Derivaciones", icon: "referral" },
     { key: "staff", href: "/administrativo/personal-medico", label: "Organización", icon: "folder", mobileHidden: true },
+    { key: "vaccines", href: "/administrativo/vacunas", label: "Vacunas", icon: "vaccine", mobileHidden: true },
     { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil y preferencias", icon: "user", mobileHidden: true },
   ];
@@ -52,6 +65,7 @@ function Icon({ name }: { name: NavIcon }) {
     folder: <><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /><path d="M3 10h18" /></>,
     referral: <><path d="M5 5h8a3 3 0 0 1 3 3v1" /><path d="m13 6 3 3-3 3M19 19h-8a3 3 0 0 1-3-3v-1" /><path d="m11 18-3-3 3-3" /></>,
     tele: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3" /></>,
+    vaccine: <><path d="m18 2 4 4m-5 1 3-3m-1 5L8.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L15 5m-6 6 4 4m-8 4-3 3M14 4l6 6" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0">{content[name]}</svg>;
 }
@@ -68,6 +82,8 @@ function isItemActive(item: NavItem, active: string) {
 }
 
 function guidanceFor(role: AppRole, clinicalRole?: ClinicalRole) {
+  if(clinicalRole === "AUDITOR") return {label:"Trazabilidad",title:"Consulta los eventos registrados",detail:"Usa fechas, actor, acción y resultado para localizar la evidencia.",href:"/administrativo/auditoria"};
+  if (clinicalRole === "REPORTING_OFFICER") return { label: "Reportes institucionales", title: "Define el período y los criterios", detail: "Aplica los filtros antes de comparar las atenciones y sus agrupaciones.", href: "/administrativo/reportes" };
   if (role === "estudiante") return { label: "¿Qué hago ahora?", title: "Revisa tu próxima cita", detail: "Confirma hora, lugar y requisitos antes de salir.", href: "/estudiante/citas" };
   if (role === "administrativo") return { label: "Ruta recomendada", title: "Empieza por admisión", detail: "Busca al estudiante antes de crear un registro nuevo.", href: "/administrativo/estudiantes" };
   if (clinicalRole === "SPECIALIST") return { label: "Ruta clínica", title: "Revisa tus derivaciones", detail: "Prioriza las asignadas y abre después la historia autorizada.", href: "/medico/derivaciones" };
@@ -76,12 +92,12 @@ function guidanceFor(role: AppRole, clinicalRole?: ClinicalRole) {
 
 export function AppSidebar({ role, active, clinicalRole }: { role: AppRole; active: string; clinicalRole?: ClinicalRole }) {
   const items = navigationFor(role, clinicalRole);
-  const subtitle = clinicalRole === "REVIEW_DOCTOR" ? "Revisión estudiantil" : clinicalRole === "SPECIALIST" ? "Atención especializada" : role === "administrativo" ? "Área administrativa" : "Atención estudiantil";
+  const subtitle = clinicalRole === "AUDITOR" ? "Auditoría institucional" : clinicalRole === "REPORTING_OFFICER" ? "Reportes institucionales" : clinicalRole === "REVIEW_DOCTOR" ? "Revisión estudiantil" : clinicalRole === "SPECIALIST" ? "Atención especializada" : role === "administrativo" ? "Área administrativa" : "Atención estudiantil";
   const guidance = guidanceFor(role, clinicalRole);
 
   return (
     <aside className="fixed inset-x-0 bottom-0 z-30 border-t border-divider bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_32px_-28px_rgba(18,49,111,0.75)] backdrop-blur-xl md:sticky md:top-0 md:flex md:h-screen md:w-72 md:shrink-0 md:flex-col md:border-r md:border-t-0 md:px-4 md:py-6 md:shadow-none">
-      <Link href={`/${role}`} className="mb-7 hidden items-center gap-3 rounded-2xl px-2 py-1 md:flex">
+      <Link href={clinicalRole === "AUDITOR" ? "/administrativo/auditoria" : clinicalRole === "REPORTING_OFFICER" ? "/administrativo/reportes" : `/${role}`} className="mb-7 hidden items-center gap-3 rounded-2xl px-2 py-1 md:flex">
         <span className="flex items-center -space-x-2" aria-hidden="true"><Image src="/branding/fcsh-uagrm-emblem.png" alt="" width={96} height={96} className="size-11 rounded-full bg-white object-contain p-0.5 ring-1 ring-secondary-container" /><Image src="/branding/centro-especialidades-emblem.png" alt="" width={96} height={96} className="size-11 rounded-full bg-white object-contain p-0.5 ring-1 ring-primary-200" /></span>
         <span><span className="block text-sm font-bold tracking-tight text-text-primary">Salud Universitaria</span><span className="mt-0.5 block text-xs text-text-tertiary">{subtitle}</span></span>
       </Link>

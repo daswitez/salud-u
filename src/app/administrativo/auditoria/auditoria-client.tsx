@@ -1,140 +1,27 @@
 "use client";
-
-import { useState, useMemo, useEffect } from "react";
-import { getAuditDemoLog, AuditEvent, AuditEventResource, AuditEventAction } from "@/lib/demo-audit-store";
-
-export function AuditoriaClient() {
-  const [logs, setLogs] = useState<AuditEvent[]>([]);
-  const [actorFilter, setActorFilter] = useState("");
-  const [resourceFilter, setResourceFilter] = useState<AuditEventResource | "TODOS">("TODOS");
-  const [actionFilter, setActionFilter] = useState<AuditEventAction | "TODOS">("TODOS");
-  const [dateFilter, setDateFilter] = useState("");
-
-  useEffect(() => {
-    setLogs(getAuditDemoLog());
-  }, []);
-
-  const filteredLogs = useMemo(() => {
-    let result = logs;
-    if (actorFilter.trim()) {
-      const q = actorFilter.toLowerCase();
-      result = result.filter(r => r.actor.name.toLowerCase().includes(q) || r.actor.id.toLowerCase().includes(q) || r.actor.role.toLowerCase().includes(q));
-    }
-    if (resourceFilter !== "TODOS") result = result.filter(r => r.resource === resourceFilter);
-    if (actionFilter !== "TODOS") result = result.filter(r => r.action === actionFilter);
-    if (dateFilter) result = result.filter(r => r.timestamp.startsWith(dateFilter));
-    return result;
-  }, [logs, actorFilter, resourceFilter, actionFilter, dateFilter]);
-
-  return (
-    <div className="space-y-6">
-      <header className="border-b border-divider pb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Auditoría Clínica y de Reportes</h1>
-          <p className="mt-2 text-text-secondary">Registro inmutable de eventos operacionales y accesos, garantizando trazabilidad y privacidad de datos de salud.</p>
-        </div>
-      </header>
-
-      {/* Filters */}
-      <section className="bg-surface border border-divider rounded-xl p-5 shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-1">Buscar por Actor</label>
-            <input type="text" placeholder="Ej. Valeria Mendoza o DOC-001..." value={actorFilter} onChange={e => setActorFilter(e.target.value)} className="w-full rounded-lg border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-1">Recurso Afectado</label>
-            <select value={resourceFilter} onChange={e => setResourceFilter(e.target.value as any)} className="w-full rounded-lg border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
-              <option value="TODOS">Cualquier recurso</option>
-              <option value="STUDENT">Estudiante (Registro Administrativo)</option>
-              <option value="ENCOUNTER">Atención (Creación/Cierre/Adenda)</option>
-              <option value="DOCUMENT">Documento Adjunto (Carga/Acceso)</option>
-              <option value="REFERRAL">Derivación (Creación/Cambio)</option>
-              <option value="REPORT">Reporte (Exportación)</option>
-              <option value="SYSTEM">Sistema</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-1">Acción</label>
-            <select value={actionFilter} onChange={e => setActionFilter(e.target.value as any)} className="w-full rounded-lg border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
-              <option value="TODOS">Cualquier acción</option>
-              <option value="CREATE">Creación / Alta</option>
-              <option value="READ">Lectura / Visualización</option>
-              <option value="UPDATE">Actualización / Edición</option>
-              <option value="DELETE">Eliminación / Baja</option>
-              <option value="STATUS_CHANGE">Cambio de Estado</option>
-              <option value="EXPORT">Exportación / Descarga</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-1">Fecha</label>
-            <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="w-full rounded-lg border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" />
-          </div>
-        </div>
-        <div className="mt-4 flex justify-end">
-          <button onClick={() => { setActorFilter(""); setResourceFilter("TODOS"); setActionFilter("TODOS"); setDateFilter(""); }} className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors">Limpiar filtros</button>
-        </div>
-      </section>
-
-      {/* Table */}
-      <div className="bg-surface border border-divider rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-surface-secondary text-text-secondary border-b border-divider">
-              <tr>
-                <th className="px-5 py-4 font-semibold">Fecha y Hora</th>
-                <th className="px-5 py-4 font-semibold">Actor (Usuario)</th>
-                <th className="px-5 py-4 font-semibold">Acción y Recurso</th>
-                <th className="px-5 py-4 font-semibold">Contexto / Detalle Operativo</th>
-                <th className="px-5 py-4 font-semibold text-right">Resultado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-divider">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-surface-secondary/50">
-                  <td className="px-5 py-4 whitespace-nowrap text-text-secondary text-xs">
-                    <span className="block font-medium text-text-primary">{log.timestamp.split("T")[0]}</span>
-                    <span className="block mt-0.5">{log.timestamp.split("T")[1]?.substring(0, 8)}</span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <p className="font-semibold text-text-primary">{log.actor.name}</p>
-                    <p className="text-xs text-text-secondary mt-0.5">{log.actor.role} ({log.actor.id})</p>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-secondary border border-divider text-text-secondary">
-                        {log.action}
-                      </span>
-                      <span className="text-xs font-semibold text-primary">{log.resource} {log.resourceId ? `#${log.resourceId}` : ""}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <p className="text-text-primary text-xs leading-relaxed max-w-sm">
-                      {log.context}
-                    </p>
-                    <div className="mt-2 text-[10px] text-text-disabled uppercase flex gap-2">
-                      <span className="flex items-center gap-1" title="La bitácora nunca muestra el contenido clínico completo">
-                        <svg className="size-3" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-                        </svg>
-                        Oculto por privacidad
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {log.result === "SUCCESS" && <span className="inline-block px-2 py-1 rounded bg-success-50 text-success-700 text-xs font-bold border border-success/20">EXITOSO</span>}
-                    {log.result === "FAILURE" && <span className="inline-block px-2 py-1 rounded bg-error-50 text-error-700 text-xs font-bold border border-error/20">FALLIDO</span>}
-                    {log.result === "DENIED" && <span className="inline-block px-2 py-1 rounded bg-warning-50 text-warning-800 text-xs font-bold border border-warning/20">DENEGADO</span>}
-                  </td>
-                </tr>
-              ))}
-              {filteredLogs.length === 0 && (
-                <tr><td colSpan={5} className="px-5 py-12 text-center text-text-secondary">No hay eventos en la bitácora que coincidan con la búsqueda.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+import Link from "next/link";
+import {useCallback,useEffect,useRef,useState} from "react";
+import {apiEnvelope,ApiRequestError} from "@/lib/api/client";
+import { replaceUrl } from "@/lib/url-state";
+type Event={id:string;occurredAt:string;actor:{id:string|null;name:string|null;roles:string[]};action:string;resource:string;resourceId:string|null;outcome:"SUCCESS"|"FAILURE"|"DENIED";context:string};
+type Filters={from:string;to:string;actor:string;action:string;resource:string;outcome:string;limit:string};
+type Result={ok:true;data:Event[];pagination:{hasMore:boolean;nextCursor:string|null}};
+const empty:Filters={from:"",to:"",actor:"",action:"",resource:"",outcome:"",limit:"100"};
+function query(f:Filters,before:string|null){const q=new URLSearchParams({paginated:"true"});for(const [key,value] of Object.entries(f))if(value)q.set(key,value);if(before)q.set("before",before);return q;}
+export function AuditoriaClient(){
+ const [draft,setDraft]=useState<Filters>(empty),[applied,setApplied]=useState<Filters>(empty),[result,setResult]=useState<Result|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[expired,setExpired]=useState(false),[cursor,setCursor]=useState<string|null>(null);
+ const request=useRef<AbortController|null>(null),feedback=useRef<HTMLParagraphElement>(null),last=useRef({filters:empty,cursor:null as string|null});
+ const load=useCallback(async(filters:Filters,before:string|null=null)=>{request.current?.abort();const controller=new AbortController();request.current=controller;last.current={filters,cursor:before};setLoading(true);setResult(null);setError("");setExpired(false);
+ try{const q=query(filters,before),data=await apiEnvelope<Result>("/api/audit-events?"+q,{signal:controller.signal});if(controller.signal.aborted)return;if(!Array.isArray(data.data)||!data.pagination)throw new Error("La respuesta de auditoría no es válida.");setResult(data);setApplied(filters);setCursor(before);replaceUrl(window.location.pathname+"?"+q);}
+ catch(cause){if(controller.signal.aborted)return;setError(cause instanceof Error&&!(cause instanceof TypeError)?cause.message:"No se pudo consultar la auditoría por un problema de conexión. Puedes reintentar.");setExpired(cause instanceof ApiRequestError&&cause.status===401);}finally{if(!controller.signal.aborted)setLoading(false);}},[]);
+ useEffect(()=>{const t=window.setTimeout(()=>{const q=new URLSearchParams(window.location.search),f={...empty};for(const k of Object.keys(f) as (keyof Filters)[])if(q.has(k))f[k]=q.get(k)??"";setDraft(f);void load(f,q.get("before"));},0);return()=>{window.clearTimeout(t);request.current?.abort();};},[load]);useEffect(()=>{if(error)feedback.current?.focus();},[error]);
+ return <section className="space-y-6" aria-label="Auditoría real" aria-busy={loading}><header><h1 className="text-3xl font-bold">Auditoría de accesos, cambios y exportaciones</h1><p className="mt-2">Eventos persistidos del sistema. Las consultas también se auditan. Esta pantalla permite leer la evidencia sin modificar los eventos existentes.</p></header>
+ <form aria-label="Filtros de auditoría" onSubmit={e=>{e.preventDefault();void load(draft);}} className="rounded-xl border border-divider bg-surface p-5"><fieldset disabled={loading} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><legend>Buscar eventos</legend>{([['from','Desde','date'],['to','Hasta','date'],['actor','Buscar por actor','text'],['action','Acción','text'],['resource','Recurso','text']] as const).map(([key,label,type])=><label key={key}>{label}<input type={type} maxLength={200} value={draft[key]} onChange={e=>setDraft({...draft,[key]:e.target.value})} className="mt-2 block w-full rounded-lg border border-divider p-3"/></label>)}
+ <label>Resultado<select value={draft.outcome} onChange={e=>setDraft({...draft,outcome:e.target.value})} className="mt-2 block w-full rounded-lg border border-divider p-3"><option value="">Todos</option><option value="SUCCESS">Exitoso</option><option value="DENIED">Denegado</option><option value="FAILURE">Fallido</option></select></label>
+ <label>Eventos por página<select value={draft.limit} onChange={e=>setDraft({...draft,limit:e.target.value})} className="mt-2 block w-full rounded-lg border border-divider p-3">{[25,100,200,500].map(n=><option key={n} value={n}>{n}</option>)}</select></label><p className="text-sm sm:col-span-2">Actor admite nombre, correo o identificador. Acción y recurso buscan coincidencias parciales de sus códigos. Las fechas incluyen ambos días en hora de Bolivia.</p>
+ <button type="submit" className="rounded-lg bg-primary p-3 font-semibold text-on-primary">Aplicar filtros</button><button type="button" onClick={()=>{setDraft(empty);void load(empty);}} className="rounded-lg border border-primary p-3">Limpiar filtros</button></fieldset></form>
+ {loading&&<p role="status">Consultando eventos registrados…</p>}{error&&<p ref={feedback} tabIndex={-1} role="alert" className="rounded-lg bg-error-container p-4 text-error">{error}</p>}{expired&&<Link href="/iniciar-sesion?error=session" target="_blank" rel="noopener">Iniciar sesión en otra pestaña y conservar los filtros</Link>}{error&&!loading&&<button type="button" onClick={()=>void load(last.current.filters,last.current.cursor)} className="rounded-lg border border-primary p-3">Reintentar auditoría</button>}
+ {result&&!loading&&<section aria-label="Eventos registrados" className="space-y-4"><p role="status">{result.data.length} evento(s) en esta página. Orden: más recientes primero.</p><div className="relative overflow-x-auto rounded-xl border border-divider focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-container" tabIndex={0} role="region" aria-label="Tabla de eventos, desplazable horizontalmente"><table aria-label="Bitácora persistida" className="w-full text-left text-sm"><thead><tr>{["Fecha y hora (Bolivia)","Actor y roles vigentes","Acción y recurso","Contexto operativo","Resultado"].map(h=><th key={h} scope="col" className="border-b p-4">{h}</th>)}</tr></thead><tbody>{result.data.map(event=><tr key={event.id} data-audit-event-id={event.id}><td className="whitespace-nowrap border-b p-4">{new Intl.DateTimeFormat("es-BO",{timeZone:"America/La_Paz",dateStyle:"short",timeStyle:"medium"}).format(new Date(event.occurredAt))}</td><td className="border-b p-4">{event.actor.name??"Nombre no disponible"}<p>{event.actor.id??"—"}</p><p>{event.actor.roles.join(", ")||"Sin roles vigentes"}</p></td><td className="border-b p-4">{event.action}<p>{event.resource} · {event.resourceId??"—"}</p></td><td className="border-b p-4">{event.context}<p className="mt-2 text-xs text-text-secondary">Sin contenido clínico ni detalles sensibles.</p></td><td className="border-b p-4">{event.outcome==="SUCCESS"?"Exitoso":event.outcome==="DENIED"?"Denegado":"Fallido"}</td></tr>)}</tbody></table></div>{!result.data.length&&<p>No hay eventos registrados para estos filtros.</p>}
+ <div className="flex gap-3">{cursor&&<button type="button" onClick={()=>void load(applied)} className="rounded-lg border border-primary p-3">Volver a los más recientes</button>}{result.pagination.hasMore&&<button type="button" onClick={()=>void load(applied,result.pagination.nextCursor)} className="rounded-lg border border-primary p-3">Ver eventos anteriores</button>}</div></section>}
+ </section>;
 }

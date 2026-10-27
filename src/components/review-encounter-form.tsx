@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { EncounterAmendments } from "@/components/encounter-amendments";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ClinicalBackgroundPanel } from "@/components/clinical-background-panel";
 import { ClinicalBackgroundSummary } from "@/components/clinical-background";
+import { ClinicalHistoryDialog } from "@/components/clinical-history-dialog";
 import { ReviewHistoryForm } from "@/components/review-history-form";
 import { MedicalDocuments } from "@/components/medical-documents";
 import { appointmentStatusLabel } from "@/components/medical-appointments";
@@ -49,9 +51,8 @@ export function ReviewEncounterForm({ appointmentId }: { appointmentId: string }
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const appointments = await apiJson<MedicalAppointment[]>("/api/medical/appointments");
-      const appointment = appointments.find(item => item.id === appointmentId && item.appointmentType === "INITIAL");
-      if (!appointment?.encounter) throw new Error("Inicia o recupera la atención desde la agenda antes de completar la ficha.");
+      const appointment = await apiJson<MedicalAppointment>(`/api/medical/appointments/${appointmentId}`);
+      if (appointment.appointmentType !== "INITIAL" || !appointment.encounter) throw new Error("Inicia o recupera la atención desde la agenda antes de completar la ficha.");
       const data = await apiJson<Context>(`/api/medical/encounters/${appointment.encounter.id}`);
       setContext(data); setChief(data.encounter.chiefComplaint ?? ""); setAssessment(data.encounter.assessment ?? "");
       setDiagnosis(data.diagnoses[0]?.label ?? ""); setBlood(data.encounter.bloodChemistryStatus ?? "NOT_PRESENTED");
@@ -135,8 +136,10 @@ export function ReviewEncounterForm({ appointmentId }: { appointmentId: string }
         <ClinicalBackgroundSummary version={context.clinicalBackground.encounter} compact />
         <ReviewSnapshot data={context.encounter.reviewHistory} hideGeneral={Boolean(context.clinicalBackground.encounter)} />
         <h3 className="font-bold">Mediciones registradas</h3><dl className="grid gap-2 sm:grid-cols-2">{context.measurements.map(item => <div key={item.code}><dt>{measurementLabels[item.code] ?? item.code}</dt><dd>{item.value} {item.unit}</dd></div>)}</dl>
+        {context.encounter.status === "CLOSED" && <EncounterAmendments encounterId={context.encounter.id} />}
       </article> : <>
         <ClinicalBackgroundPanel embedded patientId={context.patient.id} encounterId={context.encounter.id} onSaved={version => { setContext(previous => previous ? { ...previous, clinicalBackground: { current: version, encounter: version } } : previous); setHistory(previous => ({ ...previous, ...clinicalBackgroundToLegacy(version.data) })); }} />
+        <ClinicalHistoryDialog patientId={context.patient.id} currentEncounterId={context.encounter.id} />
         <p className="text-sm text-text-secondary">Los cambios de esta ficha se guardan al cerrar la atención. Al cerrar, la ficha quedará de consulta y la cita se marcará como atendida. Si sales antes, se te avisará para evitar perderlos.</p>
         <form onSubmit={finalize} onChange={() => setDirty(true)} className="space-y-6">
           <fieldset disabled={saving} className="space-y-6">

@@ -12,6 +12,18 @@ async function run() {
   const browser = await chromium.launch({ headless: true, ...(process.env.FE14_CHROMIUM ? { executablePath: process.env.FE14_CHROMIUM } : {}) });
   const results = [], traffic = [], fixtures = [], cleanup = new Set();
   const record = message => { results.push(message); console.log("PASS " + message); };
+  // Cupos en horas distintas dentro de la corrida; ante 409 (superposición con datos de corridas previas) prueba la hora siguiente.
+  let nextSlotAt=0;
+  async function publishSlot(context,starts,extra={}){
+    starts=Math.max(starts,nextSlotAt);
+    for(let attempt=0;attempt<500;attempt++,starts+=3600000){
+      const token=(await (await context.request.get(origin+"/api/v1/security/csrf")).json()).data;
+      const response=await context.request.post(origin+"/api/availability-slots",{data:{startsAt:new Date(starts).toISOString(),endsAt:new Date(starts+1800000).toISOString(),capacity:1,...extra},headers:{[token.headerName]:token.token}});
+      if(response.status()===201){nextSlotAt=starts+3600000;return (await response.json()).data.id;}
+      assert.equal(response.status(),409,await response.text());
+    }
+    throw new Error("No se encontró un horario libre para el cupo de prueba.");
+  }
   async function api(context, path, method = "GET", data, expected = 200) {
     const headers = {};
     if (method !== "GET") { const csrf = (await (await context.request.get(origin + "/api/v1/security/csrf")).json()).data; headers[csrf.headerName] = csrf.token; }
@@ -41,7 +53,7 @@ async function run() {
     async function slot(context, specialtyId = null, days = 185) {
       let starts = Date.now() + days * 86400000; const existing = (await api(admin, "/api/availability-slots")).data;
       while (existing.some(s => starts < Date.parse(s.endsAt) && starts + 1800000 > Date.parse(s.startsAt))) starts += 3600000;
-      return (await api(context, "/api/availability-slots", "POST", { startsAt: new Date(starts).toISOString(), endsAt: new Date(starts + 1800000).toISOString(), capacity: 1, specialtyId }, 201)).data.id;
+      return await publishSlot(context,starts,{specialtyId});
     }
     async function snapshot(item) {
       const data = (await api(doctor, "/api/medical/encounters/" + item.encounterId)).data;

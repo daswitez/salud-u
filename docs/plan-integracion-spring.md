@@ -7,7 +7,7 @@ Este plan convierte gradualmente `salud-u` desde Next.js/Supabase hacia el backe
 - El frontend está en la rama `backend` y aún ejecuta 24 Route Handlers bajo `src/app/api`, Supabase Auth, `proxy.ts` y consultas SSR directas a Supabase.
 - Spring ya publica rutas de compatibilidad `/api/**` para consumidores actuales, rutas versionadas `/api/v1/**`, `GET /api/health` y OpenAPI en `/openapi/salud-u-v1.yaml`.
 - Los contratos heredados usan `error` como texto. Solo `/api/v1/**` devuelve el objeto `{code,message,details,requestId}`. El cliente no debe asumir una forma única sin normalizarla.
-- H-CORTE todavía no está aceptado: faltan la suite limpia de Next, el ensayo completo Docker/backup/restore y el ensayo de migración sintético. Esto no impide planificar o integrar con datos de prueba, pero impide el corte productivo y la retirada definitiva de Supabase.
+- Estado al 2026-10-26: el frontend ya no contiene Supabase, Route Handlers ni Server Actions; FE-CORTE está aceptada localmente (ver sección de evidencia). El corte productivo sigue pendiente del ensayo de migración sintético, la estrategia de cuentas y la validación con el centro.
 
 ## Principios no negociables
 
@@ -67,6 +67,8 @@ Antes de elegir una alternativa se debe documentar origen, TLS, cookies `Secure`
 - Se creó exclusivamente una carrera y pacientes de integración identificados como FE-02 en la base local de pruebas. TypeScript y ESLint focalizados pasan.
 
 ## Evidencia local de FE-04 (2026-10-18)
+
+Actualización 2026-10-26: el ensayo FE-24 corrige el pendiente de `/api/my-specialties` y una lectura vacía de jornadas persistidas por diferencias de claves internas. La evidencia HTTP anterior no detectaba ese fallo visual. Ahora el especialista guarda y recupera su jornada desde navegador con Spring y sin Supabase; véase [evidencia FE-24](evidencia-fe24.md).
 
 - Next reenvía únicamente `/api/availability-slots` a Spring y se retiró el Route Handler que invocaba RPCs Supabase. El gestor de horarios mantiene el contrato de agenda (`schedules`, `recurringBlocks`, `dateBlocks`, `slots` y `appointments`) y las reglas camelCase se normalizan en Spring antes de persistirse.
 - Recorrido local aprobado con médico de revisión: login `200`, consulta de gestión `200`, reemplazo de jornada `200`, recarga con contrato válido `200`, creación de bloqueo por fecha `201` y eliminación `200`.
@@ -130,6 +132,68 @@ La ficha emite derivación con el cierre y muestra contexto, prioridad y element
 ## Evidencia FE-14 (2026-10-25)
 
 La bandeja administrativa y las opciones por paciente consumen Spring mediante rewrites exactos; se retiraron sus handlers Supabase. V51 restaura historial/orden de referencia, valida paciente al crear REFERRAL y registra evento/auditoría al programar atómicamente. La agenda conserva selección ante conflictos, red y caducidad, recupera respuestas perdidas consultando el estado y funciona desde paciente o agenda general. Chromium aprobó cinco grupos con concurrencia y origen clínico intacto; PostgreSQL confirmó un evento/cita/reserva por asignación. Pasan 124 pruebas Java, seis grupos de regresión FE-08 y controles frontend. [Informe y comandos](evidencia-fe14.md).
+
+## Evidencia FE-15 (2026-10-25)
+
+La ficha especialista consume contexto propio, plantilla y origen remitido en Spring, sin consultar la historia longitudinal serverless. V52 completa los datos del cierre y autoriza documentos compartidos; V53 corrige el inicio derivado y registra su evento. Se verifica templateId al cerrar, se conserva el borrador ante errores/cambio de plantilla y la consulta usa la plantilla histórica. Pasan seis grupos de Chromium en producción, regresión FE-14, 126 pruebas Java y controles frontend. [Informe y comandos](evidencia-fe15.md).
+
+## Evidencia FE-16 (2026-10-25)
+
+El especialista tiene bandeja/detalle de derivaciones recibidas y formulario de resolución/devolución. Se conserva PATCH /api/medical/referrals/{id}; las consultas propias usan rutas exactas /api/medical/assigned-referrals. V54 verifica afiliación/encuentro y audita la operación en la misma transacción. La UI comprueba el estado persistido, conserva los campos ante errores y recupera respuestas perdidas sin repetir PATCH. Pasan cinco grupos de Chromium en producción, regresión FE-15 completa, 130 pruebas Java y controles frontend. [Informe y comandos](evidencia-fe16.md).
+
+## Evidencia FE-17 (2026-10-25)
+
+La historia longitudinal usa GET /api/medical/patients/{id} en Spring mediante rewrite exacto, con el handler Supabase retirado. PostgreSQL exige relación clínica y selecciona revisiones, áreas vigentes y orígenes remitidos; la UI representa el conjunto autorizado sin recortar el origen. V55–V57 completan antecedentes/versiones, derivaciones, campos secundarios y autorización de documentos/búsqueda. Pasan cuatro grupos Chromium en producción, regresión FE-16 completa, 133 pruebas Java y controles frontend. [Informe y comandos](evidencia-fe17.md).
+
+## Evidencia FE-18 (2026-10-25)
+
+La historia consulta GET /api/medical/patients/{id}/search con q/from/to y conserva los filtros aplicados al recargar. V58/V59 normalizan texto/acentos/espacios y valores estructurados, aplican días inclusivos de Bolivia e índices para el alcance por paciente/encuentro. Se conservan null y el ámbito de FE-17, con auditoría sin el término buscado. Pasan cuatro grupos Chromium en producción, regresión FE-17, 136 pruebas Java y controles frontend. [Informe y comandos](evidencia-fe18.md).
+
+Perfil de operación indicado: centro pequeño con picos y reportes de varias áreas a fin de mes, todavía sin volumen numérico definido. FE-18 ensayó 1.001 atenciones por paciente y 20 búsquedas con concurrencia 10. FE-CORTE debe validar el escenario mixto búsquedas/reportes mensuales y el hardware real antes de acreditar capacidad institucional.
+
+## Evidencia FE-19 (2026-10-25)
+
+Las atenciones cerradas presentan correcciones auditables separadas del original. Se conserva POST /api/medical/encounters/{id}/amendments y se incorpora su GET autorizado. V60 mantiene la firma SQL anterior, limita la escritura al autor, protege UPDATE/DELETE, registra auditoría atómica y admite reintentos idempotentes. La UI conserva borradores ante errores y consulta el resultado perdido antes de volver a escribir. Pasan cinco grupos Chromium en producción, regresión FE-18, 140 pruebas Java y controles frontend. Las correcciones son buscables dentro del mismo ámbito; su inclusión en Word queda trazada para FE-20. [Informe y comandos](evidencia-fe19.md).
+
+## Evidencia local FE-20 (2026-10-26)
+
+La ficha longitudinal descarga el DOCX privado desde Spring mediante rewrite exacto, con finalidad editable. V61 completa la versión histórica, antecedentes vinculados y del área, diagnósticos, mediciones, documentos y adendas separadas con motivo/actor/fecha; exportación auditada después de generar todo el archivo. La interfaz conserva finalidad y adenda pendiente ante red, permiso, sesión o archivo incompleto y recupera el acceso tras reautenticación real. Pasan cuatro grupos Chromium en producción, regresión FE-19 completa, 147 pruebas Java y controles frontend; siete DOCX abren en LibreOffice. [Informe y comandos](evidencia-fe20.md).
+
+## Evidencia local FE-21 (2026-10-26)
+
+El constructor consume Spring por rewrite exacto, con el handler Supabase retirado. V62 completa las listas AND, antecedentes resumidos/ficha histórica y los 17 campos de la RPC; preserva la firma SQL anterior para exportaciones. Spring define columnas/grupos opcionales sobre el conjunto autorizado y admite Reportes sin personal con catálogo de especialidades de lectura. La UI conserva URL/selección y borrador ante errores y sesión; no deja filas obsoletas visibles. Pasan cuatro grupos Chromium, regresión FE-20, 155 pruebas Java y controles frontend. La consulta mensual local y sus ráfagas quedan medidas con volumen sintético explícito. [Informe, fronteras FE-22 y comandos](evidencia-fe21.md).
+
+## Evidencia local FE-22 (2026-10-26)
+
+La pantalla consume el endpoint separado de archivo en Spring mediante rewrite exacto y deja de generar reportes en el navegador. El backend recalcula el conjunto permitido y genera CSV/XLSX/PDF con finalidad, columnas/grupos y contenido equivalente. V63 registra procedencia privada/estado/checksum y auditoría; el cliente comprueba SHA-256 y recupera constancia/finalidad al recargar. Se conserva el POST compatible de registro. Pasan cuatro grupos Chromium, regresión FE-21, 167 pruebas Java y controles frontend, con errores de generación, persistencia, red y sesión real comprobados. [Informe, límites y comandos](evidencia-fe22.md).
+
+## Evidencia local FE-23 (2026-10-26)
+
+Cumplimiento y actividad institucional consumen Spring con filtros por carrera/período y fechas, sin consultas Supabase. V64 fija los días de Bolivia y aporta el panorama administrativo de conteos; la pantalla no calcula reglas clínicas ni convierte errores en métricas cero. Administrativo y Reportes consultan cumplimiento; solo Administrativo recibe el panorama de coordinación. Pasan cuatro grupos Chromium, regresión FE-22, 169 pruebas Java y controles frontend. La regla académica del modelo y el volumen todavía requieren validación institucional en FE-CORTE. [Informe, paridad y comandos](evidencia-fe23.md).
+
+## Evidencia local FE-24 (2026-10-26)
+
+La bitácora abandona el almacén demo y consulta eventos reales de Spring con autoridad Auditor, incluso en cuentas multirrol. V65 conserva la consulta histórica y agrega actor parcial/paginación por cursor estable, filtros de fecha en Bolivia y respuesta sin metadata sensible. La interfaz conserva filtros tras recarga, validación, red, permiso y sesión vencida, sin mostrar filas obsoletas. La evidencia runtime sigue sin permisos de actualización/eliminación; cada lectura agrega su evento propio. Se corrigen además el rewrite de especialidades propias y la traducción de gestión de disponibilidad que ocultaba jornadas persistidas. Pasan cinco grupos Chromium, regresión FE-23 completa y 174 pruebas Java; build, typecheck, lint del cambio y OpenAPI aprobados. El lint global mantiene tres errores previos identificados en el informe. [Evidencia y comandos](evidencia-fe24.md).
+
+## Evidencia local FE-25 (2026-10-26)
+
+La nueva pantalla `/administrativo/vacunas` consume `/api/vaccines` por rewrite exacto, sin Route Handler ni Supabase. V66 añade la versión esperada al guardar, de modo que un formulario desactualizado recibe `409` sin crear versión, y distingue código duplicado (`409`) y vacuna inexistente (`404`); se conserva la firma SQL anterior. Desactivar conserva versiones y dosis aplicadas. La interfaz conserva el borrador ante validación, conflicto, red, servidor y sesión vencida. Pasan seis grupos Chromium, regresiones FE-23/FE-24 y 176 pruebas Java; build, typecheck, lint del cambio y OpenAPI aprobados. [Evidencia y comandos](evidencia-fe25.md).
+
+## Evidencia local FE-26 (2026-10-26)
+
+El registro de dosis se integra en la ficha administrativa del estudiante y en la del médico de revisión, consumiendo `/api/vaccinations` y el nuevo `/api/vaccinations/context` por rewrites exactos, sin Route Handler ni Supabase. V67 aporta el contexto (siguiente dosis calculada en servidor, dosis con responsables, aplicadores elegibles), evalúa la fecha futura en Bolivia y exige al médico el mismo acceso clínico que la historia. Spring distingue 422/409/400/403/404 para que la pantalla pida justificación de intervalo y conserve el borrador. Pasan siete grupos Chromium, regresión FE-25 y 179 pruebas Java. [Evidencia y comandos](evidencia-fe26.md).
+
+## Evidencia local FE-27 (2026-10-26)
+
+Carnet del estudiante, carnet imprimible desde la ficha administrativa y cobertura institucional consumen Spring por rewrites exactos, sin Route Handler ni Supabase. V68 incluye lote y aplicador en el carnet, omite vacunas desactivadas sin dosis, evalúa matrículas vigentes en día de Bolivia, cuenta cada estudiante una vez por grupo y audita ambas lecturas. Pasan seis grupos Chromium, regresiones FE-23…FE-26 y 180 pruebas Java. Se registra para FE-CORTE que el `replaceState` de pantallas con filtros puede anular un clic de navegación durante la carga. [Evidencia y comandos](evidencia-fe27.md).
+
+## Evidencia local FE-INV (2026-10-26)
+
+La exportación para investigación consume `/api/research/exports` y la constancia `/api/research/exports/{id}` por rewrites exactos, sin Route Handler ni Supabase. La pantalla muestra el modo seudonimizado sin aprobación previa, descarga sólo archivos cuyo SHA-256 y estructura coinciden y confirma la finalidad registrada. V69 aplica día de Bolivia, filtros cerrados, checksum en la procedencia y lectura del catálogo de vacunas para Reportes. Pasan cinco grupos Chromium con inspección de ZIP/XLSX, regresiones FE-21…FE-27 y 183 pruebas Java. [Evidencia y comandos](evidencia-feinv.md).
+
+## Evidencia local FE-CORTE (2026-10-26)
+
+Inventario estático sin Supabase, Route Handlers, Server Actions ni stores demo; 49 rewrites exactos. Recorrido integral estudiante/administración/revisión/especialista/reportes/auditor con 34 respuestas `/api/**` emitidas por Spring. Corte de Spring, PostgreSQL y Next sin pérdida de borrador ni escrituras divididas; documentos conciliados por SHA-256. Carga mixta sintética de fin de mes con p95 695 ms. RNF-08 (historia en diálogo durante la atención), RNF-09 (axe WCAG 2.1 A/AA, teclado) y RNF-10 (Chromium/Firefox, tres resoluciones) aprobados; WebKit y validación con el centro pendientes. [Evidencia y comandos](evidencia-fecorte.md).
 
 ## Contratos de frontera a implementar en FE-CON
 

@@ -22,10 +22,10 @@ export function MedicalEncounterEntry({ appointmentId }: { appointmentId: string
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiJson<MedicalAppointment[]>("/api/medical/appointments");
-      setAppointment(data.find(item => item.id === appointmentId) ?? null);
+      setAppointment(await apiJson<MedicalAppointment>(`/api/medical/appointments/${appointmentId}`));
       setError(""); setSessionExpired(false);
     } catch (cause) {
+      if (cause instanceof ApiRequestError && cause.status === 404) { setAppointment(null); setError(""); setSessionExpired(false); return; }
       setError(cause instanceof Error ? cause.message : "No se pudo cargar la cita.");
       setSessionExpired(cause instanceof ApiRequestError && cause.status === 401);
     } finally { setLoading(false); }

@@ -1,106 +1,99 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx-js-style";
-import { apiJson } from "@/lib/api/client";
-import { addReportLogosToXlsx, loadReportBranding, reportBrand } from "@/lib/report-branding";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { apiEnvelope, apiJson, ApiRequestError } from "@/lib/api/client";
+import { downloadClinicalReport, type ExportFormat, type ExportReceipt, type ExportRecord } from "@/lib/clinical-report-export";
+import type { Filters, Specialty } from "@/lib/clinical-reports";
+import { defaultOptions, groupDimensions, optionsFromQuery, optionsQuery, reportCell, reportColumns, todayInBolivia, type ReportOptions, type ReportResult } from "@/lib/clinical-reports";
+import { replaceUrl } from "@/lib/url-state";
 
-type Specialty = { id: string; name: string };
-type Habits = { tobacco?: string; alcohol?: string; physicalActivity?: string; diet?: string; notes?: string };
-type Row = { encounter_id: string; closed_at: string; encounter_type: string; specialty_name: string | null; carnet: string; patient_name: string; chief_complaint: string; assessment: string | null; instructions: string | null; diagnoses: string; allergies: string; background_summary: string; habits: Habits };
-type Filters = { from: string; to: string; specialtyId: string; encounterType: string; diagnosis: string; allergies: string[]; histories: string[]; habitTerms: string[]; positiveHabits: string[]; search: string };
-type Period = "TODAY" | "SEVEN_DAYS" | "THIRTY_DAYS" | "MONTH" | "SEMESTER" | "YEAR";
-const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date());
-const initial: Filters = { from: today.slice(0, 8) + "01", to: today, specialtyId: "", encounterType: "", diagnosis: "", allergies: [], histories: [], habitTerms: [], positiveHabits: [], search: "" };
-const headers = ["Fecha", "Paciente", "Carnet", "Tipo", "Especialidad", "Diagnósticos", "Alergias", "Antecedentes", "Hábitos", "Motivo", "Evaluación", "Indicaciones"];
-const periods: Record<Period, string> = { TODAY: "Hoy", SEVEN_DAYS: "Últimos 7 días", THIRTY_DAYS: "Últimos 30 días", MONTH: "Este mes", SEMESTER: "Semestre actual", YEAR: "Año actual" };
-const formatDate = (value: string) => value ? new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(value + "T12:00:00")) : "sin fecha";
-const closedDate = (value: string) => new Intl.DateTimeFormat("es-BO", { timeZone: "America/La_Paz" }).format(new Date(value));
-function range(preset: Period) {
-  const [year, month, day] = today.split("-").map(Number);
-  const offset = (days: number) => new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
-  if (preset === "TODAY") return { from: today, to: today };
-  if (preset === "SEVEN_DAYS") return { from: offset(-6), to: today };
-  if (preset === "THIRTY_DAYS") return { from: offset(-29), to: today };
-  if (preset === "MONTH") return { from: today.slice(0, 8) + "01", to: today };
-  if (preset === "SEMESTER") return { from: year + "-" + (month <= 6 ? "01" : "07") + "-01", to: today };
-  return { from: year + "-01-01", to: today };
-}
-function habitText(h: Habits) { return [h.tobacco === "YES" ? "Tabaco: sí" : h.tobacco === "NO" ? "Tabaco: no" : "", h.alcohol === "YES" ? "Alcohol: sí" : h.alcohol === "NO" ? "Alcohol: no" : "", h.physicalActivity === "YES" ? "Actividad física: sí" : h.physicalActivity === "NO" ? "Actividad física: no" : "", h.diet === "ADEQUATE" ? "Alimentación: adecuada" : h.diet === "REGULAR" ? "Alimentación: regular" : h.diet === "INADEQUATE" ? "Alimentación: inadecuada" : "", h.notes ?? ""].filter(Boolean).join(" · "); }
-function rowsToValues(rows: Row[]) { return rows.map((row) => [closedDate(row.closed_at), row.patient_name, row.carnet, row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad", row.specialty_name ?? "—", row.diagnoses, row.allergies, row.background_summary, habitText(row.habits), row.chief_complaint, row.assessment ?? "", row.instructions ?? ""]); }
-function filterSummary(f: Filters, specialties: Specialty[]) { const specialty = specialties.find((item) => item.id === f.specialtyId)?.name; return [f.encounterType === "INITIAL" ? "Revisión" : f.encounterType === "SPECIALTY" ? "Especialidad" : "Todos los tipos", specialty && "Especialidad: " + specialty, f.diagnosis && "Diagnóstico: " + f.diagnosis, f.allergies.length && "Alergias: " + f.allergies.join(", "), f.histories.length && "Antecedentes: " + f.histories.join(", "), f.habitTerms.length && "Hábitos: " + f.habitTerms.join(", "), f.positiveHabits.length && "Hábitos afirmativos: " + f.positiveHabits.join(", "), f.search && "Búsqueda: " + f.search].filter(Boolean).join(" · "); }
-function download(name: string, content: BlobPart, type: string) { const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url); }
+const periods={TODAY:"Hoy",SEVEN_DAYS:"Últimos 7 días",THIRTY_DAYS:"Últimos 30 días",MONTH:"Este mes",SEMESTER:"Semestre actual",YEAR:"Año actual"};
+function dateRange(preset:keyof typeof periods){const today=todayInBolivia(),[year,month,day]=today.split("-").map(Number);const offset=(n:number)=>new Date(Date.UTC(year,month-1,day+n)).toISOString().slice(0,10);return {from:preset==="TODAY"?today:preset==="SEVEN_DAYS"?offset(-6):preset==="THIRTY_DAYS"?offset(-29):preset==="MONTH"?today.slice(0,8)+"01":preset==="SEMESTER"?year+"-"+(month<=6?"01":"07")+"-01":year+"-01-01",to:today};}
 
-async function excel(rows: Row[], filters: Filters, specialties: Specialty[], purpose: string) {
-  const data = rowsToValues(rows); const book = XLSX.utils.book_new();
-  const sheet = XLSX.utils.aoa_to_sheet([["", "", "Reporte de atenciones clínicas"], ["", "", "Centro de Especialidades Médicas · FCSH-UAGRM"], ["", "", "Período: " + formatDate(filters.from) + " al " + formatDate(filters.to)], ["", "", rows.length + " atención(es) · Finalidad: " + purpose], ["", "", "Filtros: " + filterSummary(filters, specialties)], [], headers, ...data]);
-  const border = { style: "thin", color: { rgb: "D8E0ED" } };
-  const head = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: reportBrand.red } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: border, bottom: border, left: border, right: border } };
-  sheet["!merges"] = ["C1:J1", "C2:J2", "C3:J3", "C4:J4", "C5:J5"].map(XLSX.utils.decode_range);
-  sheet["!cols"] = [13, 27, 18, 16, 19, 29, 25, 42, 34, 35, 40, 38].map((wch) => ({ wch }));
-  sheet["!rows"] = [{ hpt: 30 }, { hpt: 22 }, { hpt: 20 }, { hpt: 20 }, { hpt: 32 }, { hpt: 8 }, { hpt: 34 }];
-  sheet["!autofilter"] = { ref: "A7:L" + Math.max(7, data.length + 7) };
-  sheet["!freeze"] = { xSplit: 0, ySplit: 7, topLeftCell: "A8", activePane: "bottomLeft", state: "frozen" };
-  for (let c = 0; c < headers.length; c += 1) sheet[XLSX.utils.encode_cell({ r: 6, c })].s = head;
-  [0, 1, 2, 3, 4].forEach((r) => { sheet[XLSX.utils.encode_cell({ r, c: 2 })].s = r === 0 ? { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: reportBrand.navy } }, alignment: { horizontal: "center", vertical: "center" } } : r === 1 ? { font: { bold: true, color: { rgb: reportBrand.red } }, alignment: { horizontal: "center", vertical: "center" } } : { font: { italic: true, color: { rgb: reportBrand.muted } }, fill: { fgColor: { rgb: reportBrand.pale } }, alignment: { horizontal: "center", vertical: "center", wrapText: true } }; });
-  data.forEach((_, r) => { for (let c = 0; c < headers.length; c += 1) sheet[XLSX.utils.encode_cell({ r: r + 7, c })].s = { alignment: { vertical: "top", wrapText: true }, border: { bottom: border }, ...(r % 2 === 0 ? { fill: { fgColor: { rgb: "F7F9FD" } } } : {}) }; });
-  XLSX.utils.book_append_sheet(book, sheet, "Atenciones");
-  const raw = XLSX.write(book, { bookType: "xlsx", type: "array", compression: false, cellStyles: true });
-  const logos = await loadReportBranding();
-  download("reporte-clinico.xlsx", addReportLogosToXlsx(raw, logos.facultyBytes, logos.centerBytes), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-}
-async function pdf(rows: Row[], filters: Filters, specialties: Specialty[], purpose: string) {
-  const logos = await loadReportBranding(); const doc = new jsPDF({ orientation: "landscape", format: "a3" }); const width = doc.internal.pageSize.getWidth();
-  doc.addImage(logos.facultyDataUrl, "PNG", 14, 10, 27, 27); doc.addImage(logos.centerDataUrl, "PNG", width - 41, 10, 27, 27); doc.setFillColor("#" + reportBrand.navy); doc.roundedRect(47, 10, width - 94, 18, 2, 2, "F"); doc.setFillColor("#" + reportBrand.red); doc.rect(47, 28, width - 94, 2, "F"); doc.setFillColor("#" + reportBrand.gold); doc.rect(47, 30, width - 94, 1.2, "F");
-  doc.setTextColor("#FFFFFF"); doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("REPORTE DE ATENCIONES CLÍNICAS", width / 2, 21, { align: "center" }); doc.setTextColor("#" + reportBrand.ink); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.text("Centro de Especialidades Médicas · FCSH-UAGRM | " + formatDate(filters.from) + " al " + formatDate(filters.to) + " | " + rows.length + " atención(es)", width / 2, 39, { align: "center" }); doc.setTextColor("#" + reportBrand.muted); doc.text("Finalidad: " + purpose + " · " + filterSummary(filters, specialties), width / 2, 44, { align: "center", maxWidth: width - 32 });
-  autoTable(doc, { head: [headers], body: rowsToValues(rows), startY: 50, margin: { left: 14, right: 14, bottom: 16 }, styles: { fontSize: 5.7, cellPadding: 1.7, overflow: "linebreak", valign: "top", lineColor: [216, 224, 237], lineWidth: 0.15 }, headStyles: { fillColor: "#" + reportBrand.red, textColor: "#FFFFFF", fontStyle: "bold", halign: "center" }, alternateRowStyles: { fillColor: "#" + reportBrand.pale }, didDrawPage: (details) => { const bottom = doc.internal.pageSize.getHeight() - 10; doc.setDrawColor("#" + reportBrand.gold); doc.line(14, bottom, width - 14, bottom); doc.setFontSize(7); doc.setTextColor("#" + reportBrand.muted); doc.text("Documento generado por el sistema clínico", 14, bottom + 5); doc.text("Página " + details.pageNumber, width - 14, bottom + 5, { align: "right" }); } });
-  doc.save("reporte-clinico.pdf");
-}
-
-export function ClinicalReportBuilder({ scope }: { scope: "administrative" | "medical" }) {
-  const [filters, setFilters] = useState<Filters>(initial), [applied, setApplied] = useState<Filters>(initial), [rows, setRows] = useState<Row[]>([]), [specialties, setSpecialties] = useState<Specialty[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState(""), [purpose, setPurpose] = useState("Gestión clínica"), [revision, setRevision] = useState(0), [period, setPeriod] = useState<Period | null>("MONTH");
-  const query = useMemo(() => {
-    const params = new URLSearchParams();
-    Object.entries(applied).forEach(([key, value]) => {
-      if (Array.isArray(value) ? value.length : value) params.set(key, Array.isArray(value) ? JSON.stringify(value) : value);
-    });
-    return params.toString();
-  }, [applied]);
-  useEffect(() => { let active = true; void apiJson<Row[]>("/api/reports/clinical?" + query).then((data) => { if (active) { setRows(data); setError(""); } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No se pudo generar el reporte."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [query, revision]);
-  useEffect(() => { let active = true; void apiJson<Specialty[]>("/api/specialties").then((data) => { if (active) setSpecialties(data); }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "No se pudieron cargar las especialidades."); }); return () => { active = false; }; }, []);
-  const change = <K extends keyof Filters>(key: K, value: Filters[K]) => { if (key === "from" || key === "to") setPeriod(null); setFilters((current) => ({ ...current, [key]: value })); };
-  const changeList = (key: "allergies" | "histories" | "habitTerms" | "positiveHabits", values: string[]) => setFilters((current) => ({ ...current, [key]: values }));
-  const apply = () => { setLoading(true); setApplied(filters); setRevision((value) => value + 1); };
-  const quick = (item: Period) => { const next = { ...filters, ...range(item) }; setPeriod(item); setFilters(next); setApplied(next); setLoading(true); setRevision((value) => value + 1); };
-  const report = async (format: "CSV" | "XLSX" | "PDF") => { try { await apiJson("/api/reports/clinical", { method: "POST", body: JSON.stringify({ format, rowCount: rows.length, filters: applied, purpose }) }); if (format === "CSV") download("reporte-clinico.csv", [headers, ...rowsToValues(rows)].map((line) => line.map((cell) => "\"" + String(cell).replaceAll("\"", "\"\"") + "\"").join(",")).join("\n"), "text/csv;charset=utf-8"); if (format === "XLSX") await excel(rows, applied, specialties, purpose); if (format === "PDF") await pdf(rows, applied, specialties, purpose); } catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo exportar el reporte."); } };
+export function ClinicalReportBuilder({scope}:{scope:"administrative"|"medical"}){
+  const [resetEpoch,setResetEpoch]=useState(0);
+  const [draft,setDraft]=useState<ReportOptions>(defaultOptions),[result,setResult]=useState<ReportResult|null>(null),[loading,setLoading]=useState(true);
+  const [specialties,setSpecialties]=useState<Specialty[]>([]),[catalogError,setCatalogError]=useState(""),[catalogLoading,setCatalogLoading]=useState(false);
+  const [error,setError]=useState(""),[expired,setExpired]=useState(false),[purpose,setPurpose]=useState("Gestión clínica"),[exporting,setExporting]=useState(false);
+  const [provenance,setProvenance]=useState<ExportRecord|null>(null);
+  const [exportError,setExportError]=useState(""),[exportExpired,setExportExpired]=useState(false),[receipt,setReceipt]=useState<ExportReceipt|null>(null);
+  const exportFeedback=useRef<HTMLParagraphElement>(null),exportRequest=useRef<AbortController|null>(null);
+  useEffect(()=>()=>exportRequest.current?.abort(),[]);
+  useEffect(()=>{if(exportError)exportFeedback.current?.focus();},[exportError]);
+  const request=useRef<AbortController|null>(null),lastAttempt=useRef(""),feedback=useRef<HTMLParagraphElement>(null),saving=useRef(false);
+  const fetchReport=useCallback(async(query:string,hydrate=false,receiptId:string|null=null)=>{
+    request.current?.abort();const controller=new AbortController();request.current=controller;lastAttempt.current=query;setReceipt(null);setProvenance(null);setExportError("");setExportExpired(false);setLoading(true);setResult(null);setError("");setExpired(false);
+    try{const response=await apiEnvelope<ReportResult>("/api/reports/clinical?"+query,{signal:controller.signal});if(controller.signal.aborted)return;
+      if(!Array.isArray(response.data)||!response.filters||!response.presentation)throw new Error("El servidor no devolvió el contrato completo del reporte.");
+      setResult(response);if(hydrate)setDraft(optionsFromQuery(query));
+      const location=new URLSearchParams(query);
+      if(receiptId){
+        location.set("exportId",receiptId);
+        try{const record=await apiJson<ExportRecord>(`/api/reports/clinical/exports/${encodeURIComponent(receiptId)}`,{signal:controller.signal});if(controller.signal.aborted)return;if(record.id!==receiptId||!Number.isInteger(record.rowCount)||record.rowCount<0||record.rowCount>10000)throw new Error("La constancia de exportación no es válida.");setProvenance(record);setPurpose(record.purpose);}
+        catch(cause){if(controller.signal.aborted)return;setExportError(cause instanceof Error?cause.message:"No se pudo recuperar la constancia de exportación.");setExportExpired(cause instanceof ApiRequestError&&cause.status===401);}
+      }
+      replaceUrl(window.location.pathname+"?"+location);
+    }catch(cause){if(controller.signal.aborted)return;setError(cause instanceof Error&&!(cause instanceof TypeError)?cause.message:"No se pudo consultar el reporte por un problema de conexión. Puedes reintentar.");setExpired(cause instanceof ApiRequestError&&cause.status===401);}
+    finally{if(!controller.signal.aborted)setLoading(false);}
+  },[]);
+  const fetchCatalog=useCallback(async()=>{setCatalogLoading(true);setCatalogError("");try{setSpecialties(await apiJson<Specialty[]>("/api/specialties"));}catch(cause){setCatalogError(cause instanceof Error?cause.message:"No se pudieron cargar las especialidades.");}finally{setCatalogLoading(false);}},[]);
+  useEffect(()=>{const timer=window.setTimeout(()=>{const initialQuery=new URLSearchParams(window.location.search);const receiptId=initialQuery.get("exportId");initialQuery.delete("exportId");const query=initialQuery.toString();const options=query?optionsFromQuery(query):defaultOptions();setDraft(options);void fetchReport(query?(()=>{const q=new URLSearchParams(query);if(!q.has("columns"))q.set("columns",JSON.stringify(options.columns));if(!q.has("groupBy"))q.set("groupBy","[]");return q.toString();})():optionsQuery(options),false,receiptId);void fetchCatalog();},0);return()=>{window.clearTimeout(timer);request.current?.abort();};},[fetchReport,fetchCatalog]);
+  useEffect(()=>{if(error)feedback.current?.focus();},[error]);
+  function filter<K extends keyof Filters>(key:K,value:Filters[K]){setDraft(d=>({...d,filters:{...d.filters,[key]:value}}));}
+  async function exportReport(format:ExportFormat){
+    if(!result||loading||saving.current)return;const controller=new AbortController();exportRequest.current=controller;saving.current=true;setExporting(true);setExportError("");setExportExpired(false);setReceipt(null);setProvenance(null);
+    try{const info=await downloadClinicalReport(result,format,purpose,controller.signal);if(!controller.signal.aborted){setReceipt(info);const location=new URL(window.location.href);location.searchParams.set("exportId",info.id);replaceUrl(location.pathname+location.search);}}
+    catch(cause){if(controller.signal.aborted)return;setExportError(cause instanceof Error&&!(cause instanceof TypeError)?cause.message:"No se pudo descargar el archivo por un problema de conexión. Puedes reintentar.");setExportExpired(cause instanceof ApiRequestError&&cause.status===401);}
+    finally{saving.current=false;exportRequest.current=null;if(!controller.signal.aborted)setExporting(false);}
+  }
+  const table=(rows:ReportResult["data"],key:string)=> <div key={key} className="relative overflow-x-auto focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-container" tabIndex={0} role="region" aria-label={`${key}, desplazable horizontalmente`}><table aria-label={key} className="w-full text-left text-sm"><thead><tr>{result?.presentation.columns.map(c=><th key={c} scope="col" className="whitespace-nowrap border-b border-divider px-3 py-3">{reportColumns[c]}</th>)}</tr></thead><tbody>{rows.map(row=><tr key={row.encounter_id} data-report-encounter-id={row.encounter_id}>{result?.presentation.columns.map(c=><td key={c} className="min-w-32 max-w-96 whitespace-pre-wrap border-b border-divider px-3 py-3">{reportCell(row,c)}</td>)}</tr>)}</tbody></table></div>;
   return <div className="space-y-6">
-    <header className="border-b border-divider pb-5"><p className="text-sm font-semibold tracking-wide text-primary">REPORTES CLÍNICOS</p><h1 className="mt-1 text-3xl font-bold text-text-primary">{scope === "administrative" ? "Reporte institucional" : "Mis reportes de atención"}</h1><p className="mt-2 max-w-3xl text-text-secondary">Busca coincidencias parciales en diagnósticos, alergias, antecedentes, síntomas, hábitos y actividad. Las descargas quedan auditadas.</p></header>
-    <section className="rounded-2xl border border-divider bg-surface p-5"><p className="text-sm font-semibold text-text-primary">Períodos rápidos</p><p className="mt-1 text-sm text-text-secondary">Elige mes, semestre o año; los demás filtros se conservan.</p><div className="mt-3 flex flex-wrap gap-2">{(Object.keys(periods) as Period[]).map((item) => <button key={item} type="button" aria-pressed={period === item} onClick={() => quick(item)} className={"rounded-lg border px-3 py-2 text-sm font-semibold " + (period === item ? "border-primary bg-primary text-on-primary" : "border-divider bg-surface text-text-primary hover:border-primary")}>{periods[item]}</button>)}</div>
-      <div className="mt-5 grid gap-4 md:grid-cols-3"><Field label="Desde" type="date" value={filters.from} onChange={(value) => change("from", value)} /><Field label="Hasta" type="date" value={filters.to} onChange={(value) => change("to", value)} /><Select label="Tipo" value={filters.encounterType} onChange={(value) => change("encounterType", value)} options={[["", "Todos"], ["INITIAL", "Revisión"], ["SPECIALTY", "Especialidad"]]} /><Select label="Especialidad" value={filters.specialtyId} onChange={(value) => change("specialtyId", value)} options={[["", "Todas"], ...specialties.map((item) => [item.id, item.name])]} /><Field label="Diagnóstico" value={filters.diagnosis} onChange={(value) => change("diagnosis", value)} /><CriteriaField label="Alergias" values={filters.allergies} onChange={(values) => changeList("allergies", values)} placeholder="Ej. penicilina" /><CriteriaField label="Antecedentes, cirugías o medicamentos" values={filters.histories} onChange={(values) => changeList("histories", values)} placeholder="Ej. asma, apendicectomía" /><CriteriaField label="Hábitos, actividad o alimentación" values={filters.habitTerms} onChange={(values) => changeList("habitTerms", values)} placeholder="Ej. actividad física, alimentación" /><CriteriaSelect label="Hábitos afirmativos" values={filters.positiveHabits} onChange={(values) => changeList("positiveHabits", values)} options={[["tobacco", "Tabaco"], ["alcohol", "Alcohol"], ["physicalActivity", "Actividad física"]]} /><Field label="Buscar en la atención" value={filters.search} onChange={(value) => change("search", value)} placeholder="Síntoma, tratamiento, antecedente…" /><Field label="Finalidad de exportación" value={purpose} onChange={setPurpose} /></div>
-      <div className="mt-5 flex gap-3"><button type="button" onClick={apply} className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-on-primary">Aplicar filtros</button><button type="button" onClick={() => { setFilters(initial); setApplied(initial); setPeriod("MONTH"); setLoading(true); setRevision((value) => value + 1); }} className="rounded-lg px-4 py-3 text-sm font-semibold text-primary hover:bg-primary-container">Restablecer</button></div>
-    </section>
-    {error && <p className="rounded-lg bg-error-container p-4 text-sm text-error">{error}</p>}
-    <section className="rounded-2xl border border-divider bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-semibold tracking-wide text-primary">RESULTADO APLICADO</p><p className="mt-1 text-xl font-bold text-text-primary">{loading ? "Actualizando reporte…" : rows.length + " atención(es) encontradas"}</p><p className="mt-1 text-sm text-text-secondary">Del {formatDate(applied.from)} al {formatDate(applied.to)}</p></div><div className="flex gap-2"><button onClick={() => void report("CSV")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">CSV</button><button onClick={() => void report("XLSX")} disabled={!rows.length || loading} className="rounded-lg border border-divider px-3 py-2 text-sm disabled:opacity-50">Excel</button><button onClick={() => void report("PDF")} disabled={!rows.length || loading} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50">PDF</button></div></div>
-      <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[1200px] text-left text-sm"><thead className="border-b border-divider text-text-secondary"><tr>{headers.slice(0, 9).map((header) => <th key={header} className="px-3 py-3">{header}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.encounter_id} className="border-b border-divider"><td className="px-3 py-3">{closedDate(row.closed_at)}</td><td className="px-3 py-3 font-semibold">{row.patient_name}</td><td className="px-3 py-3">{row.carnet}</td><td className="px-3 py-3">{row.encounter_type === "INITIAL" ? "Revisión" : "Especialidad"}</td><td className="px-3 py-3">{row.specialty_name ?? "—"}</td><td className="px-3 py-3">{row.diagnoses || "—"}</td><td className="px-3 py-3">{row.allergies || "—"}</td><td className="max-w-72 px-3 py-3">{row.background_summary || "—"}</td><td className="max-w-64 px-3 py-3">{habitText(row.habits) || "—"}</td></tr>)}{!loading && !rows.length && <tr><td colSpan={9} className="px-3 py-12 text-center text-text-secondary">No hay atenciones para estos filtros.</td></tr>}</tbody></table>{loading && <p className="py-8 text-center text-sm text-text-secondary">Actualizando atenciones…</p>}</div>
-    </section>
+    <header><h1 className="text-3xl font-bold">{scope==="medical"?"Mis reportes de atención":"Reporte institucional"}</h1><p className="mt-2">Consulta atenciones cerradas con los datos históricos permitidos por tu rol. Los criterios de cada lista se combinan: se deben cumplir todos.</p></header>
+    <form key={resetEpoch} aria-label="Construir reporte clínico" onSubmit={event=>{event.preventDefault();void fetchReport(optionsQuery(draft));}} className="rounded-2xl border border-divider bg-surface p-5">
+      <fieldset disabled={loading||exporting} className="space-y-5"><legend className="font-semibold">Filtros y presentación</legend>
+        <div className="flex flex-wrap gap-2">{Object.entries(periods).map(([key,label])=><button key={key} type="button" onClick={()=>{const next={...draft,filters:{...draft.filters,...dateRange(key as keyof typeof periods)}};setDraft(next);void fetchReport(optionsQuery(next));}} className="rounded-lg border border-divider px-3 py-2">{label}</button>)}</div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Field label="Desde" type="date" value={draft.filters.from} onChange={v=>filter("from",v)}/><Field label="Hasta" type="date" value={draft.filters.to} onChange={v=>filter("to",v)}/>
+          <Select label="Tipo" value={draft.filters.encounterType} onChange={v=>filter("encounterType",v)} options={[["","Todos"],["INITIAL","Revisión"],["SPECIALTY","Especialidad"]]}/>
+          <Select label="Especialidad" value={draft.filters.specialtyId} onChange={v=>filter("specialtyId",v)} options={[["","Todas"],...specialties.map(s=>[s.id,s.name])]}/>
+          <Field label="Diagnóstico" value={draft.filters.diagnosis} onChange={v=>filter("diagnosis",v)}/>
+          <CriteriaField label="Alergias" values={draft.filters.allergies} onChange={v=>filter("allergies",v)}/>
+          <CriteriaField label="Antecedentes, cirugías o medicamentos" values={draft.filters.histories} onChange={v=>filter("histories",v)}/>
+          <CriteriaField label="Hábitos, actividad o alimentación" values={draft.filters.habitTerms} onChange={v=>filter("habitTerms",v)}/>
+          <fieldset className="space-y-2"><legend>Hábitos afirmativos</legend>{[["tobacco","Tabaco"],["alcohol","Alcohol"],["physicalActivity","Actividad física"]].map(([key,label])=><label key={key} className="mr-3 inline-flex gap-2"><input type="checkbox" checked={draft.filters.positiveHabits.includes(key)} onChange={e=>filter("positiveHabits",e.target.checked?[...draft.filters.positiveHabits,key]:draft.filters.positiveHabits.filter(h=>h!==key))}/>{label}</label>)}</fieldset>
+          <Field label="Buscar en la atención" value={draft.filters.search} onChange={v=>filter("search",v)}/>
+        </div>
+        {catalogLoading&&<p role="status">Cargando especialidades…</p>}{catalogError&&<p role="alert" className="text-error">{catalogError} <button type="button" onClick={()=>void fetchCatalog()} className="underline">Reintentar especialidades</button></p>}
+        <fieldset className="flex flex-wrap gap-4"><legend className="mb-2 font-semibold">Columnas del reporte</legend>{Object.entries(reportColumns).map(([key,label])=><label key={key} className="inline-flex gap-2"><input type="checkbox" checked={draft.columns.includes(key)} onChange={e=>setDraft(d=>({...d,columns:e.target.checked?[...d.columns,key]:d.columns.filter(c=>c!==key)}))}/>{label}</label>)}</fieldset>
+        <div className="grid gap-4 md:grid-cols-2"><Select label="Agrupar por" value={draft.groupBy[0]??""} onChange={v=>setDraft(d=>({...d,groupBy:v?[v]:[]}))} options={[["","Sin agrupación"],...Object.entries(groupDimensions)]}/><Select disabled={!draft.groupBy.length} label="Segunda agrupación" value={draft.groupBy[1]??""} onChange={v=>setDraft(d=>({...d,groupBy:d.groupBy[0]?[d.groupBy[0],...(v?[v]:[])]:[]}))} options={[["","Ninguna"],...Object.entries(groupDimensions).filter(([key])=>key!==draft.groupBy[0])]}/></div>
+        <div className="flex gap-3"><button type="submit" className="rounded-lg bg-primary px-5 py-3 font-bold text-on-primary">Aplicar filtros</button><button type="button" onClick={()=>{const next=defaultOptions();setResetEpoch(n=>n+1);setDraft(next);void fetchReport(optionsQuery(next));}} className="rounded-lg border border-primary px-4 py-3">Restablecer</button></div>
+      </fieldset>
+    </form>
+    {error&&<p ref={feedback} tabIndex={-1} role="alert" className="rounded-lg bg-error-container p-4 text-error">{error}</p>}
+    {expired&&<Link href="/iniciar-sesion?error=session" target="_blank" rel="noopener" className="block font-semibold text-primary">Iniciar sesión en otra pestaña y conservar los filtros</Link>}
+    {!loading&&error&&<button type="button" onClick={()=>void fetchReport(lastAttempt.current)} className="rounded-lg border border-primary px-4 py-2">Reintentar reporte</button>}
+    {loading&&<p role="status">Actualizando reporte…</p>}
+    {result&&!loading&&<section aria-label="Resultado aplicado" className="space-y-4 rounded-2xl border border-divider bg-surface p-5">
+      <h2 className="text-xl font-bold">{result.data.length} atención(es) encontradas</h2><p>Desde {result.filters.from||"Últimos 30 días"} hasta {result.filters.to||"Hoy"} · Columnas: {result.presentation.columns.map(c=>reportColumns[c]).join(", ")}</p>
+      <p>Filtros aplicados: {[result.filters.diagnosis,...result.filters.allergies??[],...result.filters.histories??[],...result.filters.habitTerms??[],result.filters.search].filter(Boolean).join(" · ")||"Sin criterios de texto"}</p>
+      {!result.data.length?<p>No hay atenciones para estos filtros.</p>:result.presentation.groupBy.length?result.presentation.groups.map((group,i)=><section key={i} aria-label={"Grupo "+(i+1)}><h3 className="my-3 font-semibold">{group.key.map((value,j)=>groupDimensions[result.presentation.groupBy[j]]+": "+(value===null?"Sin especialidad":value==="INITIAL"?"Revisión":value==="SPECIALTY"?"Especialidad":value)).join(" · ")} · {group.count} atención(es)</h3>{table(group.encounterIds.flatMap(id=>result.data.find(r=>r.encounter_id===id)??[]),"Detalle del grupo "+(i+1))}</section>):table(result.data,"Atenciones del reporte")}
+      <form aria-label="Exportar reporte clínico" aria-busy={exporting} onSubmit={event=>{event.preventDefault();const format=(event.nativeEvent as SubmitEvent).submitter?.getAttribute("value");if(format==="CSV"||format==="XLSX"||format==="PDF")void exportReport(format);}} className="space-y-3 border-t border-divider pt-4">
+        <fieldset disabled={exporting} className="space-y-3"><Field label="Finalidad de exportación" value={purpose} onChange={value=>{setPurpose(value);setReceipt(null);}}/>
+        <p className="text-sm">Se verifican los permisos y las atenciones al descargar. El archivo respeta las columnas y agrupaciones aplicadas; la cantidad puede variar si hubo cambios.</p>
+        <div className="flex gap-3">{(["CSV","XLSX","PDF"] as const).map(format=><button key={format} type="submit" value={format} className="rounded-lg border border-primary px-3 py-2 disabled:opacity-50">{format==="XLSX"?"Excel":format}</button>)}</div></fieldset>
+        {exporting&&<p role="status">Preparando archivo completo…</p>}
+        {exportError&&<p ref={exportFeedback} tabIndex={-1} role="alert" className="rounded-lg bg-error-container p-4 text-error">{exportError}</p>}
+        {exportExpired&&<Link href="/iniciar-sesion?error=session" target="_blank" rel="noopener" className="block font-semibold text-primary">Iniciar sesión en otra pestaña y conservar la finalidad</Link>}
+        {provenance&&<p role="status">Última exportación registrada: {provenance.format} · {provenance.state==="COMPLETED"?"Archivo generado":"Generación fallida"} · {provenance.rowCount} atención(es). Finalidad: {provenance.purpose}.</p>}
+        {receipt&&<p role="status">Archivo {receipt.format} preparado con {receipt.rowCount} atención(es). Revisa las descargas del navegador.</p>}
+      </form>
+    </section>}
   </div>;
 }
-function CriteriaField({ label, values, onChange, placeholder }: { label: string; values: string[]; onChange: (values: string[]) => void; placeholder: string }) {
-  const [draft, setDraft] = useState("");
-  const add = () => {
-    const next = draft.trim();
-    if (!next || values.some((value) => value.toLocaleLowerCase() === next.toLocaleLowerCase())) return;
-    onChange([...values, next]); setDraft("");
-  };
-  return <label><span className="text-sm font-semibold">{label}</span><div className="mt-2 rounded-lg border border-divider p-2"><div className="flex gap-2"><input value={draft} placeholder={placeholder} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); add(); } }} className="min-w-0 flex-1 px-1 py-1 outline-none" /><button type="button" onClick={add} className="rounded-md bg-primary px-3 py-1 text-sm font-bold text-on-primary" aria-label={"Agregar " + label}>+</button></div>{values.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{values.map((value) => <span key={value} className="inline-flex items-center gap-1 rounded-full bg-primary-container px-2 py-1 text-xs text-text-primary">{value}<button type="button" onClick={() => onChange(values.filter((item) => item !== value))} className="font-bold text-primary" aria-label={"Quitar " + value}>×</button></span>)}</div>}</div><span className="mt-1 block text-xs text-text-secondary">Agrega todos los criterios necesarios. Se deben cumplir todos.</span></label>;
+function CriteriaField({label,values,onChange}:{label:string;values:string[];onChange:(v:string[])=>void}){
+  const [draft,setDraft]=useState("");const add=()=>{const value=draft.trim();if(!value||values.includes(value))return;onChange([...values,value]);setDraft("");};
+  return <div className="space-y-2"><label className="block">{label}<input maxLength={200} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();add();}}} className="mt-2 block w-full rounded-lg border border-divider px-3 py-2"/></label><button type="button" aria-label={"Agregar "+label} onClick={add} disabled={values.length>=15} className="rounded-lg border border-divider px-3 py-1">Agregar</button><p className="text-xs text-text-secondary">Pulsa Agregar o Enter para incluir cada criterio.</p><ul>{values.map(v=><li key={v}>{v} <button type="button" aria-label={"Quitar "+v} onClick={()=>onChange(values.filter(x=>x!==v))}>×</button></li>)}</ul></div>;
 }
-function CriteriaSelect({ label, values, onChange, options }: { label: string; values: string[]; onChange: (values: string[]) => void; options: string[][] }) {
-  const [draft, setDraft] = useState("");
-  const labels = Object.fromEntries(options);
-  const add = () => { if (draft && !values.includes(draft)) onChange([...values, draft]); setDraft(""); };
-  return <label><span className="text-sm font-semibold">{label}</span><div className="mt-2 rounded-lg border border-divider p-2"><div className="flex gap-2"><select value={draft} onChange={(event) => setDraft(event.target.value)} className="min-w-0 flex-1 px-1 py-1 outline-none"><option value="">Selecciona un hábito</option>{options.filter(([id]) => !values.includes(id)).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select><button type="button" onClick={add} disabled={!draft} className="rounded-md bg-primary px-3 py-1 text-sm font-bold text-on-primary disabled:opacity-50" aria-label={"Agregar " + label}>+</button></div>{values.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{values.map((value) => <span key={value} className="inline-flex items-center gap-1 rounded-full bg-primary-container px-2 py-1 text-xs text-text-primary">{labels[value] ?? value}<button type="button" onClick={() => onChange(values.filter((item) => item !== value))} className="font-bold text-primary" aria-label={"Quitar " + (labels[value] ?? value)}>×</button></span>)}</div>}</div><span className="mt-1 block text-xs text-text-secondary">La atención debe declarar “sí” en cada hábito seleccionado.</span></label>;
-}
-function Field({ label, type = "text", value, onChange, placeholder }: { label: string; type?: string; value: string; onChange: (value: string) => void; placeholder?: string }) { return <label><span className="text-sm font-semibold">{label}</span><input type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-divider px-3 py-2" /></label>; }
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <label><span className="text-sm font-semibold">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-divider px-3 py-2">{options.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>; }
+function Field({label,type="text",value,onChange}:{label:string;type?:string;value:string;onChange:(v:string)=>void}){return <label className="block">{label}<input required={label==="Finalidad de exportación"} type={type} value={value} maxLength={type==="date"?undefined:label==="Finalidad de exportación"?300:200} onChange={e=>onChange(e.target.value)} className="mt-2 block w-full rounded-lg border border-divider px-3 py-2"/></label>;}
+function Select({label,value,onChange,options,disabled=false}:{label:string;value:string;onChange:(v:string)=>void;options:string[][];disabled?:boolean}){return <label className="block">{label}<select disabled={disabled} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 block w-full rounded-lg border border-divider px-3 py-2">{options.map(([key,text])=><option key={key} value={key}>{text}</option>)}</select></label>;}

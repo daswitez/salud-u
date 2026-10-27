@@ -11,6 +11,18 @@ async function run(){
   const browser=await chromium.launch({headless:true,...(process.env.FE13_CHROMIUM?{executablePath:process.env.FE13_CHROMIUM}:{})});
   const results=[],traffic=[],encounters=[],referrals=[],cleanup=[];let admin,restoreSpecialty;
   const record=message=>{results.push(message);console.log("PASS "+message);};
+  // Cupos en horas distintas dentro de la corrida; ante 409 (superposición con datos de corridas previas) prueba la hora siguiente.
+  let nextSlotAt=0;
+  async function publishSlot(context,starts,extra={}){
+    starts=Math.max(starts,nextSlotAt);
+    for(let attempt=0;attempt<500;attempt++,starts+=3600000){
+      const token=(await (await context.request.get(origin+"/api/v1/security/csrf")).json()).data;
+      const response=await context.request.post(origin+"/api/availability-slots",{data:{startsAt:new Date(starts).toISOString(),endsAt:new Date(starts+1800000).toISOString(),capacity:1,...extra},headers:{[token.headerName]:token.token}});
+      if(response.status()===201){nextSlotAt=starts+3600000;return (await response.json()).data.id;}
+      assert.equal(response.status(),409,await response.text());
+    }
+    throw new Error("No se encontró un horario libre para el cupo de prueba.");
+  }
   async function api(context,path,method="GET",data,expected=200){
     const headers={};if(method!=="GET"){const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[csrf.headerName]=csrf.token;}
     const response=await context.request.fetch(origin+path,{method,data,headers});const body=response.status()===204?null:await response.json();assert.equal(response.status(),expected,method+" "+path+" "+JSON.stringify(body));return body;
@@ -35,7 +47,7 @@ async function run(){
     const specialty=(await api(admin,"/api/v1/admin/catalogs/SPECIALTY","POST",{code:"FE13_"+seed,name:"Especialidad FE13 "+seed,active:true})).data;
     async function fixture(pid=patientId){
       let starts=Date.now()+160*86400000;const slots=(await api(admin,"/api/availability-slots")).data;while(slots.some(s=>starts<Date.parse(s.endsAt)&&starts+1800000>Date.parse(s.startsAt)))starts+=3600000;
-      const slotId=(await api(doctor,"/api/availability-slots","POST",{startsAt:new Date(starts).toISOString(),endsAt:new Date(starts+1800000).toISOString(),capacity:1},201)).data.id;
+      const slotId=await publishSlot(doctor,starts);
       const requestId=(await api(admin,"/api/appointment-requests","POST",{patientId:pid},201)).data.id;
       const appointmentId=(await api(admin,"/api/appointment-requests/"+requestId+"/assign","POST",{slotId})).data.appointmentId;cleanup.push(appointmentId);
       const encounterId=(await api(doctor,"/api/medical/appointments/"+appointmentId+"/start","POST",undefined,201)).data.encounterId;const item={appointmentId,encounterId,patientId:pid};encounters.push(item);return item;

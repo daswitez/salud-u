@@ -1,2 +1,4 @@
-import { AdminModuleShell } from "@/components/admin-module-shell";
-export default function AdminIncidentsPage() { return <AdminModuleShell active="demand" title="Incidencias operativas" description="Alertas que requieren revisión en los módulos administrativos correspondientes." items={[{ title: "Ausencia pendiente", detail: "Dra. Andrea C. · jueves 14:00–18:00", status: "Pendiente" }, { title: "Capacidad insuficiente", detail: "Especialidad 2 con demanda alta y déficit de cupos", status: "Revisar" }]} />; }
+import { redirect } from "next/navigation";
+
+/** Incidencias de demostración retiradas en FE-CORTE: sin requisito ni backend. */
+export default function LegacyIncidentsPage() { redirect("/administrativo"); }

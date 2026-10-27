@@ -141,7 +141,7 @@ export type ClinicalEncounter = {
   bloodChemistryStatus: "ATTACHED" | "PENDING" | "NOT_PRESENTED";
   closedAt?: string;
   amendmentOfId?: string;
-  specialtyData?: Record<string, any>;
+  specialtyData?: Record<string, unknown>;
 };
 
 export type Referral = {

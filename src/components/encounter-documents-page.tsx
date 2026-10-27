@@ -9,7 +9,7 @@ export function EncounterDocumentsPage({ appointmentId }: { appointmentId: strin
   const [appointment, setAppointment] = useState<MedicalAppointment | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
-    try { const appointments = await apiJson<MedicalAppointment[]>("/api/medical/appointments"); const current = appointments.find(item => item.id === appointmentId); if (!current?.encounter || !current.patient) throw new Error("No se encontró una atención iniciada y asignada a tu cuenta."); setAppointment(current); setError(""); }
+    try { const current = await apiJson<MedicalAppointment>(`/api/medical/appointments/${appointmentId}`); if (!current.encounter || !current.patient) throw new Error("No se encontró una atención iniciada y asignada a tu cuenta."); setAppointment(current); setError(""); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "No se pudo consultar la atención."); }
     finally { setLoading(false); }
   }, [appointmentId]);

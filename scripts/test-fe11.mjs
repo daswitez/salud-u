@@ -18,6 +18,18 @@ async function run() {
   assert(["127.0.0.1","localhost"].includes(new URL(origin).hostname)); mkdirSync(artifacts,{recursive:true});
   const browser=await chromium.launch({headless:true,...(process.env.FE11_CHROMIUM?{executablePath:process.env.FE11_CHROMIUM}:{})});
   const traffic=[],results=[],checksums=[],cleanup=[];let admin;
+  // Cupos en horas distintas dentro de la corrida; ante 409 (superposición con datos de corridas previas) prueba la hora siguiente.
+  let nextSlotAt=0;
+  async function publishSlot(context,starts,extra={}){
+    starts=Math.max(starts,nextSlotAt);
+    for(let attempt=0;attempt<500;attempt++,starts+=3600000){
+      const token=(await (await context.request.get(origin+"/api/v1/security/csrf")).json()).data;
+      const response=await context.request.post(origin+"/api/availability-slots",{data:{startsAt:new Date(starts).toISOString(),endsAt:new Date(starts+1800000).toISOString(),capacity:1,...extra},headers:{[token.headerName]:token.token}});
+      if(response.status()===201){nextSlotAt=starts+3600000;return (await response.json()).data.id;}
+      assert.equal(response.status(),409,await response.text());
+    }
+    throw new Error("No se encontró un horario libre para el cupo de prueba.");
+  }
   async function api(context,path,method="GET",data,expected=200){
     const headers={};if(method!=="GET"){const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[csrf.headerName]=csrf.token;}
     const response=await context.request.fetch(origin+path,{method,data,headers});const payload=response.status()===204?null:await response.json();assert.equal(response.status(),expected,method+" "+path+" "+JSON.stringify(payload));return payload;
@@ -39,7 +51,7 @@ async function run() {
     async function fixture(actor,specialtyId=null){
       let starts=Date.now()+110*86400000;const slots=(await api(admin,"/api/availability-slots")).data;
       while(slots.some(s=>starts<Date.parse(s.endsAt)&&starts+1800000>Date.parse(s.startsAt)))starts+=3600000;
-      const slotId=(await api(actor,"/api/availability-slots","POST",{startsAt:new Date(starts).toISOString(),endsAt:new Date(starts+1800000).toISOString(),capacity:1,specialtyId},201)).data.id;
+      const slotId=await publishSlot(actor,starts,{specialtyId});
       const requestId=(await api(admin,"/api/appointment-requests","POST",specialtyId?{patientId,appointmentType:"SPECIALTY",specialtyId}:{patientId},201)).data.id;
       const appointmentId=(await api(admin,"/api/appointment-requests/"+requestId+"/assign","POST",{slotId})).data.appointmentId;cleanup.push(appointmentId);
       const encounterId=(await api(actor,"/api/medical/appointments/"+appointmentId+"/start","POST",undefined,201)).data.encounterId;return {appointmentId,encounterId};

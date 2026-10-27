@@ -116,7 +116,7 @@ async function getCsrfToken(refresh = false): Promise<CsrfToken> {
   }
 }
 
-async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = true): Promise<T> {
+async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = true, envelope = false): Promise<T> {
   const method = (options?.method ?? "GET").toUpperCase();
   const headers = new Headers(options?.headers);
   if (options?.body && !isFormData(options.body) && !headers.has("Content-Type")) {
@@ -138,10 +138,10 @@ async function requestJson<T>(url: string, options?: RequestInit, retryCsrf = tr
   if (response.status === 403 && retryCsrf && (response.headers.get("X-Error-Code") === "CSRF_INVALID" || errorFromPayload(response.status, payload).code === "CSRF_INVALID")) {
     csrfToken = null;
     await getCsrfToken(true);
-    return requestJson<T>(url, options, false);
+    return requestJson<T>(url, options, false, envelope);
   }
   if (!response.ok || !payload.ok) throw errorFromPayload(response.status, payload);
-  return payload.data as T;
+  return (envelope ? payload : payload.data) as T;
 }
 
 /** Client-side JSON request with same-origin cookies, CSRF and both error contracts. */
@@ -154,6 +154,32 @@ export function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
   }
   return requestJson<unknown>(url, request).then(data =>
     (url.startsWith("/api/medical/") || url.startsWith("/api/reports/clinical") ? clinicalPayload(data, false, background) : data) as T);
+}
+
+/** Preserve top-level metadata such as report filters/presentation. */
+export function apiEnvelope<T>(url: string, options?: RequestInit): Promise<T> {
+  return requestJson<unknown>(url, options, true, true).then(payload => clinicalPayload(payload, false) as T);
+}
+
+/** Private binary GET with the same session and error contracts as JSON requests. */
+export async function apiFile(url: string, signal?: AbortSignal): Promise<Response> {
+  const response = await fetch(url, { credentials: "same-origin", cache: "no-store", signal });
+  if (!response.ok) throw errorFromPayload(response.status, await jsonPayload(response));
+  return response;
+}
+
+/** Binary requests share cookies, CSRF and both error contracts. CSRF retry occurs before business execution only. */
+export async function apiBinary(url: string, options: RequestInit, retryCsrf = true): Promise<Response> {
+  const method = (options.method ?? "GET").toUpperCase(), headers = new Headers(options.headers);
+  if (options.body && !isFormData(options.body)) headers.set("Content-Type", "application/json");
+  if (isMutation(method)) { const csrf = await getCsrfToken(); headers.set(csrf.headerName, csrf.token); }
+  const response = await fetch(url, { ...options, method, headers, credentials: "same-origin", cache: "no-store" });
+  if (response.ok) return response;
+  const error = errorFromPayload(response.status, await jsonPayload(response));
+  if (response.status === 403 && retryCsrf && (response.headers.get("X-Error-Code") === "CSRF_INVALID" || error.code === "CSRF_INVALID")) {
+    csrfToken = null; await getCsrfToken(true); return apiBinary(url, options, false);
+  }
+  throw error;
 }
 
 /** Health is intentionally not an ApiEnvelope: it is the public Spring probe. */
