@@ -56,7 +56,7 @@ try{
  const anon=await browser.newContext();assert.equal((await anon.request.get(origin+'/api/vaccines')).status(),401);assert.equal((await api(admin,'/api/vaccines')).data.find(v=>v.id===id).name,'Cambio concurrente '+seed);
  const denied=await reporter.newPage();await denied.goto(origin+'/administrativo/vacunas');await denied.getByText('No tienes permiso para gestionar el catálogo de vacunas.',{exact:true}).waitFor();assert.equal(await denied.locator('[data-vaccine-id]').count(),0);
  const blocked=await student.newPage();await blocked.goto(origin+'/administrativo/vacunas');await blocked.waitForURL(u=>!u.pathname.startsWith('/administrativo'));
- const events=sql(`SELECT string_agg(accion,',' ORDER BY ocurrido_en) FROM salud_u.evento_auditoria WHERE id_recurso=${uuid(id)} AND tipo_recurso='vaccine';`);assert.equal(events,'VACCINE_CREATED,VACCINE_UPDATED,VACCINE_UPDATED,VACCINE_UPDATED,VACCINE_UPDATED');
+ const events=sql(`SELECT string_agg(accion,',' ORDER BY ocurrido_en) FROM salud_u.evento_auditoria WHERE id_recurso=${uuid(id)} AND tipo_recurso='vacuna';`);assert.equal(events,'VACUNA_CREADA,VACUNA_ACTUALIZADA,VACUNA_ACTUALIZADA,VACUNA_ACTUALIZADA,VACUNA_ACTUALIZADA');
  pass('Solo Administrativo lee o escribe; médico, estudiante, Reportes y anónimo rechazados sin cambios; pantallas restringidas y cada cambio auditado');
  const vaccineTraffic=traffic.filter(t=>t.url.includes('/vaccines'));assert(vaccineTraffic.length>0&&vaccineTraffic.every(t=>t.url.startsWith(origin+'/api/vaccines')));assert(!traffic.some(t=>/supabase/i.test(t.url)));
  await page.reload();await row(marker).waitFor();await page.screenshot({path:artifacts+'/vacunas.png',fullPage:true});

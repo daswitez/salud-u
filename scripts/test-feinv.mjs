@@ -56,7 +56,7 @@ try{
  const constancy=result.getByRole('definition');await constancy.filter({hasText:purpose}).waitFor();await constancy.filter({hasText:'Carrera: Carrera '+marker}).waitFor();await constancy.filter({hasText:'CSV · 2 atención(es)'}).waitFor();await constancy.filter({hasText:'MONTHLY-V1 · mes '+month}).waitFor();
  const stored=sql(`SELECT finalidad||'|'||formato||'|'||cantidad_filas||'|'||checksum_sha256||'|'||mes_politica||'|'||(filtros->>'careerId') FROM salud_u.exportacion_investigacion WHERE id=${uuid(csv.id)} AND id_solicitante=${uuid(reporter.id)};`);
  assert.equal(stored,[purpose,'CSV',2,csv.headers['x-content-sha256'],month,career].join('|'));
- assert.equal(sql(`SELECT count(*) FROM salud_u.evento_auditoria WHERE accion='RESEARCH_EXPORT_COMPLETED' AND id_recurso=${uuid(csv.id)} AND id_actor=${uuid(reporter.id)} AND detalles->>'purpose'=$$${purpose}$$;`),'1');
+ assert.equal(sql(`SELECT count(*) FROM salud_u.evento_auditoria WHERE accion='EXPORTACION_INVESTIGACION_COMPLETADA' AND id_recurso=${uuid(csv.id)} AND id_actor=${uuid(reporter.id)} AND detalles->>'purpose'=$$${purpose}$$;`),'1');
  await rp.reload();await constancy.filter({hasText:purpose}).waitFor();assert.equal(await form.getByRole('combobox',{name:/^Carrera/}).inputValue(),career);assert.equal(await form.getByLabel('Atenciones desde').inputValue(),from);assert(new URL(rp.url()).searchParams.get('exportId')===csv.id);
  pass('Reportes llega desde la navegación, ve el modo seudonimizado sin aprobación previa, envía finalidad/filtros/formato con teclado y descarga ZIP íntegro (SHA-256) con datos y diccionario; columnas permitidas, edad en rangos, mes, sin carnet/registro/nombres/correo/UUID/diagnóstico/lote; constancia confirmada y persistida tras recargar');
 

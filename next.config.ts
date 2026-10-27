@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     // se migran una a una para no desviar tráfico serverless prematuramente.
     return {
       beforeFiles: [
+        { source: "/api/notifications", destination: `${backendOrigin}/api/notifications` },
+        { source: "/api/notifications/:notificationId/read", destination: `${backendOrigin}/api/notifications/:notificationId/read` },
+        { source: "/api/me/notification-preferences", destination: `${backendOrigin}/api/me/notification-preferences` },
         { source: "/api/audit-events", destination: `${backendOrigin}/api/audit-events` },
         { source: "/api/vaccines", destination: `${backendOrigin}/api/vaccines` },
         { source: "/api/vaccines/:vaccineId", destination: `${backendOrigin}/api/vaccines/:vaccineId` },

@@ -542,3 +542,21 @@ Trabajar exclusivamente en `codigo/salud-u`, rama `backend`; verificar `git bran
 ## Definición de terminado del frontend
 
 Historia backend aprobada + consumo API conectado + carga/vacío/error/permisos + recorrido de caso principal y alternativas + comprobación de datos al recargar + pruebas del proyecto + ausencia de Supabase en el flujo migrado. El cierre se registra por historia, con evidencia; no se considera cumplido porque la pantalla cargue datos simulados.
+
+## Compatibilidad con la traducción de la base — ES-08
+
+**Estado (26/10/2026): validada localmente contra V79.** Auditoría muestra los códigos actuales en español; conserva etiquetas y filtros HTTP de resultado. Ayuda de filtros y aviso de historia inmutable actualizados. Regresión Chromium FE-24 aprobada y comprobación adicional del código fuente actualizado: 25 eventos y mismos IDs usando filtros históricos o actuales. Typecheck y lint de los cambios aprobados. Las aserciones SQL de auditoría de los scripts existentes se adaptaron a los códigos nuevos.
+
+Evidencia y alcance de la comprobación: [ES-08 · Auditoría con códigos en español](evidencia-es08-auditoria.md).
+
+## Compatibilidad con nombres SQL y cierre — ES-09/ES-10
+
+**Estado (26/10/2026): validada contra V81.** Los ajustes de nombres y códigos internos se resolvieron en Java conservando HTTP. `scripts/test-es10.mjs` aprobó el login y recorrido de nueve vistas de los seis roles, pacientes/derivaciones, agenda/horarios, carnet, reportes/CSV y auditoría; permisos cruzados 403, vacuna duplicada 409 y logout 401. Typecheck, lint del script y diff check aprobados. No se modifican pantallas para adaptar nombres internos de SQL. Es un recorrido automatizado del agente, sin sustituir validación humana ni SUS.
+
+Evidencia: [ES-10 · Cierre por rol](evidencia-es10-cierre.md).
+
+## Incremento 7 — N-02 · Acceso por proxy a la API de bandeja
+
+**Estado (27/10/2026): proxy preparado y validado contra V83.** Reglas de notificaciones, lectura y preferencias en next.config.ts, sin lógica de dominio en Next. `scripts/test-n02.mjs` aprobó sesiones reales, CSRF, paginación/contador, 404 sin fuga y preferencias aisladas en una instancia temporal con la configuración actualizada. Typecheck, lint y diff check aprobados. Esa instancia se detuvo; el servidor ya compilado necesita recompilarse/reiniciarse para activar las reglas nuevas. F-01/F-02 aún deben construir la interfaz.
+
+Evidencia: [N-02 · API de bandeja](evidencia-n02-api.md).
