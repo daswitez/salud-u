@@ -1,3 +1,4 @@
+import { segundoFactorEnPagina } from "./lib/segundo-factor.mjs";
 // ES-10: recorrido local por los seis roles con sesión Spring y contratos HTTP estables.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
@@ -12,7 +13,7 @@ async function api(context,path,method='GET',data,status=200){
 }
 async function session(role,email){
  const context=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1440,height:1000}});
- const page=await context.newPage();await page.goto(origin+'/iniciar-sesion');await page.getByLabel(/Correo/i).fill(email);await page.getByLabel(/Contraseña/i).fill(password);await page.getByRole('button',{name:/Iniciar sesión|Ingresar/}).click();await page.waitForURL(url=>!url.pathname.startsWith('/iniciar-sesion'));
+ const page=await context.newPage();await page.goto(origin+'/iniciar-sesion');await page.getByLabel(/Correo/i).fill(email);await page.getByLabel(/Contraseña/i).fill(password);await page.getByRole('button',{name:/Iniciar sesión|Ingresar/}).click();await segundoFactorEnPagina(page,origin,email);await page.waitForURL(url=>!url.pathname.startsWith('/iniciar-sesion'));
  const me=(await api(context,'/api/me')).user;assert.equal(me.clinicalRole,role);assert(me.roles===undefined||me.roles.includes(role));
  context.on('response',response=>{const u=new URL(response.url());if(u.pathname.startsWith('/api/'))requests.push({role,path:u.pathname,status:response.status()});});
  return {context,page,role};

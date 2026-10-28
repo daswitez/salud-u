@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // F-08: ejecutar únicamente con la pila desechable de capturas y datos ficticios.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -13,7 +14,7 @@ const contexts=[]; const captures=[]; let page;
 async function login(email) {
  const context=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1440,height:900}});contexts.push(context);
  const csrf=(await (await context.request.get(origin+'/api/v1/security/csrf')).json()).data;
- const response=await context.request.post(origin+'/api/v1/auth/login',{headers:{[csrf.headerName]:csrf.token},data:{email,password}});assert.equal(response.status(),200); return context;
+ const response=await context.request.post(origin+'/api/v1/auth/login',{headers:{[csrf.headerName]:csrf.token},data:{email,password}});assert.equal(response.status(),200); await segundoFactor(context,origin,{email,password},await response.json()); return context;
 }
 async function capture(name, description) {
  await page.evaluate(()=>document.fonts.ready);

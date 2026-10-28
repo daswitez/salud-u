@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -34,7 +35,7 @@ async function run() {
     const headers={};if(method!=="GET"){const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[csrf.headerName]=csrf.token;}
     const response=await context.request.fetch(origin+path,{method,data,headers});const payload=response.status()===204?null:await response.json();assert.equal(response.status(),expected,method+" "+path+" "+JSON.stringify(payload));return payload;
   }
-  async function signIn(context,email){await api(context,"/api/v1/auth/login","POST",{email,password});}
+  async function signIn(context,email){await segundoFactor(context, origin, {email,password}, await api(context, "/api/v1/auth/login", "POST", {email,password}));}
   async function forbiddenUpload(context,patientId,encounterId,bytes){
     const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;
     const response=await context.request.post(origin+"/api/medical/documents",{headers:{[csrf.headerName]:csrf.token},multipart:{patientId,encounterId,documentType:"OTHER",file:{name:"rechazado.pdf",mimeType:"application/pdf",buffer:bytes}}});

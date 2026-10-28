@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Local synthetic acceptance; no production data. Requires Next + Spring + PostgreSQL.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,existsSync,unlinkSync} from 'node:fs';
@@ -10,7 +11,7 @@ const sql=q=>execFileSync('docker',['compose','exec','-T','postgres','sh','-c','
 const uuid=s=>{assert.match(s,/^[0-9a-f-]{36}$/);return "'"+s+"'";};
 const browser=await chromium.launch({headless:true,...(process.env.FE25_CHROMIUM?{executablePath:process.env.FE25_CHROMIUM}:{})}),traffic=[],results=[];const pass=s=>{results.push(s);console.log('PASS '+s);};
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.request.get(origin+'/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch((path.startsWith('http')?'':origin)+path,{method,data,headers});const b=r.status()===204?null:await r.json();assert.equal(r.status(),status,method+' '+path+' '+JSON.stringify(b));return b;}
-async function signIn(c,email){await api(c,'/api/v1/auth/login','POST',{email,password});}
+async function signIn(c,email){await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));}
 async function login(email){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1440,height:1100}});await signIn(c,email);c.on('request',r=>traffic.push({method:r.method(),url:r.url(),body:r.postData()}));return c;}
 const doses=(...intervals)=>intervals.map((d,i)=>({doseNumber:i+1,minimumIntervalDays:d}));
 try{

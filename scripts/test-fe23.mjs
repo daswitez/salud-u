@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Local synthetic historical fixtures; clinical dates are controlled through the migration account only.
 import assert from "node:assert/strict";
 import {mkdirSync,writeFileSync,existsSync,unlinkSync} from "node:fs";
@@ -9,7 +10,7 @@ assert(["localhost","127.0.0.1"].includes(new URL(origin).hostname));mkdirSync(a
 const sql=q=>execFileSync("docker",["compose","exec","-T","postgres","sh","-c",'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At'],{cwd:fileURLToPath(new URL("../../salud-u-backend/",import.meta.url)),input:q,encoding:"utf8"}).trim();const quote=x=>"'"+x.replaceAll("'","''")+"'",uuid=x=>{assert.match(x,/^[0-9a-f-]{36}$/);return quote(x);};
 const browser=await chromium.launch({headless:true,...(process.env.FE23_CHROMIUM?{executablePath:process.env.FE23_CHROMIUM}:{})}),traffic=[],results=[],patients=[];const pass=x=>{results.push(x);console.log("PASS "+x);};
 async function api(c,path,method="GET",data,expected=200){const headers={};if(method!=="GET"){const t=(await(await c.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const b=r.status()===204?null:await r.json();assert.equal(r.status(),expected,path+" "+JSON.stringify(b));return b;}
-async function signIn(c,email){await api(c,"/api/v1/auth/login","POST",{email,password});}
+async function signIn(c,email){await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));}
 async function login(email){const c=await browser.newContext({locale:"es-BO",timezoneId:"America/La_Paz",viewport:{width:1440,height:1100}});await signIn(c,email);c.on("request",r=>traffic.push({method:r.method(),url:r.url()}));return c;}
 try{
  const admin=await login("admin.demo@salud-universitaria.test"),doctor=await login("revision.ana.demo@salud-universitaria.test"),student=await login("estudiante.ana.demo@salud-universitaria.test");

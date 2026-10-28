@@ -49,6 +49,7 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "referrals", href: "/administrativo/derivaciones", label: "Derivaciones", icon: "referral" },
     { key: "academic-setup", href: "/administrativo/calendario", label: "Calendario y valores", icon: "calendar", mobileHidden: true },
     { key: "planning", href: "/administrativo/planificacion", label: "Sugerencias de agenda", icon: "calendar", mobileHidden: true },
+    { key: "metrics", href: "/administrativo/metricas", label: "Métricas de agenda", icon: "chart", mobileHidden: true },
     { key: "blocks", href: "/administrativo/bloqueos", label: "Bloqueos y reprogramación", icon: "calendar", mobileHidden: true },
     { key: "staff", href: "/administrativo/personal-medico", label: "Organización", icon: "folder", mobileHidden: true },
     { key: "vaccines", href: "/administrativo/vacunas", label: "Vacunas", icon: "vaccine", mobileHidden: true },

@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // FE-CORTE: pruebas de corte y recuperación con Spring y PostgreSQL reales (RNF-07, RNF-08 y escrituras sin partir).
 // Detiene y reinicia los contenedores locales de salud-u-backend; sólo datos sintéticos y origen localhost.
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ const readiness=async()=>{try{const r=await fetch(backendHealth);return r.status
 async function waitReady(){for(let i=0;i<90;i++){if(await readiness()===200)return;await new Promise(r=>setTimeout(r,1000));}throw new Error('Spring no volvió a readiness UP');}
 const browser=await chromium.launch({headless:true,...(process.env.FECORTE_CHROMIUM?{executablePath:process.env.FECORTE_CHROMIUM}:{})}),results=[],timings={};const pass=s=>{results.push(s);console.log('PASS '+s);};
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.request.get(origin+'/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const b=r.status()===204?null:await r.json().catch(()=>null);if(status!==null)assert.equal(r.status(),status,method+' '+path+' '+JSON.stringify(b));return status===null?{status:r.status(),body:b}:b;}
-async function login(email){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1366,height:900}});await api(c,'/api/v1/auth/login','POST',{email,password});return c;}
+async function login(email){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1366,height:900}});await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));return c;}
 const pdf=Buffer.from('%PDF-1.7\nFECORTE corte\n%%EOF\n');
 try{
  const student=await login('estudiante.ana.demo@salud-universitaria.test'),admin=await login('admin.demo@salud-universitaria.test'),doctor=await login('revision.ana.demo@salud-universitaria.test');

@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // FE-CORTE: recorrido integral estudiante → Administración → revisión → especialista → historia → vacunas → Reportes → Auditor.
 // Local synthetic acceptance; no production data. Requires Next + Spring + PostgreSQL.
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ const browser=await chromium.launch({headless:true,...(process.env.FECORTE_CHROM
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.request.get(origin+'/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const b=r.status()===204?null:await r.json();assert.equal(r.status(),status,method+' '+path+' '+JSON.stringify(b));return b;}
 async function context(role){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1366,height:900}});
  c.on('response',r=>{const u=new URL(r.url());traffic.push({role,method:r.request().method(),url:u.origin+u.pathname,status:r.status(),springRequestId:r.headers()['x-request-id']??null,type:r.request().resourceType()});});return c;}
-async function login(role,email){const c=await context(role);await api(c,'/api/v1/auth/login','POST',{email,password});return c;}
+async function login(role,email){const c=await context(role);await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));return c;}
 const today=sql(`SELECT (now() AT TIME ZONE 'America/La_Paz')::date;`);
 try{
  // 1. Estudiante entra por el formulario real y solicita revisión desde su inicio.

@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Synthetic local acceptance. Prepare fixtures with test-fe19/test-fe21; no real data is modified.
 import assert from "node:assert/strict";
 import { readFileSync,writeFileSync,mkdirSync,existsSync,unlinkSync } from "node:fs";
@@ -18,7 +19,7 @@ const traffic=[],results=[],receipts=[];let trigger=false;const triggerName="fal
 const pass=message=>{results.push(message);console.log("PASS "+message);};
 async function csrf(c){return(await(await c.request.get(origin+"/api/v1/security/csrf")).json()).data;}
 async function api(c,path,method="GET",data,expected=200){const headers={};if(method!=="GET"){const token=await csrf(c);headers[token.headerName]=token.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const body=r.status()===204?null:await r.json();assert.equal(r.status(),expected,path+" "+JSON.stringify(body));return body;}
-async function signIn(c,email){await api(c,"/api/v1/auth/login","POST",{email,password});}
+async function signIn(c,email){await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));}
 async function login(email){const c=await browser.newContext({locale:"es-BO",timezoneId:"America/La_Paz",viewport:{width:1440,height:1100},acceptDownloads:true});await signIn(c,email);c.on("request",r=>traffic.push({method:r.method(),url:r.url()}));return c;}
 const body=(format,purpose,selectedFilters=filters,selectedColumns=columns,groups=groupBy)=>({format,purpose,filters:selectedFilters,columns:selectedColumns,groupBy:groups});
 const query=f=>new URLSearchParams(Object.entries(f).map(([k,v])=>[k,Array.isArray(v)?JSON.stringify(v):v])).toString();

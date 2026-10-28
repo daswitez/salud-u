@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Local synthetic acceptance. Run test-fe19 first to prepare closed records, source and adendas.
 import assert from "node:assert/strict";
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
@@ -12,7 +13,7 @@ const uuid=id=>{assert.match(id,/^[0-9a-f-]{36}$/);return "'"+id+"'";};
 const browser=await chromium.launch({headless:true,...(process.env.FE20_CHROMIUM?{executablePath:process.env.FE20_CHROMIUM}:{})});
 const results=[],traffic=[],password=process.env.FE20_PASSWORD||"SaludDemo2026!";
 const pass=message=>{results.push(message);console.log("PASS "+message);};
-async function authenticate(c,email){const csrf=(await(await c.request.get(origin+"/api/v1/security/csrf")).json()).data;const r=await c.request.post(origin+"/api/v1/auth/login",{data:{email,password},headers:{[csrf.headerName]:csrf.token}});assert.equal(r.status(),200);}
+async function authenticate(c,email){const csrf=(await(await c.request.get(origin+"/api/v1/security/csrf")).json()).data;const r=await c.request.post(origin+"/api/v1/auth/login",{data:{email,password},headers:{[csrf.headerName]:csrf.token}});assert.equal(r.status(),200);await segundoFactor(c,origin,{email,password},await r.json());}
 async function login(email){const c=await browser.newContext({locale:"es-BO",timezoneId:"America/La_Paz",viewport:{width:1366,height:1000},acceptDownloads:true});await authenticate(c,email);c.on("request",r=>traffic.push({method:r.method(),url:r.url()}));return c;}
 async function json(c,path){const r=await c.request.get(origin+path);assert.equal(r.status(),200);return(await r.json()).data;}
 const exportPath=id=>"/api/medical/encounters/"+id+"/export.docx";

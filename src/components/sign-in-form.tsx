@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 
 import { ApiRequestError, apiJson } from "@/lib/api/client";
 import type { AppRole } from "@/lib/session";
+import { SecondFactorStep } from "@/components/second-factor-step";
 
-type LoginResponse = { user: { role: AppRole } };
+// SEG-2FA: para médico de revisión y especialista la contraseña correcta todavía no abre sesión.
+type LoginResponse = { user?: { role: AppRole }; secondFactorRequired?: boolean; enrollmentRequired?: boolean };
 
 export function SignInForm({ initialEmail }: { initialEmail?: string }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [secondFactor, setSecondFactor] = useState<{ enrollment: boolean; email: string } | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,6 +30,10 @@ export function SignInForm({ initialEmail }: { initialEmail?: string }) {
     setSubmitting(true);
     try {
       const result = await apiJson<LoginResponse>("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+      if (result.secondFactorRequired || !result.user) {
+        setSecondFactor({ enrollment: Boolean(result.enrollmentRequired), email });
+        return;
+      }
       router.replace(`/${result.user.role}`);
       router.refresh();
     } catch (error) {
@@ -35,6 +42,10 @@ export function SignInForm({ initialEmail }: { initialEmail?: string }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (secondFactor) {
+    return <SecondFactorStep enrollment={secondFactor.enrollment} email={secondFactor.email} onRestart={(notice) => { setSecondFactor(null); setMessage(notice ?? null); }} />;
   }
 
   return <form onSubmit={submit} className="mt-7 space-y-5" noValidate>

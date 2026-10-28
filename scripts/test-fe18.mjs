@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Local synthetic environment only. SQL is used solely for template fixture administration.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -18,7 +19,7 @@ async function run() {
     const response = await context.request.fetch(origin + path, { method, data, headers }); const body = response.status() === 204 ? null : await response.json();
     assert.equal(response.status(), expected, method + " " + path + " " + JSON.stringify(body)); return body;
   }
-  async function signIn(context, email) { await api(context, "/api/v1/auth/login", "POST", { email, password }); }
+  async function signIn(context, email) { await segundoFactor(context, origin, { email, password }, await api(context, "/api/v1/auth/login", "POST", { email, password })); }
   async function login(email) {
     const context = await browser.newContext({ locale: "es-BO", timezoneId: "America/La_Paz", viewport: { width: 1366, height: 1000 } }); await signIn(context, email);
     context.on("request", r => { const url = new URL(r.url()); if (url.searchParams.has("token")) url.searchParams.set("token", "REDACTED"); traffic.push({ method: r.method(), url: url.href }); }); return context;

@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -27,7 +28,7 @@ async function run(){
     const headers={};if(method!=="GET"){const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[csrf.headerName]=csrf.token;}
     const response=await context.request.fetch(origin+path,{method,data,headers});const body=response.status()===204?null:await response.json();assert.equal(response.status(),expected,method+" "+path+" "+JSON.stringify(body));return body;
   }
-  async function signIn(context,email){await api(context,"/api/v1/auth/login","POST",{email,password});}
+  async function signIn(context,email){await segundoFactor(context, origin, {email,password}, await api(context, "/api/v1/auth/login", "POST", {email,password}));}
   async function login(email){const context=await browser.newContext({locale:"es-BO",timezoneId:"America/La_Paz",viewport:{width:1366,height:1000}});await signIn(context,email);context.on("request",r=>{const url=new URL(r.url());if(url.searchParams.has("token"))url.searchParams.set("token","REDACTED");traffic.push({method:r.method(),url:url.href});});return context;}
   async function attachment(context,patientId,item,name){
     const csrf=(await(await context.request.get(origin+"/api/v1/security/csrf")).json()).data;

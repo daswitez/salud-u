@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // F-01/F-02: Next de producción + Spring/PostgreSQL. Solo cuentas y datos sintéticos locales.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -31,7 +32,7 @@ async function api(ctx, path, method = "GET", data, expected = 200) {
   assert.equal(response.status(), expected, `${method} ${path}: ${await response.text()}`);
   return response.json();
 }
-async function login(ctx, email) { await api(ctx, "/api/v1/auth/login", "POST", { email, password }); }
+async function login(ctx, email) { await segundoFactor(ctx, origin, { email, password }, await api(ctx, "/api/v1/auth/login", "POST", { email, password })); }
 async function waitCount(page, count) { await page.getByRole("link", { name: `Abrir avisos. ${count} sin leer`, exact: true }).waitFor(); }
 async function axe(page, label) {
   await page.addScriptTag({ path: process.env.FE01_AXE || "/tmp/salud-u-browser/node_modules/axe-core/axe.min.js" });

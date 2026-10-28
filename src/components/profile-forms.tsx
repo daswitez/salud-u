@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiRequestError, apiJson } from "@/lib/api/client";
+import { downloadRecoveryCodes } from "@/components/second-factor-step";
 
 type ProfileFormsProps = {
   name: string;
@@ -87,5 +88,63 @@ export function ProfileForms({ name: initialName, email: initialEmail }: Profile
       {passwordError && <p role="alert" className="mt-4 text-sm font-medium text-error">{passwordError}</p>}
       <button disabled={submittingPassword} className="mt-6 rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-container disabled:cursor-wait disabled:opacity-70">{submittingPassword ? "Actualizando…" : "Actualizar contraseña"}</button>
     </form>
+    <SecondFactorPanel email={initialEmail} />
   </>;
+}
+
+type SecondFactorStatus = { required: boolean; enabled: boolean; activatedAt: string | null; remainingRecoveryCodes: number };
+
+/** SEG-2FA: estado del segundo factor y regeneración de los códigos de recuperación con un código vigente. */
+function SecondFactorPanel({ email }: { email: string }) {
+  const [status, setStatus] = useState<SecondFactorStatus | null>(null);
+  const [code, setCode] = useState("");
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    apiJson<SecondFactorStatus>("/api/v1/profile/second-factor").then((value) => { if (active) setStatus(value); }).catch(() => { if (active) setStatus(null); });
+    return () => { active = false; };
+  }, [codes]);
+
+  async function regenerate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    if (!/^\d{6}$/.test(code)) {
+      setError("Escribe los 6 dígitos que muestra la aplicación.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await apiJson<{ recoveryCodes: string[] }>("/api/v1/profile/second-factor/recovery-codes", { method: "POST", body: JSON.stringify({ code }) });
+      setCodes(result.recoveryCodes);
+      setCode("");
+    } catch (failure) {
+      setError(messageFor(failure));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!status || (!status.required && !status.enabled)) return null;
+  return <section className="mt-5 rounded-2xl border border-divider bg-surface p-5 sm:p-6" aria-labelledby="segundo-factor-titulo">
+    <h2 id="segundo-factor-titulo" className="text-lg font-bold text-text-primary">Verificación en dos pasos</h2>
+    {status.enabled
+      ? <p className="mt-1 text-sm text-text-secondary">Activa desde el {new Date(status.activatedAt ?? "").toLocaleDateString("es-BO")}. Te quedan <b>{status.remainingRecoveryCodes}</b> de 10 códigos de recuperación.</p>
+      : <p className="mt-1 text-sm text-text-secondary">Se activará en tu próximo ingreso.</p>}
+    {codes && <div className="mt-5 space-y-3">
+      <p role="status" className="text-sm font-semibold text-success">Nuevos códigos generados. Los anteriores ya no sirven. Solo se muestran ahora.</p>
+      <ol className="grid grid-cols-1 gap-2 rounded-xl border border-border bg-surface-secondary p-4 font-mono text-sm sm:grid-cols-2">{codes.map((value) => <li key={value}>{value}</li>)}</ol>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={() => downloadRecoveryCodes(email, codes)} className="rounded-lg border border-primary px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary-container">Descargar</button>
+        <button type="button" onClick={() => setCodes(null)} className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover">Ya los guardé</button>
+      </div>
+    </div>}
+    {status.enabled && !codes && <form onSubmit={regenerate} className="mt-5" noValidate>
+      <label className="block text-sm font-semibold text-text-secondary">Código de verificación<input name="secondFactorCode" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="000000" className="mt-1.5 w-full max-w-xs rounded-lg border border-border px-3 py-2.5 font-mono tracking-[0.3em] text-text-primary" /></label>
+      {error && <p role="alert" className="mt-4 text-sm font-medium text-error">{error}</p>}
+      <button disabled={submitting} className="mt-5 rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-container disabled:cursor-wait disabled:opacity-70">{submitting ? "Generando…" : "Regenerar códigos de recuperación"}</button>
+    </form>}
+  </section>;
 }

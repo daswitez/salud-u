@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // F-04: jornada sintética, lógica O-04 real y decisiones O-06 por Next/Spring/PostgreSQL.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -29,7 +30,7 @@ async function api(c, path, method = "GET", data, expected = 200) {
   assert.equal(response.status(), expected, `${method} ${path}: ${await response.text()}`);
   return response.json();
 }
-async function login(c, email) { await api(c, "/api/v1/auth/login", "POST", { email, password: "SaludDemo2026!" }); }
+async function login(c, email) { await segundoFactor(c, origin, { email, password: "SaludDemo2026!" }, await api(c, "/api/v1/auth/login", "POST", { email, password: "SaludDemo2026!" })); }
 async function axe(page) {
   await page.addScriptTag({ path: process.env.F04_AXE || "/tmp/salud-u-browser/node_modules/axe-core/axe.min.js" });
   const issues = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] } })).violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })));

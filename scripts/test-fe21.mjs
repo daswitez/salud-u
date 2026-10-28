@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Independent browser acceptance against synthetic Spring/PostgreSQL fixtures. No Next/Supabase backend.
 import assert from "node:assert/strict";
 import { mkdirSync,writeFileSync,readFileSync } from "node:fs";
@@ -12,7 +13,7 @@ const sql=query=>execFileSync("docker",["compose","exec","-T","postgres","sh","-
 const uuid=id=>{assert.match(id,/^[0-9a-f-]{36}$/);return "'"+id+"'";};
 const pass=message=>{results.push(message);console.log("PASS "+message);};
 async function api(c,path,method="GET",data,expected=200){const headers={};if(method!=="GET"){const csrf=(await(await c.request.get(origin+"/api/v1/security/csrf")).json()).data;headers[csrf.headerName]=csrf.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const b=r.status()===204?null:await r.json();assert.equal(r.status(),expected,method+" "+path+" "+JSON.stringify(b));return b;}
-async function signIn(c,email){await api(c,"/api/v1/auth/login","POST",{email,password});}
+async function signIn(c,email){await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));}
 async function login(email){const c=await browser.newContext({locale:"es-BO",timezoneId:"America/La_Paz",viewport:{width:1440,height:1100}});await signIn(c,email);c.on("request",r=>traffic.push({method:r.method(),url:r.url()}));return c;}
 const toQuery=filters=>new URLSearchParams(Object.entries(filters).map(([k,v])=>[k,Array.isArray(v)?JSON.stringify(v):v])).toString();
 const ids=body=>body.data.map(r=>r.encounter_id);

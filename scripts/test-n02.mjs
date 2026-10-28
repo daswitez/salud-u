@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // N-02 / PA-20: API real local, cookies Spring, CSRF y dos destinatarios distintos.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
@@ -12,9 +13,9 @@ const clients=[];
 async function client(){const c=await request.newContext({baseURL:origin});clients.push(c);return c;}
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.get('/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.fetch(path,{method,data,headers});assert.equal(r.status(),status,method+' '+path+' '+await r.text());if(status===200&&path.startsWith('/api/not')||status===200&&path==='/api/me/notification-preferences')assert.equal(r.headers()['cache-control'],'no-store, private');return status===204?null:r.json();}
 try{
- const admin=await client();await api(admin,'/api/v1/auth/login','POST',{email:'admin.demo@salud-universitaria.test',password});
+ const admin=await client();await segundoFactor(admin, origin, {email:'admin.demo@salud-universitaria.test',password}, await api(admin, "/api/v1/auth/login", "POST", {email:'admin.demo@salud-universitaria.test',password}));
  const adminId=(await api(admin,'/api/me')).user.id;
- async function student(label){const email='n02.'+label+'.'+seed+'@salud-universitaria.test';const id=(await api(admin,'/api/v1/admin/principals','POST',{email,displayName:'Prueba N02 '+label,password,roles:['STUDENT']},201)).data.id;const context=await client();await api(context,'/api/v1/auth/login','POST',{email,password});return {id,context};}
+ async function student(label){const email='n02.'+label+'.'+seed+'@salud-universitaria.test';const id=(await api(admin,'/api/v1/admin/principals','POST',{email,displayName:'Prueba N02 '+label,password,roles:['STUDENT']},201)).data.id;const context=await client();await segundoFactor(context, origin, {email,password}, await api(context, "/api/v1/auth/login", "POST", {email,password}));return {id,context};}
  const a=await student('propia'),b=await student('ajena');
  const appointment=sql(`BEGIN;
 SELECT set_config('salud_u.id_actor',${uuid(adminId)},true) IS NOT NULL;

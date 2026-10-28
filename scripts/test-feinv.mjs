@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // Local synthetic acceptance; no production data. Requires Next + Spring + PostgreSQL.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,existsSync,unlinkSync,readFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ const unzip=path=>JSON.parse(execFileSync('python3',['-I','-c','import sys,json,
 const csvRows=text=>text.replace(/^﻿/,'').trim().split('\n').map(line=>line.match(/("([^"]|"")*"|[^,]*)(,|$)/g).filter(c=>c!=='').map(c=>c.replace(/,$/,'').replace(/^"|"$/g,'').replace(/""/g,'"')));
 const browser=await chromium.launch({headless:true,...(process.env.FEINV_CHROMIUM?{executablePath:process.env.FEINV_CHROMIUM}:{})}),traffic=[],results=[];const pass=s=>{results.push(s);console.log('PASS '+s);};
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.request.get(origin+'/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const type=r.headers()['content-type']||'';const b=r.status()===204?null:type.includes('json')?await r.json():await r.body();assert.equal(r.status(),status,method+' '+path+' '+(type.includes('json')?JSON.stringify(b):type));return b;}
-async function signIn(c,email){await api(c,'/api/v1/auth/login','POST',{email,password});}
+async function signIn(c,email){await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));}
 async function login(email){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:1440,height:1100},acceptDownloads:true});await signIn(c,email);c.on('request',r=>traffic.push({method:r.method(),url:r.url(),body:r.method()==='POST'&&r.url().includes('/api/research/')?r.postData():undefined}));return c;}
 try{
  const adminEmail='admin.demo@salud-universitaria.test',admin=await login(adminEmail),doctor=await login('revision.ana.demo@salud-universitaria.test');

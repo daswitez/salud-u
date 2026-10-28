@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // C-03: capturas reales contra Next/Spring; no genera ni sustituye pantallas pendientes.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -24,7 +25,7 @@ async function api(ctx, path, method = "GET", data, status = 200) {
 }
 async function login(email) {
   const ctx = await browser.newContext({ locale: "es-BO", timezoneId: "America/La_Paz", viewport: { width: 1440, height: 1050 } }); contexts.push(ctx);
-  await api(ctx, "/api/v1/auth/login", "POST", { email, password: "SaludDemo2026!" }); return ctx;
+  await segundoFactor(ctx, origin, { email, password: "SaludDemo2026!" }, await api(ctx, "/api/v1/auth/login", "POST", { email, password: "SaludDemo2026!" })); return ctx;
 }
 async function capture(page, id, file, description, locator) {
   await page.evaluate(() => window.scrollTo(0, 0));

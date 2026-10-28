@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 /* FE-09 browser regression against local synthetic seeds; see docs/evidencia-fe09.md. */
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -27,7 +28,7 @@ async function run() {
   }
   async function login(email) {
     const context = await browser.newContext({ locale: "es-BO", timezoneId: "America/La_Paz", viewport: { width: 1366, height: 900 } });
-    await api(context, "/api/v1/auth/login", "POST", { email, password });
+    await segundoFactor(context, origin, { email, password }, await api(context, "/api/v1/auth/login", "POST", { email, password }));
     context.on("request", request => traffic.push({ method: request.method(), url: request.url() }));
     return context;
   }

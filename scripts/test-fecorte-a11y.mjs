@@ -1,3 +1,4 @@
+import { segundoFactor } from "./lib/segundo-factor.mjs";
 // FE-CORTE: RNF-09 (teclado, foco, etiquetas y contraste con axe-core WCAG 2.1 A/AA) y RNF-10 (navegadores y resoluciones de escritorio).
 // Recorre las pantallas esenciales de cada rol con Next en producción + Spring/PostgreSQL locales; sólo datos sintéticos.
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ const browsers={chromium:{launch:()=>playwright.chromium.launch({headless:true,.
 const viewports=[[1024,768],[1366,768],[1920,1080]],results=[],report={axe:[],keyboard:[],layout:[]};const pass=s=>{results.push(s);console.log('PASS '+s);};
 let browser=await browsers.chromium.launch();
 async function api(c,path,method='GET',data,status=200){const headers={};if(method!=='GET'){const t=(await(await c.request.get(origin+'/api/v1/security/csrf')).json()).data;headers[t.headerName]=t.token;}const r=await c.request.fetch(origin+path,{method,data,headers});const b=r.status()===204?null:await r.json();assert.equal(r.status(),status,method+' '+path+' '+JSON.stringify(b));return b;}
-async function context(email,viewport=[1366,768]){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:viewport[0],height:viewport[1]}});await api(c,'/api/v1/auth/login','POST',{email,password});return c;}
+async function context(email,viewport=[1366,768]){const c=await browser.newContext({locale:'es-BO',timezoneId:'America/La_Paz',viewport:{width:viewport[0],height:viewport[1]}});await segundoFactor(c, origin, {email,password}, await api(c, "/api/v1/auth/login", "POST", {email,password}));return c;}
 try{
  const admin=await context('admin.demo@salud-universitaria.test');
  const principal=async(label,roles)=>{const email='fecorte.'+label+'.'+seed+'@salud-universitaria.test';await api(admin,'/api/v1/admin/principals','POST',{email,displayName:label+' FECORTE '+seed,password,roles},201);return email;};
