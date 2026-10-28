@@ -10,12 +10,14 @@ import { appointmentStatusLabel, formatAppointmentTime } from "@/components/medi
 import { ClinicalBackgroundSummary } from "@/components/clinical-background";
 import { ClinicalBackgroundPanel } from "@/components/clinical-background-panel";
 import { ApiRequestError, apiJson } from "@/lib/api/client";
+import { relationshipLabels, type EmergencyContact } from "@/lib/emergency-contact";
 import type { ClinicalBackgroundVersion } from "@/lib/clinical-background";
 import { ClinicalWordDownload } from "@/components/clinical-word-download";
 import { replaceUrl } from "@/lib/url-state";
 
 export type PatientRecord = {
   patient: { id: string; carnet: string; registrationCode: string; fullName: string; birthDate: string | null; phone: string | null; email: string | null };
+  emergencyContact: EmergencyContact | null;
   intake: { allergies: string | null; chronic_conditions: string | null; current_medications: string | null; relevant_history: string | null; emergency_contact_note: string | null; recorded_at: string } | null;
   clinicalBackground: ClinicalBackgroundVersion | null;
   encounters: { id: string; appointment_id: string | null; status: "DRAFT" | "CLOSED" | "VOIDED"; encounter_type: "INITIAL" | "SPECIALTY"; occurred_at: string; chief_complaint: string | null; assessment: string | null; instructions?: string | null; follow_up_text?: string | null; specialty: string | null; accessReason?: "AREA" | "REFERRAL_SOURCE"; reviewHistoryVersion?: number | null; specialtyHistoryVersion?: number | null; template?: { id: string; version: number } | null; reviewHistory?: Record<string, unknown> | null; specialtyHistory?: Record<string, unknown> | null; clinicalBackground?: ClinicalBackgroundVersion | null }[];
@@ -115,6 +117,7 @@ export function MedicalPatientRecord({ patientId, clinicalRole, initialFilters =
     </fieldset></form>
     {record && <>
       <header className="rounded-2xl border border-divider bg-surface p-6"><h1 className="text-3xl font-bold">{record.patient.fullName}</h1><p>CI {record.patient.carnet} · Registro {record.patient.registrationCode ?? "—"}</p>
+        <section className="mt-4 rounded-xl bg-surface-secondary p-4" aria-label="Contacto de emergencia"><h2 className="font-bold">Contacto de emergencia</h2>{record.emergencyContact ? <p className="mt-1">{record.emergencyContact.fullName} · {relationshipLabels[record.emergencyContact.relationship] ?? record.emergencyContact.relationship} · {record.emergencyContact.phone}</p> : <p className="mt-1 text-text-secondary">No registrado.</p>}</section>
         {active && <Link href={`/medico/citas/${active.id}`} className="mt-4 block font-semibold text-primary">Abrir cita pendiente →</Link>}
       </header>
       <ClinicalBackgroundPanel embedded patientId={patientId} onSaved={version => setRecord(previous => previous ? { ...previous, clinicalBackground: version } : previous)} />

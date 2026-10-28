@@ -11,6 +11,23 @@ if (backendOrigin) {
 }
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    // React/Next insertan scripts y estilos en línea; se restringen las demás fuentes.
+    const scripts = process.env.NODE_ENV === "development" ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self' 'unsafe-inline'";
+    const csp = [
+      "default-src 'self'", `script-src ${scripts}`, "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:", "font-src 'self' data:", "connect-src 'self'",
+      "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
+    ].join('; ');
+    return [{ source: '/:path*', headers: [
+      { key: 'Content-Security-Policy', value: csp },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ] }];
+  },
   experimental: { proxyClientMaxBodySize: "16mb" },
   async rewrites() {
     if (!backendOrigin) return [];
@@ -19,14 +36,18 @@ const nextConfig: NextConfig = {
     // se migran una a una para no desviar tráfico serverless prematuramente.
     return {
       beforeFiles: [
+        // F-01: bandeja y lectura propias. F-02: preferencias persistidas en Spring.
         { source: "/api/notifications", destination: `${backendOrigin}/api/notifications` },
         { source: "/api/notifications/:notificationId/read", destination: `${backendOrigin}/api/notifications/:notificationId/read` },
         { source: "/api/me/notification-preferences", destination: `${backendOrigin}/api/me/notification-preferences` },
         { source: "/api/me/emergency-contact", destination: `${backendOrigin}/api/me/emergency-contact` },
+        { source: "/api/consent-texts", destination: `${backendOrigin}/api/consent-texts` },
         { source: "/api/me/consents", destination: `${backendOrigin}/api/me/consents` },
         { source: "/api/audit-events", destination: `${backendOrigin}/api/audit-events` },
+        // F-03: calendario académico y valores iniciales de la agenda.
         { source: "/api/academic-periods", destination: `${backendOrigin}/api/academic-periods` },
         { source: "/api/scheduling/initial-values", destination: `${backendOrigin}/api/scheduling/initial-values` },
+        // F-04: consulta y decisiones de sugerencias para Administración.
         { source: "/api/scheduling/suggestions", destination: `${backendOrigin}/api/scheduling/suggestions` },
         { source: "/api/scheduling/suggestions/:suggestionId/decision", destination: `${backendOrigin}/api/scheduling/suggestions/:suggestionId/decision` },
         { source: "/api/scheduling/block-proposals", destination: `${backendOrigin}/api/scheduling/block-proposals` },

@@ -1,5 +1,7 @@
 # FE-27 · Carnet de vacunación y cobertura institucional
 
+> Actualización VAC-HISTORIAL (27/10/2026): las vistas se llaman «Historial de vacunación», no incluyen impresión y aclaran que no reemplazan el carnet oficial del Ministerio de Salud. La evidencia histórica de abajo describe el comportamiento anterior; la nueva verificación y capturas están en `ENTREGAS_CODEX/VAC-HISTORIAL/`.
+
 Fecha: 2026-10-26. Trazabilidad: UC-27 / BE-27 / RF-31 y RF-32; RN-21, RN-29 y RN-30. Ensayo exclusivamente local con datos sintéticos, Next en producción, Spring y PostgreSQL reales.
 
 ## Resultado local

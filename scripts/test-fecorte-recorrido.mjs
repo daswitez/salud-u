@@ -41,8 +41,8 @@ try{
  await api(doctor,'/api/medical/patients/'+patientId+'/clinical-background','PATCH',{data:background?.data??bg,expectedVersion:version,changeReason:'Revisión '+marker,encounterId:reviewEncounter});
  const referralId=(await api(doctor,'/api/medical/encounters/'+reviewEncounter+'/finalize','POST',{chiefComplaint:'Motivo revisión '+marker,assessment:'Evaluación revisión '+marker,diagnosisText:'Diagnóstico revisión '+marker,reviewHistory:{},referralSpecialtyId:specialty.id,referralReason:'Derivación '+marker,referralComment:'Resumen '+marker,referralPriority:'ROUTINE'})).data.referralId;
  await dp.reload();await dp.getByText(/Atención cerrada|Cerrada|CLOSED/).first().waitFor();
- assert.equal(sql(`SELECT e.estado||'/'||c.estado FROM salud_u.encuentro_clinico e JOIN salud_u.cita c ON c.id=e.id_cita WHERE e.id=${uuid(reviewEncounter)};`),'CLOSED/ATTENDED');
- pass('Médico de revisión inicia la cita desde su pantalla y cierra la atención con derivación; encuentro CLOSED y cita ATTENDED de forma atómica');
+ assert.equal(sql(`SELECT e.estado||'/'||c.estado FROM salud_u.encuentro_clinico e JOIN salud_u.cita c ON c.id=e.id_cita WHERE e.id=${uuid(reviewEncounter)};`),'CERRADA/ATENDIDA');
+ pass('Médico de revisión inicia la cita desde su pantalla y cierra la atención con derivación; encuentro CERRADA y cita ATENDIDA en la base, de forma atómica');
 
  // 4. Administración agenda la derivación con el especialista; el especialista la atiende.
  const special=await login('SPECIALIST','fe09.especialista@salud-universitaria.test'),specialUser=(await api(special,'/api/me')).user;
@@ -64,7 +64,7 @@ try{
  const staffDoctor=sql(`SELECT pe.id FROM salud_u.personal pe WHERE pe.activo AND pe.id_principal=${uuid(doctorUser.id)};`);
  const vaccine=(await api(admin,'/api/vaccines','POST',{code:marker+'-V',name:'Vacuna '+marker,active:true,doses:[{doseNumber:1,minimumIntervalDays:0}]},201)).data.id;
  await api(admin,'/api/vaccinations','POST',{patientId,vaccineId:vaccine,doseNumber:1,appliedOn:today,lot:'LOT-'+marker,applicatorStaffId:staffDoctor},201);
- await sp.goto(origin+'/estudiante');await sp.getByRole('link',{name:/Mi carnet de vacunación/}).first().click();await sp.waitForURL('**/estudiante/vacunas');await sp.getByRole('cell',{name:'LOT-'+marker,exact:true}).waitFor();
+ await sp.goto(origin+'/estudiante');await sp.getByRole('link',{name:/Historial de vacunación/}).first().click();await sp.waitForURL('**/estudiante/vacunas');await sp.getByRole('cell',{name:'LOT-'+marker,exact:true}).waitFor();
  pass('Administración registra una dosis y el estudiante la ve en su carnet (lote y estado) navegando desde su inicio');
 
  // 7. Reportes y Auditoría reflejan el recorrido.

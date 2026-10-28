@@ -1,6 +1,6 @@
 # Backlog de integración del frontend Salud-U
 
-Fuente principal: `Proyecto Daniel Mercado v2 db.md`, cuadros 3.16 (RF-01–RF-34), 3.17 (RNF-01–RNF-12), 3.18 (RN-01–RN-32), 3.36 (UC-01–UC-27) y especificaciones críticas de UC-07/12/13/15/17/22. Referencia de implementación: 24 rutas `src/app/api`, Server Actions, consultas directas y SQL de `supabase/migrations`/`complete_schema.sql`.
+Fuente vigente del cierre C: `MSD-Documento proyecto de grado Ver.1.10 u.docx` (27/10/2026). Fuente histórica de la integración: `Proyecto Daniel Mercado v2 db.md`, cuadros 3.16 (RF-01–RF-34), 3.17 (RNF-01–RNF-12), 3.18 (RN-01–RN-32), 3.36 (UC-01–UC-27) y especificaciones críticas de UC-07/12/13/15/17/22. Referencia de implementación: 24 rutas `src/app/api`, Server Actions, consultas directas y SQL de `supabase/migrations`/`complete_schema.sql`.
 
 Estado (2026-10-26): historias FE-CON…FE-INV integradas y FE-CORTE aceptada localmente con datos sintéticos; corte productivo pendiente de validación con el personal del centro y de las condiciones 4–5 de BE-CORTE. La secuencia técnica obligatoria está en [plan-integracion-spring.md](plan-integracion-spring.md). Las referencias SQL sin ruta no se presentan como endpoints HTTP existentes. El contrato final debe caracterizar la última definición de cada RPC y sus políticas, no solo la migración inicial.
 
@@ -560,3 +560,37 @@ Evidencia: [ES-10 · Cierre por rol](evidencia-es10-cierre.md).
 **Estado (27/10/2026): proxy preparado y validado contra V83.** Reglas de notificaciones, lectura y preferencias en next.config.ts, sin lógica de dominio en Next. `scripts/test-n02.mjs` aprobó sesiones reales, CSRF, paginación/contador, 404 sin fuga y preferencias aisladas en una instancia temporal con la configuración actualizada. Typecheck, lint y diff check aprobados. Esa instancia se detuvo; el servidor ya compilado necesita recompilarse/reiniciarse para activar las reglas nuevas. F-01/F-02 aún deben construir la interfaz.
 
 Evidencia: [N-02 · API de bandeja](evidencia-n02-api.md).
+
+
+## Épica F — F-01 y F-02 · Bandeja y preferencias
+
+**Estado (27/10/2026): terminadas y verificadas localmente**, rama `backend`, contra backend V96 sin modificarlo. Esta épica continúa el backlog nuevo; sus IDs F-01/F-02 no sustituyen las historias anteriores FE-01/FE-02.
+
+- **F-01:** `/estudiante/avisos` reemplaza su redirección; nuevas `/medico/avisos` y `/administrativo/avisos`, para los seis roles. Campana con contador real y acceso desde menú, cursor de 20, lectura propia confirmada por servidor, fechas de Bolivia y estados de carga/vacío/error/sesión. Proveedor en memoria por sesión; consulta cada minuto visible, al volver a la pestaña/conexión y después de leer. No cambia la lista mientras se leen páginas: el botón actualiza la primera página. [Evidencia F-01](evidencia-fe28.md).
+- **F-02:** `/perfil` carga/guarda dos preferencias reales mediante GET/PUT, independientemente de datos y contraseña; retira `notifications`/`waitlist` ficticios de sesión. Sin defaults visuales hasta recibir respuesta; borrador conservado ante error, reintento y persistencia al recargar. [Evidencia F-02](evidencia-fe29.md).
+
+Las reglas exactas de proxy de N-02 se reutilizan y quedan identificadas en next.config.ts. `scripts/test-fe01-fe02.mjs`: cinco grupos Chromium con sesiones y datos sintéticos reales, 28 avisos, seis roles, aislamiento/404, cursor, contador, lectura, preferencias, dobles clics, fallos recuperables, móvil/teclado/axe. Backend 312/0/0/0; lint completo, typecheck, build, inventario frontend (64 rewrites exactos) y diff check aprobados. Regresión ES-10 de nueve vistas y seis perfiles aprobada. Next de producción activo localmente en 3000; salud backend UP. Las capturas, resultados y red se reproducen con los comandos de evidencia.
+
+Siguiente historia: F-03, calendario y valores iniciales. F-03…F-10 siguen pendientes; la validación con personal y SUS permanece en C-03.
+
+
+## Épica C — Cierre técnico y evidencias (27/10/2026)
+
+**C-01 terminada; C-02 ejecutada con observación PA-23; C-03 parcial.** Fuente vigente confirmada por el usuario: MSD-Documento proyecto de grado Ver.1.10 u.docx. Se preservaron los cambios F-01/F-02 y no se implementaron pantallas pendientes durante el cierre.
+
+- Backend: estados explícitos de 25 historias BE-05…BE-27/BE-INV/BE-CORTE; 312 pruebas actuales sin fallos, errores ni omisiones. Registro A.6 con versión/huellas/entorno y diez criterios. SMTP original fuera del alcance vigente; PA-23 observada por consulta de derivacion en O-05. [C-01/C-02](../../salud-u-backend/docs/operations/cierre-c01-c02.md).
+- C-03: ocho grupos de recorrido mixto UI/API, seis roles y 47 respuestas Spring aprobados. Ocho PNG versionados de seis figuras y dos complementos; 3.54 sin lista de espera. Figura 3.61 pendiente de F-04. Instrumento SUS y nueve tareas humanas listos, planillas vacías y calculador comprobado; el usuario confirmó que no tiene respuestas reales. No se acredita SUS ni aceptación humana. [Evidencia C-03](evidencia-cierre-c03.md).
+
+Lint completo, typecheck e inventario frontend aprobados; el build vigente no cambia porque solo se modifican scripts/documentación/evidencias. El recorrido antiguo se adapta a CERRADA/ATENDIDA en SQL conservando HTTP. Los límites de BE-CORTE y F-03…F-10 permanecen explícitos.
+
+
+## Épica F — F-04 · Sugerencias de la jornada y alertas
+
+**Estado (27/10/2026): implementada y verificada localmente con observaciones.** Administración dispone de `/administrativo/planificacion`, accesible desde el menú y desde el inicio en móvil. Consulta O-04 por fecha; presenta explicaciones y fuente disponible, sugerencias de jornada/sobrecupo y alertas de exceso/defecto. O-06 registra aceptación, modificación del sobrecupo o rechazo, con persistencia y resultado visible. Carga, vacío, error, 401/403 y conflictos cubiertos; sin SMTP ni reglas nuevas de dominio en Next. Las rutas de consulta/decisión ya estaban en el proxy y se identificaron para F-04.
+
+Nueve grupos Chromium con datos sintéticos, incluyendo recarga, 400 por sobrecupo, 409 concurrente y casos de nombres duplicados; 312 pruebas backend y lint/typecheck/build frontend en verde. Figura 3.61 con explicación y decisión persistida. [Evidencia FE-30](evidencia-fe30.md); [entrega F-04](../../../ENTREGAS_CODEX/F-04/resumen.md).
+
+
+## Épica F — F-03 · Calendario académico y valores iniciales
+
+**Estado (27/10/2026): implementada y verificada localmente.** Administración dispone de `/administrativo/calendario` para consultar y registrar períodos y configurar valores iniciales por área o especialidad y tipo de período. Las referencias predeterminadas se distinguen de los valores guardados; no se han cargado cifras reales del área. [Evidencia](evidencia-fe31.md).

@@ -1,0 +1,11 @@
+{
+  "estado": "PENDIENTE_RESPUESTAS_REALES",
+  "n": 0,
+  "promedio_sus": null,
+  "cumple_umbral_70": null,
+  "promedio_por_rol": {},
+  "alfa_cronbach": null,
+  "participantes": [],
+  "aceptacion_global": "PENDIENTE_EVALUACION_TAREAS_Y_VALIDACION_HUMANA",
+  "nota": "SUS es una puntuación de 0 a 100, no un porcentaje. El umbral SUS no demuestra finalización sin ayuda ni tiempos de tareas. No mezclar versiones/incrementos en una conclusión sin distinguirlos."
+}

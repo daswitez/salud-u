@@ -1,0 +1,8 @@
+PASS Estudiante inicia sesión por el formulario, ve su nombre real (sin datos de ejemplo) y registra una solicitud de revisión desde la navegación; el inicio refleja la solicitud pendiente desde Spring
+PASS Médico publica disponibilidad, Administración asigna el cupo y el estudiante ve la cita confirmada con su médico al recargar
+PASS Médico de revisión inicia la cita desde su pantalla y cierra la atención con derivación; encuentro CERRADA y cita ATENDIDA en la base, de forma atómica
+PASS Administración ve la derivación en su bandeja y la agenda; el especialista la ve en su bandeja, inicia la cita desde pantalla y cierra la atención de especialidad
+PASS Historia del paciente muestra las atenciones cerradas a los profesionales autorizados (revisión y especialidad) desde Spring
+PASS Administración registra una dosis y el estudiante la ve en su carnet (lote y estado) navegando desde su inicio
+PASS Reportes encuentra ambas atenciones por período/contenido y navega a cumplimiento; Auditor ve cierres y derivación del recorrido en la auditoría
+PASS Registro de red: 47 respuestas /api/** con X-Request-Id de Spring, ninguna generada por Next; sin orígenes externos ni Supabase

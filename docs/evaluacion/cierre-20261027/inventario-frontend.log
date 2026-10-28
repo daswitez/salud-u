@@ -1,0 +1,22 @@
+PASS Rama de trabajo: backend
+PASS Sin imports, consultas ni dependencias Supabase en src/, package.json ni pnpm-lock.yaml; sin librerías de exportación en navegador
+PASS Sin Route Handlers ni Server Actions: ninguna API de negocio serverless; /api/** sólo por rewrites
+PASS 64 rewrites exactos /api/** → SALUD_U_BACKEND_ORIGIN (sin transformación ni comodín global)
+PASS Sin stores/datos demo ni nombres ficticios; variables de entorno sólo de servidor (SALUD_U_BACKEND_ORIGIN, SALUD_U_TEST_ACCESS_PASSWORD); .env.example sin claves Supabase
+PASS Bundle de navegador sin Supabase, origen interno del backend ni contraseña de pruebas
+{
+  "status": "PASS",
+  "results": [
+    "Rama de trabajo: backend",
+    "Sin imports, consultas ni dependencias Supabase en src/, package.json ni pnpm-lock.yaml; sin librerías de exportación en navegador",
+    "Sin Route Handlers ni Server Actions: ninguna API de negocio serverless; /api/** sólo por rewrites",
+    "64 rewrites exactos /api/** → SALUD_U_BACKEND_ORIGIN (sin transformación ni comodín global)",
+    "Sin stores/datos demo ni nombres ficticios; variables de entorno sólo de servidor (SALUD_U_BACKEND_ORIGIN, SALUD_U_TEST_ACCESS_PASSWORD); .env.example sin claves Supabase",
+    "Bundle de navegador sin Supabase, origen interno del backend ni contraseña de pruebas"
+  ],
+  "rewrites": 64,
+  "env": [
+    "SALUD_U_BACKEND_ORIGIN",
+    "SALUD_U_TEST_ACCESS_PASSWORD"
+  ]
+}

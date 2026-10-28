@@ -75,7 +75,6 @@ export function ProfileForms({ name: initialName, email: initialEmail }: Profile
       </div>
       <label className="mt-4 block text-sm font-semibold text-text-secondary">Contraseña actual<input name="profileCurrentPassword" required type="password" autoComplete="current-password" value={profilePassword} onChange={(event) => setProfilePassword(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-text-primary" /></label>
       {profileError && <p role="alert" className="mt-4 text-sm font-medium text-error">{profileError}</p>}
-      <fieldset className="mt-6 border-t border-divider pt-5"><legend className="text-sm font-bold text-text-primary">Avisos</legend><p className="mt-1 text-sm text-text-secondary">Los avisos pueden informar cambios de cita o derivación sin incluir datos clínicos sensibles.</p></fieldset>
       <button disabled={submittingProfile} className="mt-6 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70">{submittingProfile ? "Guardando…" : "Guardar datos"}</button>
     </form>
     <form onSubmit={submitPassword} className="mt-5 rounded-2xl border border-divider bg-surface p-5 sm:p-6">

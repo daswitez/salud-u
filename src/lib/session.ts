@@ -13,12 +13,11 @@ export type AppSession = {
   name: string;
   role: AppRole;
   clinicalRole: ClinicalRole;
-  notifications: { appointments: boolean; waitlist: boolean; changes: boolean };
 };
 
 type MePayload = {
   ok?: boolean;
-  user?: Omit<AppSession, "notifications">;
+  user?: AppSession;
 };
 
 function isClinicalRole(value: unknown): value is ClinicalRole {
@@ -56,10 +55,7 @@ export async function getSession(): Promise<AppSession | null> {
     return null;
   }
 
-  return {
-    ...user,
-    notifications: { appointments: true, waitlist: false, changes: true },
-  };
+  return user;
 }
 
 export async function requireRole(role: AppRole) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { NotificationBell } from "@/components/notification-provider";
 import type { AppRole } from "@/components/app-sidebar";
 import type { ClinicalRole } from "@/lib/ui-contracts";
 
@@ -18,7 +19,8 @@ export function AppHeader({ role, name, clinicalRole }: { role: AppRole; name: s
       <span className="flex items-center -space-x-2" aria-hidden="true"><Image src="/branding/fcsh-uagrm-emblem.png" alt="" width={96} height={96} className="size-10 rounded-full bg-white object-contain p-0.5 ring-1 ring-secondary-container" /><Image src="/branding/centro-especialidades-emblem.png" alt="" width={96} height={96} className="size-10 rounded-full bg-white object-contain p-0.5 ring-1 ring-primary-200" /></span>
       <span><span className="block text-sm font-bold leading-4 tracking-tight">Salud Universitaria<span className="sr-only">, ir al inicio</span></span><span className="mt-0.5 block text-xs text-text-tertiary">{clinicalRole === "AUDITOR" ? "Auditoría institucional" : clinicalRole === "REPORTING_OFFICER" ? "Reportes institucionales" : clinicalRole === "REVIEW_DOCTOR" ? "Revisión estudiantil" : clinicalRole === "SPECIALIST" ? "Atención especializada" : areaLabels[role]}</span></span>
     </Link>
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <NotificationBell href={`/${role}/avisos`} />
       <Link href={`/perfil?rol=${role}`} className="flex items-center gap-2 rounded-xl p-1.5 text-sm text-text-secondary transition hover:bg-surface-secondary">
         <span className="hidden text-right sm:block"><span className="block font-medium text-text-primary">{name}</span><span className="block text-xs">{roleLabel}</span></span>
         <span className="sr-only">Abrir mi perfil</span>

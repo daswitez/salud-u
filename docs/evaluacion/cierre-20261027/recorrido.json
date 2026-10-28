@@ -1,0 +1,3631 @@
+{
+  "status": "PASS",
+  "results": [
+    "Estudiante inicia sesión por el formulario, ve su nombre real (sin datos de ejemplo) y registra una solicitud de revisión desde la navegación; el inicio refleja la solicitud pendiente desde Spring",
+    "Médico publica disponibilidad, Administración asigna el cupo y el estudiante ve la cita confirmada con su médico al recargar",
+    "Médico de revisión inicia la cita desde su pantalla y cierra la atención con derivación; encuentro CERRADA y cita ATENDIDA en la base, de forma atómica",
+    "Administración ve la derivación en su bandeja y la agenda; el especialista la ve en su bandeja, inicia la cita desde pantalla y cierra la atención de especialidad",
+    "Historia del paciente muestra las atenciones cerradas a los profesionales autorizados (revisión y especialidad) desde Spring",
+    "Administración registra una dosis y el estudiante la ve en su carnet (lote y estado) navegando desde su inicio",
+    "Reportes encuentra ambas atenciones por período/contenido y navega a cumplimiento; Auditor ve cierres y derivación del recorrido en la auditoría",
+    "Registro de red: 47 respuestas /api/** con X-Request-Id de Spring, ninguna generada por Next; sin orígenes externos ni Supabase"
+  ],
+  "patientId": "851982c2-a83f-4409-b57d-875e54382ffd",
+  "requestId": "b7117021-4110-44e1-bbe4-355944b0b502",
+  "appointmentId": "e5313e0f-e904-461d-8101-1e401fc30ea7",
+  "reviewEncounter": "e40827ae-2169-4091-94cc-c8d77a0e8c9f",
+  "referralId": "307d8e0c-c2b0-4777-95a3-861811c6c0a5",
+  "specialtyAppointment": "a1478c9a-9aff-4f4e-82c1-86eca7322f47",
+  "specialtyEncounter": "49aa2bf0-a492-4862-a4a5-ad1f45f4d253",
+  "apiResponses": 47,
+  "traffic": [
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/iniciar-sesion",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3xadfg-c10yrr.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/v1/security/csrf",
+      "status": 200,
+      "springRequestId": "dd60718f-ff81-4664-92b5-574a58491530",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "POST",
+      "url": "http://127.0.0.1:3000/api/v1/auth/login",
+      "status": 200,
+      "springRequestId": "a4138334-a3e0-4419-8645-89ef0cfa7073",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2xyyty716dl2h.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/appointment-requests",
+      "status": 200,
+      "springRequestId": "e62734c9-1070-4c68-8587-71957935c5eb",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "e0d8d087-cd08-4e83-b4b4-c56d180af97b",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1czmvz8mzkdxe.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/reservar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/reservar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/reservar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2ccas5p_fbdzl.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "POST",
+      "url": "http://127.0.0.1:3000/api/appointment-requests",
+      "status": 201,
+      "springRequestId": "a5174e33-1d00-46f9-9e2e-c6bf9ab26231",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b7117021-4110-44e1-bbe4-355944b0b502",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2xyyty716dl2h.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "05aee391-2e08-4d8b-bdf2-10b651725ad5",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/appointment-requests",
+      "status": 200,
+      "springRequestId": "e39b95da-0598-46f5-9d44-acfeaa33f530",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2zazk_q1fbg_a.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "11546e68-a1d7-4aef-a095-91d2f217c5f4",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/appointment-requests",
+      "status": 200,
+      "springRequestId": "07fe6e13-d90a-49b0-a568-c7fd42fa945b",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/reservar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/reservar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b7117021-4110-44e1-bbe4-355944b0b502",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b96d9e7a-ebca-49c0-b1fa-9fb5da89cb00",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/2bd5da17-951a-47ba-8325-6eff470e1b20",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/80711f10-3d3a-4c5e-af9b-bfb27664d725",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b7117021-4110-44e1-bbe4-355944b0b502",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b96d9e7a-ebca-49c0-b1fa-9fb5da89cb00",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/2bd5da17-951a-47ba-8325-6eff470e1b20",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/80711f10-3d3a-4c5e-af9b-bfb27664d725",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/61ae4eaa-ed48-4f15-b48d-5cd5ea740bc3",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/e21a34fd-bc77-48c6-bb12-e257ea6aa06e",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/b0e82825-c09b-497a-aadf-c14c91e0f7f5",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/citas/e5313e0f-e904-461d-8101-1e401fc30ea7",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3h7wtzgjjqhym.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2lju-zcn3phe6.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2-eyq93eg-wc8.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/appointments/e5313e0f-e904-461d-8101-1e401fc30ea7",
+      "status": 200,
+      "springRequestId": "0c27ef58-2913-4c9b-89fe-ad13c365760e",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "caf6721a-84cc-444c-8bde-b32c281f6bec",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/v1/security/csrf",
+      "status": 200,
+      "springRequestId": "d06d43f4-cfd5-491e-9bd8-6ca5c0da2624",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "POST",
+      "url": "http://127.0.0.1:3000/api/medical/appointments/e5313e0f-e904-461d-8101-1e401fc30ea7/start",
+      "status": 201,
+      "springRequestId": "fafea469-1d5e-44d4-91f6-e553d479a515",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/citas/e5313e0f-e904-461d-8101-1e401fc30ea7",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3h7wtzgjjqhym.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2-eyq93eg-wc8.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2lju-zcn3phe6.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/appointments/e5313e0f-e904-461d-8101-1e401fc30ea7",
+      "status": 200,
+      "springRequestId": "d1ee8305-59d1-4299-b6f4-8b5805799d81",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "43235c9e-815c-471c-84bc-8a5e3ae1bc9d",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/21o0cu7oywotx.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/estudiantes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "c851bcc8-52ab-4fe4-8edc-6253f229ed0f",
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/check-in",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/personal-medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/administrative/referrals",
+      "status": 200,
+      "springRequestId": "a00e297d-8584-47f2-8af5-1bc0b9b5dd90",
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/estudiantes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/check-in",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/check-in",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/check-in",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/personal-medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "ADMINISTRATIVE",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/26mje7io8k-7t.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "adc359a0-a49a-408d-9a50-8ec8e5b39232",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/assigned-referrals",
+      "status": 200,
+      "springRequestId": "06dde0d1-fb6e-4528-9288-82d83282e2e8",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/307d8e0c-c2b0-4777-95a3-861811c6c0a5",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/68ee9c59-e279-413b-ae1e-dfa94fb5ad82",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/42c16d63-dbe2-479e-a39f-49d6778b30fd",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/46297dae-ed1f-4ff6-8d0a-8a5955c9c281",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/42c16d63-dbe2-479e-a39f-49d6778b30fd",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/46297dae-ed1f-4ff6-8d0a-8a5955c9c281",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/307d8e0c-c2b0-4777-95a3-861811c6c0a5",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones/68ee9c59-e279-413b-ae1e-dfa94fb5ad82",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/citas/a1478c9a-9aff-4f4e-82c1-86eca7322f47",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3h7wtzgjjqhym.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2-eyq93eg-wc8.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2lju-zcn3phe6.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/appointments/a1478c9a-9aff-4f4e-82c1-86eca7322f47",
+      "status": 200,
+      "springRequestId": "5dec5a92-eec0-48e2-9d35-88823b204b76",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "f3457cae-b12a-4b3e-a0ee-72159c616a69",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/v1/security/csrf",
+      "status": 200,
+      "springRequestId": "05887a58-e4ac-4c91-ba59-69f0f0c47558",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "POST",
+      "url": "http://127.0.0.1:3000/api/medical/appointments/a1478c9a-9aff-4f4e-82c1-86eca7322f47/start",
+      "status": 201,
+      "springRequestId": "6c5ee809-aba2-46cd-9275-616eb6de317e",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes/851982c2-a83f-4409-b57d-875e54382ffd",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0fy26sgitaj31.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0tykf5tpc64eq.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "d73bac06-ceda-421e-851d-062dc0ddd356",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/patients/851982c2-a83f-4409-b57d-875e54382ffd",
+      "status": 200,
+      "springRequestId": "98451de4-8759-4124-8900-582925fb7863",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/patients/851982c2-a83f-4409-b57d-875e54382ffd/clinical-background",
+      "status": 200,
+      "springRequestId": "25acf975-cdce-4d92-be1c-4fdc69559147",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/appointments",
+      "status": 200,
+      "springRequestId": "d08a7ad6-6d08-4d8f-afc1-94dbe07097fc",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/encounters/49aa2bf0-a492-4862-a4a5-ad1f45f4d253/amendments",
+      "status": 200,
+      "springRequestId": "9edaa333-4b82-42c3-81b3-75e9b40e70ee",
+      "type": "fetch"
+    },
+    {
+      "role": "SPECIALIST",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/documents",
+      "status": 200,
+      "springRequestId": "0742b3d5-bfbf-4005-ac88-bcfb62fc06ad",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes/851982c2-a83f-4409-b57d-875e54382ffd",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2cg3barap5omy.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0fy26sgitaj31.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0tykf5tpc64eq.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/vaccinations/context",
+      "status": 200,
+      "springRequestId": "a9811e4f-3662-4cf3-9fd6-fb93b5657fb1",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/patients/851982c2-a83f-4409-b57d-875e54382ffd",
+      "status": 200,
+      "springRequestId": "de4101f1-17db-4216-bf0b-3fb13b2feeb7",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "8c98900e-c76d-4884-adaa-3fa79581fd99",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/horarios",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/pacientes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/derivaciones",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/agenda",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/citas/ab1e364c-7941-46f7-b68c-46daf8c53e3c",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/patients/851982c2-a83f-4409-b57d-875e54382ffd/clinical-background",
+      "status": 200,
+      "springRequestId": "94e84ab7-5959-4f5c-bb6b-36ce0c23dc12",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/medico/citas/ab1e364c-7941-46f7-b68c-46daf8c53e3c",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/appointments",
+      "status": 200,
+      "springRequestId": "61f19d6a-8082-4c51-aa3a-1f8b2ab12600",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/encounters/e40827ae-2169-4091-94cc-c8d77a0e8c9f/amendments",
+      "status": 200,
+      "springRequestId": "8f8f70a4-a485-4b7f-b919-4db80d005da5",
+      "type": "fetch"
+    },
+    {
+      "role": "REVIEW_DOCTOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/medical/documents",
+      "status": 200,
+      "springRequestId": "015f7ee5-03fb-4676-a1f1-82d3dd6b1e81",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2xyyty716dl2h.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "edcde2f3-d1cf-402d-9aeb-2ee395259d9c",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/appointment-requests",
+      "status": 200,
+      "springRequestId": "1f82eee2-5f9c-4246-bd85-e70f4bf7ee50",
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/buscar",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/vacunas",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/estudiante/citas/ec31beb0-703a-46b3-95f9-54a048add025",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1l59u-0afv_2n.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "STUDENT",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/vaccination-card",
+      "status": 200,
+      "springRequestId": "12875ea5-25c1-41cf-8202-c5f13980ac46",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2eyirup4ze2ny.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/specialties",
+      "status": 200,
+      "springRequestId": "26619b12-6da8-43a7-b299-9f5ab80b44b4",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/cumplimiento",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/vacunacion",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/investigacion",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/reports/clinical",
+      "status": 200,
+      "springRequestId": "4759e642-6bb0-46ff-9864-e7a2f7c4ea92",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "0132c928-93db-4486-aabc-442013ef6be1",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/cumplimiento",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/vacunacion",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/investigacion",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/reportes/cumplimiento",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1w1-2jt-n5nqp.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/careers",
+      "status": 200,
+      "springRequestId": "ee8d3d06-092e-4d98-8e27-ce0a87cdb6c8",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/reports/daily-activity",
+      "status": 200,
+      "springRequestId": "9e7fba64-01de-4021-8feb-2153489df1fa",
+      "type": "fetch"
+    },
+    {
+      "role": "REPORTING_OFFICER",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/reports/compliance",
+      "status": 200,
+      "springRequestId": "9f9b65b7-79c0-46bb-8ba0-e0138278519a",
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/auditoria",
+      "status": 200,
+      "springRequestId": null,
+      "type": "document"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hqfo6w4hpvkp.css",
+      "status": 200,
+      "springRequestId": null,
+      "type": "stylesheet"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/228r8fvxcj5-5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0oz2ulem0qzb5.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/3gwv7_y5o7sse.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-269-g9rmk3zac.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2bna8b7dbjupz.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/1pf060f3e_wsw.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/17zzjjc65oarc.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/27hobw3j-yonn.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/0m6li0l-s7qs4.js",
+      "status": 200,
+      "springRequestId": null,
+      "type": "script"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/_next/image",
+      "status": 200,
+      "springRequestId": null,
+      "type": "image"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/auditoria",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/notifications",
+      "status": 200,
+      "springRequestId": "45cd1122-e730-4d4b-a162-3d37760a17e3",
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/api/audit-events",
+      "status": 200,
+      "springRequestId": "2bc38f39-2e3e-42f7-a4f6-db24b71e404f",
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/administrativo/avisos",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    },
+    {
+      "role": "AUDITOR",
+      "method": "GET",
+      "url": "http://127.0.0.1:3000/perfil",
+      "status": 200,
+      "springRequestId": null,
+      "type": "fetch"
+    }
+  ]
+}

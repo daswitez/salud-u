@@ -9,23 +9,23 @@ type Card={patientId:string;carnet:string;fullName:string;careerId:string|null;c
 const labels:Record<Status,string>={PENDING:"Pendiente",PARTIAL:"En curso",COMPLETE:"Completo",INACTIVE:"Vacuna desactivada"};
 const tones:Record<Status,string>={PENDING:"bg-warning-container text-warning",PARTIAL:"bg-primary-container text-primary",COMPLETE:"bg-success-container text-success",INACTIVE:"bg-surface-secondary text-text-secondary"};
 const day=(value:string)=>new Intl.DateTimeFormat("es-BO",{timeZone:"UTC",dateStyle:"medium"}).format(new Date(value+"T00:00:00Z"));
-/** UC-27: carnet propio (estudiante) o de un paciente (Administración); el estado lo calcula Spring/PostgreSQL. */
+/** UC-27: historial propio (estudiante) o de un paciente (Administración); el estado lo calcula Spring/PostgreSQL. */
 export function VaccinationCard({patientId}:{patientId?:string}){
  const [card,setCard]=useState<Card|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[expired,setExpired]=useState(false);
  const request=useRef<AbortController|null>(null),feedback=useRef<HTMLParagraphElement>(null);
  const load=useCallback(async()=>{request.current?.abort();const controller=new AbortController();request.current=controller;setLoading(true);setError("");setExpired(false);setCard(null);
-  try{const data=await apiJson<Card>("/api/vaccination-card"+(patientId?"?patientId="+encodeURIComponent(patientId):""),{signal:controller.signal});if(controller.signal.aborted)return;if(!data||!Array.isArray(data.vaccines))throw new Error("La respuesta del carnet de vacunación no es válida.");setCard(data);}
-  catch(cause){if(controller.signal.aborted)return;setError(cause instanceof ApiRequestError&&cause.status===401?"Tu sesión expiró. Inicia sesión en otra pestaña y vuelve a consultar el carnet.":cause instanceof Error&&!(cause instanceof TypeError)?cause.message:"No se pudo consultar el carnet por un problema de conexión. Puedes reintentar.");setExpired(cause instanceof ApiRequestError&&cause.status===401);}
+  try{const data=await apiJson<Card>("/api/vaccination-card"+(patientId?"?patientId="+encodeURIComponent(patientId):""),{signal:controller.signal});if(controller.signal.aborted)return;if(!data||!Array.isArray(data.vaccines))throw new Error("La respuesta del historial de vacunación no es válida.");setCard(data);}
+  catch(cause){if(controller.signal.aborted)return;setError(cause instanceof ApiRequestError&&cause.status===401?"Tu sesión expiró. Inicia sesión en otra pestaña y vuelve a consultar el historial.":cause instanceof Error&&!(cause instanceof TypeError)?cause.message:"No se pudo consultar el historial por un problema de conexión. Puedes reintentar.");setExpired(cause instanceof ApiRequestError&&cause.status===401);}
   finally{if(!controller.signal.aborted)setLoading(false);}},[patientId]);
  useEffect(()=>{const t=window.setTimeout(()=>void load(),0);return()=>{window.clearTimeout(t);request.current?.abort();};},[load]);
  useEffect(()=>{if(error)feedback.current?.focus();},[error]);
  const count=(status:Status)=>card?.vaccines.filter(v=>v.status===status).length??0;
- return <section aria-label="Carnet de vacunación" aria-busy={loading} className="space-y-5">
- <header className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-3xl font-bold">Carnet de vacunación</h1><p className="mt-2 text-text-secondary">Estado de cada vacuna según la versión vigente de su esquema. Las dosis conservan el esquema con que se aplicaron.</p></div><div className="flex gap-2 print:hidden"><button type="button" disabled={loading} onClick={()=>void load()} className="rounded-lg border border-primary px-3 py-2">Actualizar carnet</button>{card&&<button type="button" onClick={()=>window.print()} className="rounded-lg bg-primary px-3 py-2 font-semibold text-on-primary">Imprimir</button>}</div></header>
- {loading&&<p role="status">Consultando carnet…</p>}
+ return <section aria-label="Historial de vacunación" aria-busy={loading} className="space-y-5">
+ <header className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-3xl font-bold">Historial de vacunación</h1><p className="mt-2 text-text-secondary">Dosis registradas en el centro y estado de cada vacuna según su esquema vigente. Las dosis conservan el esquema con que se aplicaron.</p><p className="mt-3 rounded-lg bg-info-container p-3 text-sm text-info">Este historial no reemplaza el carnet de vacunación oficial, que emite el Ministerio de Salud.</p></div><div className="flex gap-2"><button type="button" disabled={loading} onClick={()=>void load()} className="rounded-lg border border-primary px-3 py-2">Actualizar historial</button></div></header>
+ {loading&&<p role="status">Consultando historial…</p>}
  {error&&<p ref={feedback} tabIndex={-1} role="alert" className="rounded-lg bg-error-container p-4 text-error">{error}</p>}
  {expired&&<Link href="/iniciar-sesion?error=session" target="_blank" rel="noopener" className="font-semibold text-primary">Iniciar sesión en otra pestaña</Link>}
- {error&&!loading&&<button type="button" onClick={()=>void load()} className="rounded-lg border border-primary p-3">Reintentar carnet</button>}
+ {error&&!loading&&<button type="button" onClick={()=>void load()} className="rounded-lg border border-primary p-3">Reintentar historial</button>}
  {card&&!loading&&<>
   <dl aria-label="Datos del estudiante" className="grid gap-3 rounded-xl border border-divider bg-surface p-5 sm:grid-cols-2 lg:grid-cols-4">{([["Estudiante",card.fullName],["Carnet",card.carnet],["Carrera",card.careerName??"Sin carrera registrada"],["Período académico",card.academicPeriod??"Sin matrícula registrada"]] as const).map(([k,v])=><div key={k}><dt className="text-sm text-text-secondary">{k}</dt><dd className="font-semibold">{v}</dd></div>)}</dl>
   <p role="status">{card.vaccines.length} vacuna(s): {count("COMPLETE")} completa(s), {count("PARTIAL")} en curso, {count("PENDING")} pendiente(s){count("INACTIVE")?`, ${count("INACTIVE")} desactivada(s) con dosis`:""}.</p>

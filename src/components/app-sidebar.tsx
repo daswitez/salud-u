@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ClinicalRole } from "@/lib/ui-contracts";
 
 export type AppRole = "estudiante" | "medico" | "administrativo";
-type NavIcon = "home" | "search" | "calendar" | "bell" | "user" | "users" | "chart" | "document" | "folder" | "referral" | "tele" | "vaccine";
+type NavIcon = "home" | "search" | "calendar" | "bell" | "user" | "users" | "chart" | "document" | "folder" | "referral" | "vaccine";
 type NavItem = { label: string; mobileLabel?: string; icon: NavIcon; href?: string; key: string; comingSoon?: boolean; mobileHidden?: boolean };
 
 function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
@@ -15,7 +15,7 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
     { key: "patients", href: "/medico/pacientes", label: "Mis pacientes", mobileLabel: "Pacientes", icon: "users" },
     { key: "referrals", href: "/medico/derivaciones", label: isSpecialist ? "Derivaciones recibidas" : "Derivaciones emitidas", mobileLabel: "Derivaciones", icon: "referral" },
     { key: "reports", href: "/medico/reportes", label: "Reportes", icon: "chart", mobileHidden: true },
-    { key: "tele", label: "Teleconsulta · próximamente", icon: "tele", comingSoon: true, mobileHidden: true },
+    { key: "notifications", href: "/medico/avisos", label: "Mis avisos", icon: "bell", mobileHidden: true },
     { key: "profile", href: "/perfil?rol=medico", label: "Perfil y preferencias", icon: "user", mobileHidden: true },
   ];
 }
@@ -23,6 +23,7 @@ function medicalNavigation(clinicalRole: ClinicalRole): NavItem[] {
 function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
   if(clinicalRole === "AUDITOR") return [
     {key:"audit",href:"/administrativo/auditoria",label:"Auditoría",icon:"chart"},
+    {key:"notifications",href:"/administrativo/avisos",label:"Mis avisos",icon:"bell",mobileHidden:true},
     {key:"profile",href:"/perfil?rol=administrativo",label:"Perfil y preferencias",icon:"user"},
   ];
   if (clinicalRole === "REPORTING_OFFICER") return [
@@ -30,13 +31,15 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "coverage", href: "/administrativo/reportes/vacunacion", label: "Cobertura de vacunas", mobileLabel: "Vacunas", icon: "vaccine" },
     { key: "research", href: "/administrativo/reportes/investigacion", label: "Exportación para investigación", mobileLabel: "Investigación", icon: "document" },
     { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
+    { key: "notifications", href: "/administrativo/avisos", label: "Mis avisos", icon: "bell", mobileHidden: true },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil y preferencias", icon: "user" },
   ];
   if (role === "estudiante") return [
     { key: "home", href: "/estudiante", label: "Inicio", icon: "home" },
     { key: "request", href: "/estudiante/buscar", label: "Solicitar cita", mobileLabel: "Solicitar", icon: "search" },
     { key: "appointments", href: "/estudiante/citas", label: "Mis citas", mobileLabel: "Citas", icon: "calendar" },
-    { key: "vaccines", href: "/estudiante/vacunas", label: "Mi carnet de vacunación", mobileLabel: "Vacunas", icon: "vaccine" },
+    { key: "vaccines", href: "/estudiante/vacunas", label: "Historial de vacunación", mobileLabel: "Vacunas", icon: "vaccine" },
+    { key: "notifications", href: "/estudiante/avisos", label: "Mis avisos", icon: "bell", mobileHidden: true },
     { key: "profile", href: "/perfil?rol=estudiante", label: "Mi información", mobileLabel: "Perfil", icon: "user" },
   ];
   if (role === "administrativo") return [
@@ -44,9 +47,13 @@ function navigationFor(role: AppRole, clinicalRole?: ClinicalRole): NavItem[] {
     { key: "students", href: "/administrativo/estudiantes", label: "Estudiantes", icon: "users" },
     { key: "admission", href: "/administrativo/check-in", label: "Citas y asistencia", mobileLabel: "Citas", icon: "calendar" },
     { key: "referrals", href: "/administrativo/derivaciones", label: "Derivaciones", icon: "referral" },
+    { key: "academic-setup", href: "/administrativo/calendario", label: "Calendario y valores", icon: "calendar", mobileHidden: true },
+    { key: "planning", href: "/administrativo/planificacion", label: "Sugerencias de agenda", icon: "calendar", mobileHidden: true },
+    { key: "blocks", href: "/administrativo/bloqueos", label: "Bloqueos y reprogramación", icon: "calendar", mobileHidden: true },
     { key: "staff", href: "/administrativo/personal-medico", label: "Organización", icon: "folder", mobileHidden: true },
     { key: "vaccines", href: "/administrativo/vacunas", label: "Vacunas", icon: "vaccine", mobileHidden: true },
     { key: "reports", href: "/administrativo/reportes", label: "Reportes", icon: "chart" },
+    { key: "notifications", href: "/administrativo/avisos", label: "Mis avisos", icon: "bell", mobileHidden: true },
     { key: "profile", href: "/perfil?rol=administrativo", label: "Perfil y preferencias", icon: "user", mobileHidden: true },
   ];
   return medicalNavigation(clinicalRole ?? "REVIEW_DOCTOR");
@@ -64,7 +71,6 @@ function Icon({ name }: { name: NavIcon }) {
     document: <><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5M8 13h8m-8 4h5" /></>,
     folder: <><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /><path d="M3 10h18" /></>,
     referral: <><path d="M5 5h8a3 3 0 0 1 3 3v1" /><path d="m13 6 3 3-3 3M19 19h-8a3 3 0 0 1-3-3v-1" /><path d="m11 18-3-3 3-3" /></>,
-    tele: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3" /></>,
     vaccine: <><path d="m18 2 4 4m-5 1 3-3m-1 5L8.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L15 5m-6 6 4 4m-8 4-3 3M14 4l6 6" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0">{content[name]}</svg>;

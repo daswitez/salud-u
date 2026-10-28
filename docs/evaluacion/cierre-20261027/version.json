@@ -1,0 +1,10 @@
+{
+  "version": "local-V96-314cc879d9dd-FE-26350084a3f4",
+  "fecha": "2026-10-27T14:37:43.293338+00:00",
+  "fuente": {
+    "nombre": "MSD-Documento proyecto de grado Ver.1.10 u.docx",
+    "sha256": "61102af2eec9259c3f2a8a7f1d8cff1ad94cb21a7824157bdd6ab795482ae8df"
+  },
+  "entorno": "Ver version-entorno.json en evidencia backend",
+  "tipo_recorrido": "Mixto UI/API automatizado; no prueba humana ni SUS"
+}

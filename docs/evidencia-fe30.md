@@ -1,0 +1,9 @@
+# F-04 · Sugerencias de la jornada y alertas
+
+Fecha: 27/10/2026. Estado: implementada y verificada localmente con observaciones. Fuente: O-04/O-06 y P0-1 de `TAREAS_CODEX.md`. [Entrega completa, comandos, versión y límites](../../../ENTREGAS_CODEX/F-04/resumen.md); [Figura 3.61](../../../ENTREGAS_CODEX/F-04/figuras/figura-3.61.png).
+
+Administración consulta `/administrativo/planificacion` por fecha de Bolivia. La pantalla muestra los tres tipos de O-04 con explicación y origen de asistencia cuando el servidor lo proporciona, además de estado y decisión persistida. Aceptar/rechazar una jornada o alerta registra la revisión; aceptar o modificar sobrecupo aplica capacidades por O-06. El motivo es obligatorio para modificar/rechazar. Reprogramaciones son otro flujo y no se deciden aquí.
+
+Las reglas `GET /api/scheduling/suggestions` y `POST /api/scheduling/suggestions/:suggestionId/decision` ya existían en `next.config.ts`, donde se identifican para F-04. La modificación permite seleccionar otros cupos de la jornada solo cuando el nombre identifica inequívocamente al profesional en el catálogo; con homónimos o error de consulta se ofrecen únicamente los cupos de la sugerencia y el backend valida todos los casos. Las alertas no identifican todas las fuentes de demanda: la interfaz lo indica sin inventar una fuente.
+
+Nueve grupos Chromium verificaron datos sintéticos generados con `SugeridorAgenda`, presentación, explicación, aceptación/rechazo/modificación, cambios y lectura tras recargar, motivo, exceso de sobrecupo, conflicto concurrente, homónimos, 401/403, carga/vacío/error, acceso móvil y axe. Backend: 312 pruebas sin fallos/errores/omisiones; frontend: lint completo, typecheck y build aprobados. Los ensayos crean jornadas y decisiones sintéticas en la base local, no son resultados de asistencia de pacientes reales.

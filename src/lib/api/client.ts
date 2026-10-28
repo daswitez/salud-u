@@ -1,3 +1,4 @@
+import type { EmergencyContact, PatientSex } from "@/lib/emergency-contact";
 import { clinicalPayload } from "@/lib/clinical-json";
 
 export type CareerOption = { id: string; code: string; name: string };
@@ -10,6 +11,8 @@ export type AdministrativePatient = {
   birthDate: string | null;
   phone: string | null;
   email: string | null;
+  sex?: PatientSex | null;
+  emergencyContact?: EmergencyContact | null;
   academicStatus: "ACTIVE" | "INACTIVE" | "GRADUATED" | "SUSPENDED";
   createdAt: string;
   updatedAt: string;
@@ -39,7 +42,7 @@ export type MedicalAppointment = {
 };
 
 type VersionedError = { code?: string; message?: string; requestId?: string };
-type ApiPayload = { ok?: boolean; data?: unknown; error?: unknown };
+type ApiPayload = { ok?: boolean; data?: unknown; error?: unknown; code?: string };
 
 type CsrfToken = { token: string; headerName: string };
 
@@ -75,7 +78,7 @@ function isFormData(body: BodyInit | null | undefined) {
 
 function errorFromPayload(status: number, payload: ApiPayload): ApiRequestError {
   if (typeof payload.error === "string") {
-    return new ApiRequestError(payload.error, status);
+    return new ApiRequestError(payload.error, status, payload.code);
   }
   if (payload.error && typeof payload.error === "object") {
     const error = payload.error as VersionedError;

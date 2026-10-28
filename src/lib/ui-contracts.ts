@@ -100,7 +100,6 @@ export type ClinicalIntake = {
   chronicConditions?: string;
   currentMedications?: string;
   relevantHistory?: string;
-  emergencyContact?: string;
   updatedAt: string;
   updatedBy: string;
 };
